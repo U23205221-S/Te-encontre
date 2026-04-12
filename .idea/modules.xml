@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/QR-UTP-RS.iml" filepath="$PROJECT_DIR$/QR-UTP-RS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/frontend-react/frontend-react.iml" filepath="$PROJECT_DIR$/frontend-react/frontend-react.iml" />
     </modules>
   </component>
 </project>
