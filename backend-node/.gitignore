@@ -1,0 +1,46 @@
+# --- Dependencias ---
+node_modules/
+jspm_packages/
+
+# --- Build / Salida ---
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# --- Variables de Entorno (CRÍTICO por seguridad) ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+eslintdebug.log*
+logs/
+*.log
+
+# --- IDEs (IntelliJ, VSCode, etc) ---
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.project
+.classpath
+
+# --- Sistema operativo ---
+.DS_Store
+Thumbs.db
+
+# --- Testing ---
+coverage/
+.nyc_output
+
+# --- Otros ---
+.npm
+.eslintcache
