@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Camera, Search, AlertTriangle, CheckCircle, Loader2, User, ExternalLink } from 'lucide-react';
 
 const MODELS_URL = '/models';
-const API_URL = 'http://localhost:5001/api/rostros';
+const API_URL = 'http://localhost:8080/api/v1/badge';
 
 const BuscarRostro = () => {
     const videoRef = useRef(null);
@@ -187,29 +187,28 @@ const BuscarRostro = () => {
                 .withFaceDescriptor();
 
             if (!detection) {
-                setResult({ found: false, message: 'No se detectó ningún rostro. Centra el rostro del niño frente a la cámara.' });
+                setResult({ found: false, message: 'No se detect ningún rostro. Centra el rostro del niño frente a la cámara.' });
                 return;
             }
 
             const descriptor = Array.from(detection.descriptor);
-            const res = await axios.post(`${API_URL}/buscar`, { descriptor });
+            const res = await axios.post(`${API_URL}/identify`, descriptor);
 
             setResult({
                 found: true,
-                childId: res.data.childId,
-                distancia: res.data.distancia,
-                message: res.data.mensaje,
+                childId: res.data.uuid,
+                distancia: null,
+                message: 'Niño encontrado',
             });
             stopCamera();
         } catch (err) {
-            if (err.response?.status === 404) {
+            if (err.response?.status === 401 || err.response?.status === 404) {
                 setResult({
                     found: false,
-                    message: 'No se encontró al niño en la base de datos.',
-                    distancia: err.response.data?.menorDistanciaEncontrada,
+                    message: 'No se encontró al niño en la base de datos o rostro no coincide.',
                 });
             } else {
-                setResult({ found: false, message: err.response?.data?.mensaje || 'Error al procesar la búsqueda.' });
+                setResult({ found: false, message: err.response?.data?.message || 'Error al procesar la búsqueda.' });
             }
         } finally {
             setLoading(false);

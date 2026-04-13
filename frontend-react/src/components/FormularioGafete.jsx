@@ -240,20 +240,28 @@ const FormularioGafete = ({ formRef }) => {
         if (!validateForm()) return;
         setLoading(true);
         try {
+            const dataToUpload = {
+                fullName: formData.nombreNino,
+                age: parseInt(formData.edad),
+                bloodType: formData.tipoSangre,
+                allergies: formData.alergias,
+                emergencyContactName: formData.nombrePadre,
+                mainEmergencyPhone: formData.telefonoPrincipal,
+                alternativeEmergencyPhone: formData.telefonoAlternativo,
+                statusBadge: 'NEUTRAL',
+                faceVector: faceDescriptor,
+                gender: 'MALE'
+            };
+
             const data = new FormData();
-            Object.keys(formData).forEach(k => data.append(k, formData[k]));
-            data.append('foto', file);
-            // Primero creamos el gafete (con la foto estática subida)
-            const res = await axios.post('http://localhost:5001/api/gafetes', data, {
+            data.append('data', new Blob([JSON.stringify(dataToUpload)], { type: 'application/json' }));
+            data.append('file', file);
+
+            const res = await axios.post('http://localhost:8080/api/v1/badge', data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            const nuevoGafete = res.data.gafete;
-            // Luego registramos el rostro asociado (usando el descriptor capturado en vivo de la cámara)
-            await axios.post('http://localhost:5001/api/rostros/registrar', {
-                childId: nuevoGafete.id,
-                descriptor: faceDescriptor,
-                status: 'desaparecido'
-            });
+            const nuevoGafete = res.data;
+
             setGafete(nuevoGafete);
             window.scrollTo(0, 0);
         } catch (err) {
@@ -264,16 +272,16 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
     if (gafete) {
-        const urlGafete = `${window.location.origin}/gafete/${gafete.id}`;
+        const urlGafete = `${window.location.origin}/gafete/${gafete.uuid}`;
         return (
             <div className="mx-auto mb-10 max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-700">
-                <h2 className="mb-4 text-2xl font-bold text-slate-900">¡Registro completo!</h2>
+                <h2 className="mb-4 text-2xl font-bold text-slate-900">Registro completo!</h2>
                 <div className="mb-6 rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-brand-800">
-                    Los datos del niño/a se han guardado correctamente. Se ha generado su gafete QR y su rostro está listo para ser reconocido en caso de emergencia.
+                    Los datos del nio/a se han guardado correctamente. Se ha generado su gafete QR y su rostro est listo para ser reconocido en caso de emergencia.
                 </div>
-                <p className="mb-4 text-slate-600">Imprime este código QR o descárgalo para usarlo como gafete, pulsera, o etiqueta en la ropa de tu hijo/a.</p>
+                <p className="mb-4 text-slate-600">Imprime este cdigo QR o descrgalo para usarlo como gafete, pulsera, o etiqueta en la ropa de tu hijo/a.</p>
                 <div className="mx-auto mb-6 flex max-w-sm flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4">
-                    <QRGenerado url={urlGafete} id={`qr-gafete-${gafete.id}`} />
+                    <QRGenerado url={urlGafete} id={`qr-gafete-${gafete.uuid}`} />
                 </div>
                 <div className="mb-6 mt-4 rounded-lg border border-brand-200 bg-brand-50 p-4 text-left">
                     <p className="mb-2 font-semibold text-brand-800">Enlace del gafete (redirección QR):</p>
