@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: backend-java
+
+  # ---------------------------------------------------------
+  # CONFIGURACIÓN DE BASE DE DATOS (Ajustado a tu log: qr_utp_db)
+  # ---------------------------------------------------------
+  datasource:
+    url: jdbc:postgresql://localhost:5432/qr_utp_db
+    username: admin
+    password: password123
+    driver-class-name: org.postgresql.Driver
+
+  # ---------------------------------------------------------
+  # CONFIGURACIÓN DE JPA E HIBERNATE
+  # ---------------------------------------------------------
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    # 1. ELIMINA EL WARNING DE "open-in-view"
+    # Se desactiva por rendimiento para evitar mantener la conexión abierta más tiempo de lo necesario.
+    open-in-view: false
+
+    properties:
+      hibernate:
+        format_sql: true
+
+# ---------------------------------------------------------
+# CONFIGURACIÓN DE SPRINGDOC (SWAGGER)
+# ---------------------------------------------------------
+# 2 y 3. ELIMINAN LOS WARNINGS DE SPRINGDOC
+# Define explícitamente que quieres habilitar la documentación y la UI.
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+# ---------------------------------------------------------
+# CONFIGURACIÓN DE LOGS
+# ---------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    org.sync_astra.backendjava: DEBUG

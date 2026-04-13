@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  db:
+    image: ankane/pgvector:latest
+    container_name: postgres-pgvector
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: qr_utp_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+    volumes:
+      # Volumen para que los datos no se borren si apagas el contenedor
+      - postgres_data:/var/lib/postgresql/data
+      # Script de inicialización (se ejecuta la primera vez)
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:
