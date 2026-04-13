@@ -5,12 +5,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
 import org.sync_astra.backendjava.mapper.mapperImpl.BadgeMapper;
 import org.sync_astra.backendjava.model.Badge;
 import org.sync_astra.backendjava.repository.BadgeRepository;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,6 +28,8 @@ public class BadgeService {
     private final BadgeRepository badgeRepository;
     private final BadgeMapper badgeMapper;
     private static final double MATCH_THRESHOLD = 0.6; // Ajustar según precisión del modelo
+    // Ruta donde se guardarán las fotos (puedes ajustarla a tu monorepo)
+    private final Path rootLocation = Paths.get("..", "uploads", "badges").toAbsolutePath().normalize();
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional(readOnly = true)
@@ -43,14 +52,46 @@ public class BadgeService {
      * REGISTRO: Crea un nuevo badge con su vector facial.
      */
     @Transactional
-    public BadgeResponseDTO create(BadgeRequestDTO requestDTO) {
-        // Convertimos el DTO a Entidad (MapStruct se encarga de todo)
-        Badge badge = badgeMapper.toModel(requestDTO);
+    public BadgeResponseDTO createWithPhoto(BadgeRequestDTO requestDTO, MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("La imagen no puede estar vacía.");
+        }
 
-        // Guardamos en la BD (Genera ID, UUID, CreatedAt automáticamente)
+        String fileName = saveFile(file);
+
+        // URL lógica para el WebMvcConfigurer
+        String photoUrl = "/api/v1/uploads/badges/" + fileName;
+        requestDTO.setPhoto(photoUrl);
+
+        Badge badge = badgeMapper.toModel(requestDTO);
         Badge savedBadge = badgeRepository.save(badge);
 
-        // Retornamos el DTO de respuesta
+        log.info("Nuevo Badge registrado con éxito. UUID: {}", savedBadge.getUuid());
         return badgeMapper.toDTO(savedBadge);
+    }
+
+    private String saveFile(MultipartFile file) {
+        try {
+            // Aseguramos que el directorio exista
+            if (!Files.exists(rootLocation)) {
+                Files.createDirectories(rootLocation);
+            }
+
+            // Mantenemos la extensión original de forma segura
+            String originalFilename = file.getOriginalFilename();
+            String extension = (originalFilename != null && originalFilename.contains("."))
+                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                    : ".jpg";
+
+            String fileName = UUID.randomUUID().toString() + extension;
+            Path destinationFile = rootLocation.resolve(fileName);
+
+            Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
+
+            return fileName;
+        } catch (IOException e) {
+            log.error("Fallo crítico al guardar archivo: {}", e.getMessage());
+            throw new RuntimeException("Error en el sistema de almacenamiento de archivos.");
+        }
     }
 }

@@ -6,7 +6,7 @@ spring:
     name: backend-java
 
   # ---------------------------------------------------------
-  # CONFIGURACIÓN DE BASE DE DATOS (Ajustado a tu log: qr_utp_db)
+  # CONFIGURACIï¿½N DE BASE DE DATOS (Ajustado a tu log: qr_utp_db)
   # ---------------------------------------------------------
   datasource:
     url: jdbc:postgresql://localhost:5432/qr_utp_db
@@ -15,25 +15,30 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   # ---------------------------------------------------------
-  # CONFIGURACIÓN DE JPA E HIBERNATE
+  # CONFIGURACIï¿½N DE JPA E HIBERNATE
   # ---------------------------------------------------------
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
     # 1. ELIMINA EL WARNING DE "open-in-view"
-    # Se desactiva por rendimiento para evitar mantener la conexión abierta más tiempo de lo necesario.
+    # Se desactiva por rendimiento para evitar mantener la conexiï¿½n abierta mï¿½s tiempo de lo necesario.
     open-in-view: false
 
     properties:
       hibernate:
         format_sql: true
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
 # ---------------------------------------------------------
-# CONFIGURACIÓN DE SPRINGDOC (SWAGGER)
+# CONFIGURACIï¿½N DE SPRINGDOC (SWAGGER)
 # ---------------------------------------------------------
 # 2 y 3. ELIMINAN LOS WARNINGS DE SPRINGDOC
-# Define explícitamente que quieres habilitar la documentación y la UI.
+# Define explï¿½citamente que quieres habilitar la documentaciï¿½n y la UI.
 springdoc:
   api-docs:
     enabled: true
@@ -41,7 +46,7 @@ springdoc:
     enabled: true
 
 # ---------------------------------------------------------
-# CONFIGURACIÓN DE LOGS
+# CONFIGURACIï¿½N DE LOGS
 # ---------------------------------------------------------
 logging:
   level:

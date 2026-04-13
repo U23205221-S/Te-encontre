@@ -2,8 +2,10 @@ package org.sync_astra.backendjava.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
 import org.sync_astra.backendjava.service.BadgeService;
@@ -16,10 +18,11 @@ import java.util.UUID;
 public class BadgeController {
     private final BadgeService badgeService;
 
-    // 1. Registro de nuevo Badge
-    @PostMapping
-    public ResponseEntity<BadgeResponseDTO> register(@RequestBody BadgeRequestDTO request) {
-        return new ResponseEntity<>(badgeService.create(request), HttpStatus.CREATED);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BadgeResponseDTO> register(
+            @RequestPart("data") BadgeRequestDTO request,
+            @RequestPart("file") MultipartFile file) {
+        return new ResponseEntity<>(badgeService.createWithPhoto(request, file), HttpStatus.CREATED);
     }
 
     // Endpoint para Reconocimiento Facial
@@ -35,4 +38,5 @@ public class BadgeController {
     public ResponseEntity<BadgeResponseDTO> getByUuid(@PathVariable UUID uuid) {
         return ResponseEntity.ok(badgeService.getByUuid(uuid));
     }
+
 }
