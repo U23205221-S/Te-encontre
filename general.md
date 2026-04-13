@@ -66,29 +66,36 @@ Para ejecutar el backend localmente, navega a la carpeta `backend-java` y ejecut
 
 La ruta base de la API es: `/api/v1/badges`
 
-### 1. Registrar un Nuevo Usuario
-Crea una nueva credencial y almacena su perfil médico junto con su vector facial. Guarda el `uuid` retornado para generar el Código QR físico.
+### 1. Registrar un Nuevo Usuario (con Foto Biométrica)
+Crea una nueva credencial y almacena su perfil médico junto con su vector facial. Guarda el `uuid` retornado para generar el Código QR físico. Esta operación soporta la carga de imágenes reales en el sistema de archivos (arquitectura híbrida: procesa datos estructurados y almacenamiento físico de archivos Multipart).
 
-* **URL:** `POST /api/v1/badges`
-* **Request Body:**
+* **URL:** `POST /api/v1/badge`
+* **Content-Type:** `multipart/form-data`
+
+#### 📂 Estructura de Almacenamiento
+Las imágenes no se guardan dentro de la carpeta del backend para evitar que se borren. Se almacenan en la raíz del repositorio:
+`raiz-del-repo/uploads/badge/`
+
+#### Parámetros de la Petición
+
+| Campo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| **`data`** | `String` (JSON) | Objeto `BadgeRequestDTO` serializado. Contiene la información personal y el vector de 128 posiciones. |
+| **`file`** | `File` (Binary) | El archivo de imagen (JPG/PNG) capturado por la cámara o seleccionado por el usuario. |
+
+**Ejemplo del JSON interno (`data`):**
 
 ```json
 {
-  "fullName": "Juan Carlos Pérez",
-  "age": 35,
+  "fullName": "Victor Elias Chung Coelho",
+  "age": 20,
   "gender": "MALE",
   "bloodType": "O+",
-  "allergies": "Penicilina, Nueces",
-  "emergencyContactName": "María Gómez",
-  "mainEmergencyPhone": "+51987654321",
-  "alternativeEmergencyPhone": "+51912345678",
-  "photo": "https://mi-storage.com/fotos/juan-perez.jpg",
+  "allergies": "Ninguna",
+  "emergencyContactName": "Madre",
+  "mainEmergencyPhone": "+51 9XX XXX XXX",
   "statusBadge": "ACTIVE",
-  "faceVector": [
-    0.12345, -0.09876, 0.45678, -0.11122, 0.33445, 
-    "...", 
-    "Nota: Este array DEBE contener exactamente 128 números decimales."
-  ]
+  "faceVector": [0.12, -0.05, 0.88, "... (128 floats)"]
 }
 ```
 
@@ -97,17 +104,24 @@ Crea una nueva credencial y almacena su perfil médico junto con su vector facia
 ```json
 {
   "uuid": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  "fullName": "Juan Carlos Pérez",
-  "age": 35, ...
+  "fullName": "Victor Elias Chung Coelho",
+  "age": 20,
+  ...
+  "photo": "/api/v1/uploads/badge/uuid-generado.jpg",
   "createdAt": "2024-05-20T10:30:00Z",
   "updatedAt": "2024-05-20T10:30:00Z"
 }
 ```
 
+### 🛠️ Configuración de Almacenamiento
+* **application.yml**: Configurado `max-file-size` a `10MB`.
+* **Resource Handler (`WebConfig.java`)**: Configurado para servir los recursos subidos.
+* **Consumo Frontend**: La URL lógica devuelta por el backend puede ser consumida directamente.
+
 ### 2. Identificación por Rostro (Cámara Biométrica)
 Recibe un vector de 128 dimensiones desde la cámara y busca el rostro más similar en la BD.
 
-* **URL:** `POST /api/v1/badges/identify`
+* **URL:** `POST /api/v1/badge/identify`
 * **Request Body:** Envía directamente el array JSON de 128 números flotantes.
 * **Response:**
   * `200 OK`: Ficha médica completa si la coincidencia es segura.
@@ -116,8 +130,8 @@ Recibe un vector de 128 dimensiones desde la cámara y busca el rostro más simi
 ### 3. Consulta por Código QR (UUID)
 Recupera la información pública de una credencial de forma instantánea usando el escáner de QR.
 
-* **URL:** `GET /api/v1/badges/qr/{uuid}`
-* **Ejemplo:** `GET /api/v1/badges/qr/f47ac10b-58cc-4372-a567-0e02b2c3d479`
+* **URL:** `GET /api/v1/badge/uuid/{uuid}`
+* **Ejemplo:** `GET /api/v1/badge/uuid/f47ac10b-58cc-4372-a567-0e02b2c3d479`
 
 ---
 
@@ -145,4 +159,3 @@ ORDER BY distance LIMIT 1
 * El operador `<->` calcula la **Distancia Euclidiana**.
 * Valores cercanos a `0.0` indican que las caras son idénticas.
 * El límite predeterminado del sistema (`MATCH_THRESHOLD`) es `0.6`. Todo valor superior se rechaza asumiendo que no es la misma persona.
-

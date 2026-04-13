@@ -12,13 +12,13 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Obtenemos la ruta absoluta de la carpeta de subidas en la raíz del monorepo
-        String uploadPath = Paths.get("..", "uploads", "badges")
+        String uploadPath = Paths.get("..", "uploads", "badge")
                 .toAbsolutePath()
                 .toUri()
                 .toString();
 
         // Mapeamos la URL lógica a la carpeta física
-        registry.addResourceHandler("/api/v1/uploads/badges/**")
+        registry.addResourceHandler("/api/v1/uploads/badge/**")
                 .addResourceLocations(uploadPath);
     }
 }
