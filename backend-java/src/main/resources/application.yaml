@@ -1,10 +1,14 @@
 server:
   port: 8080
-
 spring:
   application:
     name: backend-java
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 20MB
   # ---------------------------------------------------------
   # CONFIGURACI�N DE BASE DE DATOS (Ajustado a tu log: qr_utp_db)
   # ---------------------------------------------------------
@@ -28,11 +32,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-
-  servlet:
-    multipart:
-      max-file-size: 5MB
-      max-request-size: 5MB
 
 # ---------------------------------------------------------
 # CONFIGURACI�N DE SPRINGDOC (SWAGGER)

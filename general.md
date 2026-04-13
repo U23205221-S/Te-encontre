@@ -90,12 +90,20 @@ Las imágenes no se guardan dentro de la carpeta del backend para evitar que se 
   "fullName": "Victor Elias Chung Coelho",
   "age": 20,
   "gender": "MALE",
-  "bloodType": "O+",
+  "bloodType": "B+",
   "allergies": "Ninguna",
-  "emergencyContactName": "Madre",
-  "mainEmergencyPhone": "+51 9XX XXX XXX",
-  "statusBadge": "ACTIVE",
-  "faceVector": [0.12, -0.05, 0.88, "... (128 floats)"]
+  "emergencyContactName": "Contacto de Emergencia",
+  "mainEmergencyPhone": "+51900000000",
+  "statusBadge": "NEUTRAL",
+  "faceVector": [
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0
+  ]
 }
 ```
 

@@ -29,7 +29,7 @@ public class BadgeService {
     private final BadgeMapper badgeMapper;
     private static final double MATCH_THRESHOLD = 0.6; // Ajustar según precisión del modelo
     // Ruta donde se guardarán las fotos (puedes ajustarla a tu monorepo)
-    private final Path rootLocation = Paths.get("..", "uploads", "badge").toAbsolutePath().normalize();
+    private final Path rootLocation = Paths.get( "uploads", "badge").toAbsolutePath().normalize();
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional(readOnly = true)
