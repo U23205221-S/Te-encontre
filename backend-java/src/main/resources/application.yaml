@@ -33,6 +33,30 @@ spring:
       hibernate:
         format_sql: true
 
+  jackson:
+    default-property-inclusion: non_null
+    mapper:
+      default-view-inclusion: false
+
+  # Configuración de Correo
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: chungcoelhove070@gmail.com
+    #Cambia esto por una contraseña de aplicación específica de Gmail, no uses tu contraseña real por seguridad
+    password: afanqirxgjiebtzt
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true # Recomendado para mayor seguridad
+
+  # Configuración de Hilos para mejorar el rendimiento en operaciones concurrentes
+  threads:
+    virtual:
+      enabled: true
 # ---------------------------------------------------------
 # CONFIGURACI�N DE SPRINGDOC (SWAGGER)
 # ---------------------------------------------------------
@@ -40,9 +64,9 @@ spring:
 # Define expl�citamente que quieres habilitar la documentaci�n y la UI.
 springdoc:
   api-docs:
-    enabled: true
+    enabled: false
   swagger-ui:
-    enabled: true
+    enabled: false
 
 # ---------------------------------------------------------
 # CONFIGURACI�N DE LOGS
