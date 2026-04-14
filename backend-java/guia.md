@@ -1,84 +1,166 @@
-# 🪪 Biometric Badge System - Backend API
+# 🪪 Sync Astra - Biometric Badge & Auth API
 
-Este proyecto es una API RESTful construida con **Spring Boot** y **Java** para la gestión de credenciales (Badges) e identificación biométrica. Utiliza reconocimiento facial mediante vectores de 128 dimensiones y la extensión **`pgvector`** de PostgreSQL para realizar búsquedas de similitud matemática ultrarrápidas directamente en la base de datos.
+Este proyecto es una API RESTful construida con **Spring Boot** y **Java** para la gestión de credenciales (Badges), identificación biométrica, sistema de alertas de geolocalización y autenticación segura. Utiliza reconocimiento facial mediante vectores de 128 dimensiones y la extensión **`pgvector`** de PostgreSQL para realizar búsquedas de similitud matemática ultrarrápidas.
 
 ## 🚀 Tecnologías Principales
 
-* **Java 17+**
-* **Spring Boot 3.x** (Web, Data JPA)
-* **PostgreSQL** + Extensión **`pgvector`**
-* **Hibernate 6+** (Soporte nativo para vectores)
-* **MapStruct** (Mapeo de DTOs con abstracciones avanzadas)
-* **Lombok** (Reducción de boilerplate)
+- **Java 17/21**
+- **Spring Boot 3.x** (Web, Data JPA, Security)
+- **PostgreSQL** + Extensión **`pgvector`** (Para cálculos de distancia Euclidiana `<->`)
+- **Redis** (Gestión de estado de JWT y aniquilador de sesiones)
+- **Hibernate 6+** (Soporte nativo vectorial)
+- **MapStruct & Lombok** (Mapeo de DTOs y reducción de boilerplate)
+- **JavaMailSender** (Envío asíncrono de alertas de ubicación)
 
 ---
 
-## 🧠 Arquitectura y Decisiones de Diseño
+## 🛠️ Configuración Previa (Para el equipo)
 
-1. **Búsqueda Vectorial Nativa:** La comparación de rostros (búsqueda de similitud) no se realiza en la memoria de Java para evitar cuellos de botella. Se delega a PostgreSQL utilizando el operador de Distancia Euclidiana (`<->`).
-2. **Seguridad por UUID:** Los identificadores internos (Long ID secuenciales) no se exponen al cliente para evitar ataques de enumeración. Todas las consultas públicas utilizan UUIDs.
-3. **Patrón DTO Estricto:** Se utilizan `RequestDTO` y `ResponseDTO`. El vector facial de 128 dimensiones **nunca** se devuelve al frontend tras una consulta para optimizar la red y proteger la biometría.
-4. **Mappers Genéricos:** Implementación de interfaces `Convert` y `UpdatePatch` con MapStruct para automatizar conversiones y actualizaciones parciales ignorando nulos.
-5. **Auditoría Automática:** Fechas de creación y actualización (`createdAt`, `updatedAt`) manejadas automáticamente por `@EntityListeners(AuditingEntityListener.class)`.
-
----
-
-## 🛠️ Configuración e Instalación
-
-### 1. Base de Datos (PostgreSQL)
-Asegúrate de tener PostgreSQL instalado. Antes de levantar la aplicación, es **obligatorio habilitar la extensión vectorial** ejecutando este script en tu base de datos:
+### PostgreSQL
+Es **obligatorio** habilitar la extensión vectorial en tu base de datos local antes de levantar el backend:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-### 2. Dependencia Clave (Maven)
-El proyecto requiere la dependencia oficial de Hibernate para manejar los tipos de datos vectoriales de Postgres:
-
-```xml
-<dependency>
-    <groupId>org.hibernate.orm</groupId>
-    <artifactId>hibernate-vector</artifactId>
-    <version>6.4.4.Final</version>
-</dependency>
-```
+### Redis
+Debes tener un servidor Redis corriendo en **`localhost:6379`** (por defecto). Sin esto, el inicio de sesión fallará.
 
 ---
 
-## 📡 Endpoints de la API y Estructuras JSON
-La ruta base de la API es: `/api/v1/badge`
+## 🧠 Arquitectura y Decisiones de Diseño
 
-### 1. Registrar un Nuevo Usuario (con Foto Biométrica)
+1. **Búsqueda Vectorial Nativa:** La comparación de rostros se delega a PostgreSQL utilizando el operador de Distancia Euclidiana (`<->`).
+2. **Seguridad por UUID:** Los identificadores internos (Long ID) no se exponen al cliente para evitar ataques de enumeración.
+3. **Patrón DTO Estricto:** Se utilizan `RequestDTO` y `ResponseDTO`. El vector facial de 128 dimensiones **nunca** se devuelve tras una consulta para optimizar red y seguridad.
+4. **Mappers Genéricos:** Implementación de interfaces `Convert` y `UpdatePatch` con MapStruct para automatizar conversiones.
+5. **Auditoría Automática:** Fechas de creación y actualización (`createdAt`, `updatedAt`) manejadas automáticamente.
 
-Crea una nueva credencial y almacena su perfil médico junto con su vector facial. Guarda el uuid retornado para generar el Código QR físico. Esta operación soporta la carga de imágenes reales en el sistema de archivos (arquitectura híbrida: procesa datos estructurados y almacenamiento físico de archivos Multipart).
+---
 
-**URL:** `POST /api/v1/badge`
+## 🔐 Sistema de Seguridad con JWT
 
-**Content-Type:** `multipart/form-data`
+### Flujo de Autenticación
+Todos los endpoints privados requieren un token JWT válido en el header `Authorization`:
 
-#### 📂 Estructura de Almacenamiento
-Las imágenes no se guardan dentro de la carpeta del backend para evitar que se borren. Se almacenan en la raíz del repositorio:
-`raiz-del-repo/uploads/badge/`
+```
+Header: Authorization
+Value: Bearer <tu_access_token>
+```
 
-#### Parámetros de la Petición
+**Características:**
+- **Access Token:** Válido por 15 minutos (acceso a recursos).
+- **Refresh Token:** Válido por 7 días (obtener nuevo access token sin credenciales).
+- **Redis Blacklist:** Los tokens invalidados se guardan en Redis durante su tiempo de expiración.
 
-| Campo | Tipo | Descripción |
-| :--- | :--- | :--- |
-| **`data`** | `String` (JSON) | Objeto `BadgeRequestDTO` serializado. Contiene la información personal y el vector de 128 posiciones. |
-| **`file`** | `File` (Binary) | El archivo de imagen (JPG/PNG) capturado por la cámara o seleccionado por el usuario. |
+---
 
-**Ejemplo del JSON interno (`data`):**
+## 📡 Endpoints de la API
+
+### 🔓 1. Módulo de Autenticación (`/api/auth`)
+
+#### 1.1 Registrar un Usuario (Auto-Login)
+
+Crea una cuenta nueva y devuelve la sesión iniciada inmediatamente.
+
+- **Método:** `POST`
+- **URL:** `/api/auth/register`
+- **Acceso:** Público
+- **Body:**
 
 ```json
 {
-  "fullName": "Victor Elias Chung Coelho",
+  "userName": "padre@ejemplo.com",
+  "dni": "70000000",
+  "passwordHash": "MiPassword123",
+  "confirmPasswordHash": "MiPassword123"
+}
+```
+
+- **Response (200 OK):**
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+#### 1.2 Iniciar Sesión (Login)
+
+- **Método:** `POST`
+- **URL:** `/api/auth/login`
+- **Acceso:** Público
+- **Body:**
+
+```json
+{
+  "userName": "padre@ejemplo.com",
+  "passwordHash": "MiPassword123"
+}
+```
+
+- **Response (200 OK):** Devuelve `accessToken` y `refreshToken`.
+
+#### 1.3 Refrescar Sesión
+
+Cuando el `accessToken` expira (15 mins), usa este endpoint para obtener uno nuevo sin pedir contraseña.
+
+- **Método:** `POST`
+- **URL:** `/api/auth/refresh`
+- **Acceso:** Público
+- **Body:**
+
+```json
+{
+  "refreshToken": "<tu_refresh_token_guardado>"
+}
+```
+
+- **Response (200 OK):** Devuelve nuevo `accessToken` y el mismo `refreshToken`.
+
+#### 1.4 Cerrar Sesión (Logout)
+
+Invalida los tokens en Redis inmediatamente.
+
+- **Método:** `POST`
+- **URL:** `/api/auth/logout`
+- **Acceso:** Privado (Requiere JWT válido)
+- **Body:** Ninguno (El usuario se extrae del token)
+- **Response (200 OK):** `"Sesión cerrada exitosamente"`
+
+---
+
+### 🪪 2. Módulo de Gafetes y Escaneo (`/api/v1/badge`)
+
+#### 2.1 Registrar un Nuevo Gafete (Multipart)
+
+Crea la credencial de un familiar y guarda su vector facial. Se asocia automáticamente al usuario logueado.
+
+- **Método:** `POST`
+- **URL:** `/api/v1/badge`
+- **Acceso:** Privado (Requiere JWT)
+- **Content-Type:** `multipart/form-data`
+
+**Parámetros:**
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `file` | `File` | Imagen/foto capturada (JPG/PNG) |
+| `data` | `Text/JSON` | Objeto JSON con la información del gafete |
+
+**JSON en `data`:**
+
+```json
+{
+  "fullName": "Victor Chung",
   "age": 20,
   "gender": "MALE",
-  "bloodType": "B+",
+  "bloodType": "O+",
   "allergies": "Ninguna",
-  "emergencyContactName": "Contacto de Emergencia",
+  "emergencyContactName": "Madre",
   "mainEmergencyPhone": "+51900000000",
-  "statusBadge": "NEUTRAL",
+  "statusBadge": "ACTIVE",
   "faceVector": [
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -91,18 +173,18 @@ Las imágenes no se guardan dentro de la carpeta del backend para evitar que se 
 }
 ```
 
-**Response (201 Created):**
+- **Response (201 Created):**
 
 ```json
 {
   "uuid": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  "fullName": "Victor Elias Chung Coelho",
+  "fullName": "Victor Chung",
   "age": 20,
   "gender": "MALE",
   "bloodType": "O+",
   "allergies": "Ninguna",
   "emergencyContactName": "Madre",
-  "mainEmergencyPhone": "+51 9XX XXX XXX",
+  "mainEmergencyPhone": "+51900000000",
   "photo": "/api/v1/uploads/badges/uuid-generado.jpg",
   "statusBadge": "ACTIVE",
   "createdAt": "2024-05-20T10:30:00Z",
@@ -110,38 +192,67 @@ Las imágenes no se guardan dentro de la carpeta del backend para evitar que se 
 }
 ```
 
-### 🛠️ Configuración de Almacenamiento
-* **application.yml**: Configurado `max-file-size` a `10MB`.
-* **Resource Handler (`WebConfig.java`)**: Configurado para servir los recursos subidos.
-* **Consumo Frontend**: La URL lógica devuelta por el backend puede ser consumida directamente en el frontend.
+📂 **Almacenamiento:** Las imágenes se guardan en `raiz-del-repo/uploads/badge/`
 
-### 2. Identificación por Rostro (Cámara Biométrica)
-Recibe un vector de 128 dimensiones desde la cámara y busca el rostro más similar en la BD.
+#### 2.2 Escaneo por Reconocimiento Facial (Auditoría + Alerta)
 
-**URL:** `POST /api/v1/badge/identify`
+Compara el rostro capturado con la BD. Si hay coincidencia (< 0.6 distancia), envía email de ubicación al familiar y guarda auditoría.
 
-**Request Body:**
+- **Método:** `POST`
+- **URL:** `/api/v1/badge/scan/face`
+- **Acceso:** Privado (Requiere JWT del escaneador/policía/serenazgo)
+- **Body:**
 
 ```json
-[
-  0.12349, -0.09870, 0.45680, -0.11120, 0.33440,
-  "...",
-  "Nota: Enviar directamente el array de 128 floats."
-]
+{
+  "faceVector": [
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0
+  ],
+  "latitude": -6.77137,
+  "longitude": -79.84088
+}
 ```
 
-**Response (200 OK):** Devuelve la ficha médica completa (`BadgeResponseDTO`) idéntica a la del registro, si la coincidencia es segura.
+- **Response (200 OK):** Devuelve la ficha pública médica para mostrar en pantalla.
+- **Response (401 Unauthorized):** Si el rostro no coincide o la distancia > 0.6.
 
-**Response (401 Unauthorized):** Si el rostro es desconocido o la distancia supera el límite de seguridad (0.6).
+#### 2.3 Escaneo por Código QR (Auditoría + Alerta)
 
-### 3. Consulta por Código QR (UUID)
-Recupera la información pública de una credencial de forma instantánea usando el escáner de QR (sin necesidad de enviar JSON en el Body).
+Busca el gafete por UUID. Genera alerta, envía email con Google Maps y guarda auditoría.
 
-**URL:** `GET /api/v1/badge/uuid/{uuid}`
+- **Método:** `GET`
+- **URL:** `/api/v1/badge/scan/qr`
+- **Acceso:** Privado (Requiere JWT del escaneador)
+- **Body:**
 
-**Ejemplo:** `GET /api/v1/badge/uuid/f47ac10b-58cc-4372-a567-0e02b2c3d479`
+```json
+{
+  "qrCodeUuid": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "latitude": -6.77137,
+  "longitude": -79.84088
+}
+```
 
-**Response (200 OK):**
+⚠️ **Aviso para Frontend:** Este endpoint es `GET` pero requiere `@RequestBody`. Librerías como `fetch` o `axios` bloquean el body en GET. **Soluciones:**
+- Cambiar Backend a `POST` (recomendado)
+- Enviar datos como Query Parameters
+- Usar Postman/Insomnia para testing (sí permite body en GET)
+
+#### 2.4 Consulta por Código QR (Pública)
+
+Recupera información de una credencial usando UUID (ideal para lectores QR simples).
+
+- **Método:** `GET`
+- **URL:** `/api/v1/badge/uuid/{uuid}`
+- **Acceso:** Privado (Requiere JWT)
+- **Ejemplo:** `GET /api/v1/badge/uuid/f47ac10b-58cc-4372-a567-0e02b2c3d479`
+- **Response (200 OK):**
 
 ```json
 {
@@ -150,31 +261,45 @@ Recupera la información pública de una credencial de forma instantánea usando
   "age": 35,
   "gender": "MALE",
   "bloodType": "O+",
-  "allergies": "Penicilina, Nueces",
+  "allergies": "Penicilina",
   "emergencyContactName": "María Gómez",
   "mainEmergencyPhone": "+51987654321",
-  "alternativeEmergencyPhone": "+51912345678",
-  "photo": "https://mi-storage.com/fotos/juan-perez.jpg",
-  "statusBadge": "ACTIVE",
-  "createdAt": "2024-05-20T10:30:00Z",
-  "updatedAt": "2024-05-20T10:30:00Z"
+  "photo": "http://localhost:8080/uploads/badge/juan-perez.jpg",
+  "statusBadge": "ACTIVE"
 }
 ```
 
 ---
 
-## 🧩 Estructura de MapStruct
-El proyecto utiliza una configuración global estricta (`GlobalMapperConfig`) y abstracciones para simplificar los mappers:
+## 📊 Respuesta Exitosa Unificada (Endpoints 2.2 y 2.3)
 
-- `Convert<M, DRQ, DRE>`: Interfaz base para `toModel` y `toDTO`.
-- `UpdatePatch<DRQ, T>`: Permite actualizaciones parciales ignorando valores nulos en el `RequestDTO`.
+Cuando un escaneo (facial o QR) es exitoso, se devuelve:
 
-El `BadgeMapper` funciona de manera completamente automática gracias a la convención de nombres (camelCase) y la configuración que ignora atributos no mapeados (como el `faceVector` al responder).
+```json
+{
+  "uuid": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "fullName": "Juan Carlos Pérez",
+  "age": 35,
+  "gender": "MALE",
+  "bloodType": "O+",
+  "allergies": "Penicilina",
+  "emergencyContactName": "María Gómez",
+  "mainEmergencyPhone": "+51987654321",
+  "photo": "http://localhost:8080/uploads/badge/juan-perez.jpg",
+  "statusBadge": "ACTIVE"
+}
+```
+
+**Acciones Automáticas en Background:**
+- ✅ Se guarda auditoría con IP, ubicación y escaneador
+- 📧 Se envía email al contacto de emergencia con enlace de Google Maps
+- 📍 Se registra geolocalización en la base de datos
 
 ---
 
 ## 📐 Lógica Matemática de Similitud
-El repositorio JPA utiliza una consulta SQL nativa respaldada por índices vectoriales para garantizar tiempos de respuesta de milisegundos:
+
+El repositorio JPA utiliza consulta SQL nativa respaldada por índices vectoriales:
 
 ```sql
 SELECT id, (face_vector <-> CAST(:embedding AS vector)) as distance
@@ -182,6 +307,30 @@ FROM badge
 ORDER BY distance LIMIT 1
 ```
 
-- El operador `<->` calcula la **Distancia Euclidiana**.
-- Valores cercanos a `0.0` indican que las caras son idénticas.
-- El límite predeterminado del sistema (`MATCH_THRESHOLD`) es `0.6`. Todo valor superior se rechaza asumiendo que no es la misma persona.
+- El operador `<->` calcula **Distancia Euclidiana**
+- Valores cercanos a `0.0` = caras idénticas
+- **Umbral del sistema:** `0.6` (valores superiores se rechazan)
+
+---
+
+## 📝 Tablas de Referencia Rápida
+
+### Headers Requeridos (Endpoints Privados)
+```
+Authorization: Bearer <access_token>
+```
+
+### Estados de Badge
+- `ACTIVE` - Persona autorizada
+- `INACTIVE` - Persona desactivada
+- `NEUTRAL` - Sin clasificar
+
+### Códigos HTTP Comunes
+| Código | Significado |
+|--------|-------------|
+| 200 | Éxito |
+| 201 | Recurso creado |
+| 400 | Error en solicitud |
+| 401 | Token inválido/expirado o rostro no encontrado |
+| 403 | Acceso denegado |
+| 500 | Error del servidor |
