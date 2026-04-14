@@ -22,7 +22,6 @@ public class BadgeRequestDTO {
     private String emergencyContactName;
     private String mainEmergencyPhone;
     private String alternativeEmergencyPhone;
-    private String parentEmail;
     private String photo;
     private StatusBadge statusBadge;
 

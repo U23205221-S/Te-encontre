@@ -21,14 +21,19 @@ public class ScanAlert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String qrCodeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "badge_id", nullable = false)
+    private Badge badge;
 
     @Column(nullable = false)
     private Double latitude;
 
     @Column(nullable = false)
     private Double longitude;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "scan_by_user", nullable = false)
+    private Users scanByUser;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

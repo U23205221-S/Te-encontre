@@ -16,5 +16,16 @@ services:
       # Script de inicialización (se ejecuta la primera vez)
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  cache_redis_qr:
+    image: redis:7.2-alpine
+    container_name: social_network_redis
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_volume:/data
 volumes:
   postgres_data:
+    name: postgres_data_volume
+  redis_data_volume:
+    name: redis_data_volume

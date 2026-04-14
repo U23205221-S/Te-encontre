@@ -12,6 +12,7 @@ import org.sync_astra.backendjava.model.Categories.Gender;
 import org.sync_astra.backendjava.model.Categories.StatusBadge;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -60,9 +61,6 @@ public class Badge {
     @Column(name = "alternative_emergency_phone", length = 50)
     private String alternativeEmergencyPhone;
 
-    @Column(name = "parent_email", length = 150)
-    private String parentEmail;
-
     @Column(name = "photo", length = 255)
     private String photo;
 
@@ -82,4 +80,11 @@ public class Badge {
     @LastModifiedDate
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY) // O @OneToOne, dependiendo de la relación que quieras establecer
+    @JoinColumn(name = "user_id") // Clave foránea que apunta a la
+    private Users userParent; // Relación con la entidad Users, si es necesario. Se puede mapear con @ManyToOne o @OneToOne según el caso.
+
+    @OneToMany(mappedBy = "badge", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ScanAlert> scanAlerts; // Relación con ScanAlert, un badge puede tener múltiples alertas de escaneo asociadas.
 }

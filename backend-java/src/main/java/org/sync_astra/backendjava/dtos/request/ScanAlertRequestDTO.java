@@ -14,7 +14,9 @@ import lombok.NoArgsConstructor;
 public class ScanAlertRequestDTO {
 
     @NotBlank(message = "El qrCodeId es obligatorio")
-    private String qrCodeId;
+    private String qrCodeUuid;
+
+    private float[] faceVector;
 
     @NotNull(message = "La latitud es obligatoria")
     private Double latitude;
