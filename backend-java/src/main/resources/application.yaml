@@ -42,9 +42,9 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: chungcoelhove070@gmail.com
+    username: sync.astra0@gmail.com
     #Cambia esto por una contraseña de aplicación específica de Gmail, no uses tu contraseña real por seguridad
-    password: afanqirxgjiebtzt
+    password: pvpxzpqsvtcufzut
     properties:
       mail:
         smtp:
