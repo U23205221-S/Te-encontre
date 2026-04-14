@@ -1,47 +1,86 @@
-import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Phone, User, Activity, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Phone, User, Activity, AlertCircle, ArrowLeft, ShieldCheck, MapPin, Loader2 } from 'lucide-react';
+import { useGeolocationAlert } from '../hooks/useGeolocationAlert';
 
 const PaginaGafete = () => {
     const { id } = useParams();
-    const [gafete, setGafete] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { status, gafete, error, retry } = useGeolocationAlert(id);
 
-    useEffect(() => {
-        const fetchGafete = async () => {
-            try {
-                const res = await axios.get(`http://localhost:8080/api/v1/badge/uuid/${id}`);
-                setGafete(res.data);
-            } catch {
-                setError('No se pudo encontrar la informacin del gafete.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchGafete();
-    }, [id]);
-
-    if (loading) {
+    // ESTADO 1: Solicitando permisos (o inicializando)
+    if (status === 'IDLE' || status === 'REQUESTING_LOCATION') {
         return (
-            <div className="flex justify-center items-center h-64">
-                <p className="text-slate-300 font-medium">Cargando información segura...</p>
+            <div className="flex flex-col justify-center items-center h-screen px-4 text-center max-w-sm mx-auto">
+                <div className="mb-4 p-4 bg-brand-50 rounded-full">
+                    <MapPin size={48} className="text-brand-600 animate-pulse" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">Activando Alerta Segura</h2>
+                <p className="text-slate-600 text-sm mb-6">
+                    Para ver la información de esta persona y ayudar a su familia, necesitamos tu ubicación actual.
+                </p>
+                <div className="flex items-center gap-2 text-brand-700 font-semibold bg-brand-100 px-4 py-2 rounded-lg">
+                    <Loader2 className="animate-spin" size={20} />
+                    Esperando permisos del navegador...
+                </div>
             </div>
         );
     }
 
-    if (error || !gafete) {
+    // ESTADO 2: Permiso Denegado / GPS Apagado
+    if (status === 'DENIED') {
         return (
-            <div className="text-center mt-10">
-                <p className="text-accent-500 font-bold text-xl">{error}</p>
-                <Link to="/" className="mt-4 inline-block text-brand-300 hover:text-brand-200 hover:underline">Volver al inicio</Link>
+            <div className="text-center mt-10 p-6 ui-card mx-auto max-w-lg shadow-lg border-red-200 bg-red-50">
+                <AlertCircle className="mx-auto mb-4 text-red-500" size={56} />
+                <h2 className="text-2xl font-black text-red-700 mb-2">Ubicación Requerida</h2>
+                <p className="text-slate-700 font-medium mb-6">
+                    {error || 'No podemos mostrar los datos sin tu ubicación. Por favor, habilita el GPS para ayudar a localizar a esta persona.'}
+                </p>
+                <button
+                    onClick={retry}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3 font-bold text-white hover:bg-red-700 transition-colors shadow-md"
+                >
+                    <MapPin size={20} /> Reintentar Acceso
+                </button>
+                <div className="mt-4">
+                    <Link to="/" className="text-slate-500 hover:text-slate-700 underline text-sm font-medium">Volver al inicio</Link>
+                </div>
             </div>
         );
     }
 
+    // ESTADO 3: Enviando alerta silenciosa / Recuperando Datos
+    if (status === 'SENDING_ALERT' || status === 'FETCHING_DATA') {
+        return (
+            <div className="flex flex-col justify-center items-center h-screen px-4 text-center max-w-sm mx-auto">
+                <Loader2 size={56} className="text-accent-500 animate-spin mb-4" />
+                <h2 className="text-xl font-bold text-slate-800 mb-2">
+                    {status === 'SENDING_ALERT' ? 'Calculando ubicación...' : 'Descargando datos seguros...'}
+                </h2>
+                <p className="text-slate-500 text-sm">
+                    Por favor espera, estamos conectando con la familia en segundo plano.
+                </p>
+            </div>
+        );
+    }
+
+    // ERRORES DEL BACKEND O RED (404, etc)
+    if (status === 'ERROR' || !gafete) {
+        return (
+            <div className="text-center mt-10 p-6 ui-card mx-auto max-w-lg border-slate-200">
+                <AlertCircle className="mx-auto mb-4 text-slate-400" size={48} />
+                <p className="text-xl font-bold text-slate-700 mb-6">
+                    {error || 'Error al recuperar el registro.'}
+                </p>
+                <Link to="/" className="inline-block rounded-lg bg-brand-700 px-6 py-2 font-bold text-white hover:bg-brand-600">
+                    Volver al inicio
+                </Link>
+            </div>
+        );
+    }
+
+    // ESTADO 4: EXITO - Render del Gafete (UI mantenida igual pero limpia)
     return (
-        <div className="ui-card mx-auto my-6 max-w-2xl overflow-hidden lg:my-10">
+        <div className="ui-card mx-auto my-6 max-w-2xl overflow-hidden lg:my-10 shadow-xl border border-slate-200">
             <div className="flex items-center justify-center gap-2 bg-brand-800 p-4 text-center text-white">
                 <ShieldCheck size={28} />
                 <h1 className="text-2xl font-bold uppercase tracking-wide">Identificacin segura</h1>

@@ -11,6 +11,7 @@ const FormularioGafete = ({ formRef }) => {
         tipoSangre: '',
         alergias: '',
         nombrePadre: '',
+        correoPadre: '',
         telefonoPrincipal: '',
         telefonoAlternativo: '',
     });
@@ -217,8 +218,13 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
     const validateForm = () => {
-        if (!formData.nombreNino || !formData.edad || !formData.tipoSangre || !formData.nombrePadre || !formData.telefonoPrincipal) {
+        if (!formData.nombreNino || !formData.edad || !formData.tipoSangre || !formData.nombrePadre || !formData.correoPadre || !formData.telefonoPrincipal) {
             alert("Por favor, completa todos los campos obligatorios.");
+            return false;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.correoPadre)) {
+            alert("Por favor, ingresa un correo electrónico válido.");
             return false;
         }
         if (!file) {
@@ -246,6 +252,7 @@ const FormularioGafete = ({ formRef }) => {
                 bloodType: formData.tipoSangre,
                 allergies: formData.alergias,
                 emergencyContactName: formData.nombrePadre,
+                parentEmail: formData.correoPadre,
                 mainEmergencyPhone: formData.telefonoPrincipal,
                 alternativeEmergencyPhone: formData.telefonoAlternativo,
                 statusBadge: 'NEUTRAL',
@@ -291,7 +298,7 @@ const FormularioGafete = ({ formRef }) => {
                 </div>
                 <button onClick={() => {
                     setGafete(null);
-                    setFormData({ nombreNino: '', edad: '', tipoSangre: '', alergias: '', nombrePadre: '', telefonoPrincipal: '', telefonoAlternativo: '' });
+                    setFormData({ nombreNino: '', edad: '', tipoSangre: '', alergias: '', nombrePadre: '', correoPadre: '', telefonoPrincipal: '', telefonoAlternativo: '' });
                     setFile(null);
                     setPreview(null);
                     setFaceDescriptor(null);
@@ -335,6 +342,10 @@ const FormularioGafete = ({ formRef }) => {
                         <div className="form-group col-span-1 md:col-span-2">
                             <label className="mb-1 block text-sm font-bold text-slate-700">Nombre del padre/madre/tutor *</label>
                             <input required type="text" name="nombrePadre" value={formData.nombrePadre} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
+                        </div>
+                        <div className="form-group col-span-1 md:col-span-2">
+                            <label className="mb-1 block text-sm font-bold text-slate-700">Correo electrónico del padre/madre/tutor *</label>
+                            <input required type="email" name="correoPadre" value={formData.correoPadre} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="ejemplo@correo.com" />
                         </div>
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-slate-700">Teléfono principal *</label>
