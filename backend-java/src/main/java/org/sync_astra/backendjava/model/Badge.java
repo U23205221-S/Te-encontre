@@ -60,6 +60,9 @@ public class Badge {
     @Column(name = "alternative_emergency_phone", length = 50)
     private String alternativeEmergencyPhone;
 
+    @Column(name = "parent_email", length = 150)
+    private String parentEmail;
+
     @Column(name = "photo", length = 255)
     private String photo;
 
