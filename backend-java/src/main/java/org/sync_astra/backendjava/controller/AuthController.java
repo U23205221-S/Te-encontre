@@ -4,15 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.sync_astra.backendjava.dtos.request.RefreshTokenRequestDTO;
 import org.sync_astra.backendjava.dtos.request.UserRequestDTO;
 import org.sync_astra.backendjava.dtos.response.AuthResponseDTO;
 import org.sync_astra.backendjava.service.auth.AuthService;
 
+@CrossOrigin(origins = "http://localhost:5173") // O el puerto de tu React
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor

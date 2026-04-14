@@ -41,7 +41,7 @@ public class SecurityConfig {
                         // --- RUTAS PÚBLICAS ---
                         .requestMatchers(
                                 "/api/auth/register", // Habilitamos todo lo de auth (register, pre-login, login)
-                                "/api/auth/pre-login",
+                                "/api/auth/login",
                                 "/api/auth/refresh-token",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",

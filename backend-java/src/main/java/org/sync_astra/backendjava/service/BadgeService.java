@@ -7,10 +7,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
+import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
 import org.sync_astra.backendjava.mapper.mapperImpl.BadgeMapper;
 import org.sync_astra.backendjava.model.Badge;
+import org.sync_astra.backendjava.model.Users;
 import org.sync_astra.backendjava.repository.BadgeRepository;
+import org.sync_astra.backendjava.repository.UserRepository;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,32 +30,49 @@ import java.util.UUID;
 public class BadgeService {
     private final BadgeRepository badgeRepository;
     private final BadgeMapper badgeMapper;
+    private final UserRepository userRepository; // <-- Inyectamos para buscar al escaneador
+    private final ScanAlertService scanAlertService; // <-- Inyectamos el servicio de alertas
     private static final double MATCH_THRESHOLD = 0.6; // Ajustar según precisión del modelo
     // Ruta donde se guardarán las fotos (puedes ajustarla a tu monorepo)
     private final Path rootLocation = Paths.get( "uploads", "badge").toAbsolutePath().normalize();
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
-    @Transactional(readOnly = true)
-    public Optional<BadgeResponseDTO> identifyByFace(float[] vector) {
-        return badgeRepository.findBestMatch(vector)
+    @Transactional
+    public Optional<BadgeResponseDTO> identifyByFace(ScanAlertRequestDTO requestDTO, String scannerUserName) {
+        Users scannerUser = userRepository.findByUserName(scannerUserName)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
+
+        return badgeRepository.findBestMatch(requestDTO.getFaceVector())
                 .filter(result -> result.getDistance() < MATCH_THRESHOLD)
                 .flatMap(result -> badgeRepository.findById(result.getId()))
-                .map(badgeMapper::toDTO);
+                .map(badge -> {
+                    // ¡Aquí disparamos la alerta!
+                    scanAlertService.processAndSendAlert(badge, requestDTO.getLatitude(), requestDTO.getLongitude(), scannerUser);
+                    return badgeMapper.toDTO(badge);
+                });
     }
 
-    // BÚSQUEDA POR QR (UUID): Devuelve el DTO completo
-    @Transactional(readOnly = true)
-    public BadgeResponseDTO getByUuid(UUID uuid) {
-        return badgeRepository.findByUuid(uuid)
-                .map(badgeMapper::toDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + uuid));
+    // BÚSQUEDA POR QR (UUID)
+    @Transactional
+    public BadgeResponseDTO getByUuid(ScanAlertRequestDTO requestDTO, String scannerUserName) {
+        // Buscamos quién está haciendo la petición
+        Users scannerUser = userRepository.findByUserName(scannerUserName)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
+
+        Badge badge = badgeRepository.findByUuid(requestDTO.getQrCodeUuid())
+                .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + requestDTO.getQrCodeUuid()));
+
+        // ¡Aquí disparamos la alerta!
+        scanAlertService.processAndSendAlert(badge, requestDTO.getLatitude(), requestDTO.getLongitude(), scannerUser);
+
+        return badgeMapper.toDTO(badge);
     }
 
     /**
      * REGISTRO: Crea un nuevo badge con su vector facial.
      */
     @Transactional
-    public BadgeResponseDTO createWithPhoto(BadgeRequestDTO requestDTO, MultipartFile file) {
+    public BadgeResponseDTO createWithPhoto(BadgeRequestDTO requestDTO, MultipartFile file, String registerUserName) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("La imagen no puede estar vacía.");
         }
@@ -64,6 +84,8 @@ public class BadgeService {
         requestDTO.setPhoto(photoUrl);
 
         Badge badge = badgeMapper.toModel(requestDTO);
+        badge.setUserParent(userRepository.findByUserName(registerUserName)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD")));
         Badge savedBadge = badgeRepository.save(badge);
 
         log.info("Nuevo Badge registrado con éxito. UUID: {}", savedBadge.getUuid());

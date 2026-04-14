@@ -3,6 +3,12 @@ server:
 spring:
   application:
     name: backend-java
+    security:
+      jwt:
+        secret-key: d6c0ff14675130d6259dced991adf4ca4f29bce75958d290fa9feebbdef6595d # �C�mbialo! (Debe ser 256-bit min)
+        expiration: 86400000 # 1 d�a (milisegundos)
+        refresh-token:
+          expiration: 604800000 # 7 d�as (milisegundos)
 
   servlet:
     multipart:

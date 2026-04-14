@@ -29,13 +29,13 @@ public class Users {
     @Column(name = "uuid", nullable = false, unique = true, updatable = false)
     private UUID uuid;
 
-    @Column(name = "user_name", nullable = false, unique = true, length = 25)
+    @Column(name = "user_name", nullable = false, unique = true, length = 50)
     private String userName;
 
     @Column(name = "dni", nullable = false, unique = true)
     private String dni;
 
-    @Column(name = "password_hash", nullable = false, unique = true)
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
     @CreatedDate
@@ -46,7 +46,7 @@ public class Users {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "userParent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Badge> badges;
 
     @OneToMany(mappedBy = "scanByUser", cascade = CascadeType.ALL, orphanRemoval = true)
