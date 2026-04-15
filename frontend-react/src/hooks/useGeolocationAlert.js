@@ -26,7 +26,7 @@ export const useGeolocationAlert = (qrCodeId) => {
                     // Estado 3: Coordenadas obtenidas, enviando alerta silenciosa
                     setStatus('SENDING_ALERT');
                     await api.post('/api/v1/alerts/scan', {
-                        qrCodeId,
+                        qrCodeUuid: qrCodeId,
                         latitude,
                         longitude
                     });

@@ -75,7 +75,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post('/api/auth/logout');
+    } catch {
+      // Ignore errors - logout locally anyway
+    }
     window.localStorage.removeItem(AUTH_STORAGE_KEY);
     setSessionUser(null);
   };
