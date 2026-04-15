@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 const DEMO_LOGIN_EMAIL = 'prueba@gmail.com';
 
@@ -8,12 +9,14 @@ const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login: handleLogin } = useAuth();
+  const { login: handleLogin, isLoading } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setError('');
 
     if (!form.email || !form.password) {
       setError('Completa tu correo y contraseña para continuar.');
@@ -25,7 +28,7 @@ const LoginPage = () => {
       return;
     }
 
-    const result = handleLogin({ email: form.email, password: form.password });
+    const result = await handleLogin({ email: form.email, password: form.password });
 
     if (!result.ok) {
       setError(result.error);
@@ -63,23 +66,33 @@ const LoginPage = () => {
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder={DEMO_LOGIN_EMAIL}
                 spellCheck={false}
+                disabled={isLoading}
               />
             </div>
 
-            <div>
+            <div className="relative">
               <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-200">
                 Contraseña
               </label>
               <input
                 id="password"
                 name="current-password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
-                className="ui-input"
+                className="ui-input pr-10"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Mínimo 6 caracteres"
+                disabled={isLoading}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-[34px] text-slate-400 hover:text-slate-200"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
 
             {error && (
@@ -88,8 +101,9 @@ const LoginPage = () => {
               </p>
             )}
 
-            <button type="submit" className="ui-btn-primary w-full">
-              Acceder
+            <button type="submit" className="ui-btn-primary w-full flex items-center justify-center gap-2" disabled={isLoading}>
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isLoading ? 'Iniciando sesión...' : 'Acceder'}
             </button>
           </form>
 
