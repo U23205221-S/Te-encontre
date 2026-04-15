@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import * as faceapi from 'face-api.js';
-import axios from 'axios';
+import { api } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { Camera, Search, AlertTriangle, CheckCircle, Loader2, User, ExternalLink } from 'lucide-react';
 
 const MODELS_URL = '/models';
-const API_URL = 'http://localhost:8080/api/v1/badge';
 
 const BuscarRostro = () => {
     const videoRef = useRef(null);
@@ -191,13 +190,31 @@ const BuscarRostro = () => {
                 return;
             }
 
+            // Get geolocation
+            let latitude = null;
+            let longitude = null;
+            if (navigator.geolocation) {
+              try {
+                const position = await new Promise((resolve, reject) => {
+                  navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000 });
+                });
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+              } catch (geoErr) {
+                console.warn('Geolocation denied or unavailable:', geoErr);
+              }
+            }
+
             const descriptor = Array.from(detection.descriptor);
-            const res = await axios.post(`${API_URL}/identify`, descriptor);
+            const res = await api.post('/api/v1/badge/scan/face', {
+              faceVector: descriptor,
+              latitude,
+              longitude
+            });
 
             setResult({
                 found: true,
                 childId: res.data.uuid,
-                distancia: null,
                 message: 'Niño encontrado',
             });
             stopCamera();

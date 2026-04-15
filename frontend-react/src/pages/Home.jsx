@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import FormularioGafete from '../components/FormularioGafete';
 import PaginaReconocimiento from './PaginaReconocimiento';
 import ScannerQR from '../components/ScannerQR';
@@ -24,12 +25,23 @@ const Home = () => {
     const containerRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
+    const { sessionUser } = useAuth();
     const action = new URLSearchParams(location.search).get('action');
     const showModal = action === 'registro';
     const showReconocimientoModal = action === 'reconocimiento';
     const showScannerModal = action === 'scanner';
 
+    useEffect(() => {
+        if ((showModal || showReconocimientoModal || showScannerModal) && !sessionUser) {
+            navigate('/login');
+        }
+    }, [action, showModal, showReconocimientoModal, showScannerModal, sessionUser, navigate]);
+
     const setActionInUrl = (nextAction) => {
+        if (!sessionUser) {
+            navigate('/login');
+            return;
+        }
         navigate({ pathname: '/', search: `?action=${nextAction}`, hash: location.hash });
     };
 

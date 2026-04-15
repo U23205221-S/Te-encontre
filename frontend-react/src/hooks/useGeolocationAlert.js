@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { api } from '../lib/api';
 
 export const useGeolocationAlert = (qrCodeId) => {
     // Posibles estados: 'IDLE' | 'REQUESTING_LOCATION' | 'DENIED' | 'SENDING_ALERT' | 'FETCHING_DATA' | 'SUCCESS' | 'ERROR'
@@ -25,15 +25,15 @@ export const useGeolocationAlert = (qrCodeId) => {
                 try {
                     // Estado 3: Coordenadas obtenidas, enviando alerta silenciosa
                     setStatus('SENDING_ALERT');
-                    await axios.post('http://localhost:8080/api/v1/alerts/scan', {
-                        qrCodeId,
+                    await api.post('/api/v1/badge/scan/qr', {
+                        qrCodeUuid: qrCodeId,
                         latitude,
                         longitude
                     });
 
                     // Obteniendo datos reales del gafete tras enviar la alarma
                     setStatus('FETCHING_DATA');
-                    const res = await axios.get(`http://localhost:8080/api/v1/badge/uuid/${qrCodeId}`);
+                    const res = await api.get(`/api/v1/badge/uuid/${qrCodeId}`);
 
                     setGafete(res.data);
                     setStatus('SUCCESS'); // Estado 4: Éxito

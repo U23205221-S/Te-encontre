@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../lib/api';
 import * as faceapi from 'face-api.js';
 import { Camera, Send, Loader2, Link as LinkIcon, Download, CheckCircle, XCircle } from 'lucide-react';
 import QRGenerado from './QRGenerado';
@@ -8,6 +8,7 @@ const FormularioGafete = ({ formRef }) => {
     const [formData, setFormData] = useState({
         nombreNino: '',
         edad: '',
+        genero: 'MALE',
         tipoSangre: '',
         alergias: '',
         nombrePadre: '',
@@ -218,7 +219,7 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
     const validateForm = () => {
-        if (!formData.nombreNino || !formData.edad || !formData.tipoSangre || !formData.nombrePadre || !formData.correoPadre || !formData.telefonoPrincipal) {
+        if (!formData.nombreNino || !formData.edad || !formData.genero || !formData.tipoSangre || !formData.nombrePadre || !formData.correoPadre || !formData.telefonoPrincipal) {
             alert("Por favor, completa todos los campos obligatorios.");
             return false;
         }
@@ -252,19 +253,18 @@ const FormularioGafete = ({ formRef }) => {
                 bloodType: formData.tipoSangre,
                 allergies: formData.alergias,
                 emergencyContactName: formData.nombrePadre,
-                parentEmail: formData.correoPadre,
                 mainEmergencyPhone: formData.telefonoPrincipal,
                 alternativeEmergencyPhone: formData.telefonoAlternativo,
                 statusBadge: 'NEUTRAL',
                 faceVector: faceDescriptor,
-                gender: 'MALE'
+                gender: formData.genero
             };
 
             const data = new FormData();
             data.append('data', new Blob([JSON.stringify(dataToUpload)], { type: 'application/json' }));
             data.append('file', file);
 
-            const res = await axios.post('http://localhost:8080/api/v1/badge', data, {
+            const res = await api.post('/api/v1/badge', data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             const nuevoGafete = res.data;
@@ -298,7 +298,7 @@ const FormularioGafete = ({ formRef }) => {
                 </div>
                 <button onClick={() => {
                     setGafete(null);
-                    setFormData({ nombreNino: '', edad: '', tipoSangre: '', alergias: '', nombrePadre: '', correoPadre: '', telefonoPrincipal: '', telefonoAlternativo: '' });
+                    setFormData({ nombreNino: '', edad: '', genero: 'MALE', tipoSangre: '', alergias: '', nombrePadre: '', correoPadre: '', telefonoPrincipal: '', telefonoAlternativo: '' });
                     setFile(null);
                     setPreview(null);
                     setFaceDescriptor(null);
@@ -327,6 +327,13 @@ const FormularioGafete = ({ formRef }) => {
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-slate-700">Edad *</label>
                             <input required type="text" name="edad" value={formData.edad} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Años (ej. 5)" />
+                        </div>
+                        <div className="form-group">
+                            <label className="mb-1 block text-sm font-bold text-slate-700">Género *</label>
+                            <select required name="genero" value={formData.genero} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                                <option value="MALE">Masculino</option>
+                                <option value="FEMALE">Femenino</option>
+                            </select>
                         </div>
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-slate-700">Tipo de sangre *</label>

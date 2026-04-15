@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../lib/api';
 import { Phone, User, Activity, AlertCircle, ArrowLeft, ShieldCheck, MapPin, Loader2 } from 'lucide-react';
 import { useGeolocationAlert } from '../hooks/useGeolocationAlert';
 
@@ -83,14 +83,14 @@ const PaginaGafete = () => {
         <div className="ui-card mx-auto my-6 max-w-2xl overflow-hidden lg:my-10 shadow-xl border border-slate-200">
             <div className="flex items-center justify-center gap-2 bg-brand-800 p-4 text-center text-white">
                 <ShieldCheck size={28} />
-                <h1 className="text-2xl font-bold uppercase tracking-wide">Identificacin segura</h1>
+                <h1 className="text-2xl font-bold uppercase tracking-wide">Identificación segura</h1>
             </div>
 
             <div className="p-6 md:p-8">
                 <div className="flex flex-col items-center gap-6 border-b border-slate-700 pb-6 md:flex-row">
                     {gafete.photo ? (
                         <img
-                            src={`http://localhost:8080/api/v1/uploads/badge/${gafete.photo}`}
+                            src={`http://localhost:8080${gafete.photo}`}
                             alt={`Foto de ${gafete.fullName}`}
                             className="h-32 w-32 rounded-full border-4 border-brand-700 object-cover shadow-md md:h-40 md:w-40"
                         />
@@ -102,18 +102,25 @@ const PaginaGafete = () => {
 
                     <div className="text-center md:text-left flex-1">
                         <h2 className="text-3xl font-black text-slate-100 mb-2">{gafete.fullName}</h2>
-                        {gafete.age && (
-                            <p className="inline-block bg-brand-800 text-brand-100 px-3 py-1 rounded-full font-semibold text-sm">
-                                {gafete.age} aos
-                            </p>
-                        )}
+                        <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                            {gafete.age && (
+                                <p className="inline-block bg-brand-800 text-brand-100 px-3 py-1 rounded-full font-semibold text-sm">
+                                    {gafete.age} años
+                                </p>
+                            )}
+                            {gafete.gender && (
+                                <p className="inline-block bg-brand-800 text-brand-100 px-3 py-1 rounded-full font-semibold text-sm">
+                                    {gafete.gender === 'MALE' ? 'Masculino' : gafete.gender === 'FEMALE' ? 'Femenino' : gafete.gender}
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {(gafete.bloodType || gafete.allergies) && (
                     <div className="mt-6 rounded-xl border border-accent-500/35 bg-accent-500/10 p-4">
                         <h3 className="mb-3 flex items-center gap-2 font-bold text-accent-200">
-                            <Activity size={20} /> Informacin mdica importante
+                            <Activity size={20} /> Información médica importante
                         </h3>
                         <div className="space-y-2 text-sm text-slate-200">
                             {gafete.bloodType && (
