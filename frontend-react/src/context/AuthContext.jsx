@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   const login = async ({ email, password }) => {
     setIsLoading(true);
     try {
-      const response = await api.post('/api/auth/login', { userName: email, password });
+      const response = await api.post('/api/auth/login', { userName: email, passwordHash: password });
       const { fullName, accessToken } = response.data;
       startSession({ fullName, email }, accessToken);
       return { ok: true };
@@ -54,7 +54,12 @@ export const AuthProvider = ({ children }) => {
   const register = async ({ fullName, email, password }) => {
     setIsLoading(true);
     try {
-      const response = await api.post('/api/auth/register', { userName: email, password, fullName });
+      const response = await api.post('/api/auth/register', { 
+        userName: email, 
+        passwordHash: password,
+        confirmPasswordHash: password,
+        fullName 
+      });
       const { accessToken } = response.data;
       startSession({ fullName, email }, accessToken);
       return { ok: true };

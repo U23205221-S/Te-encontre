@@ -252,7 +252,6 @@ const FormularioGafete = ({ formRef }) => {
                 bloodType: formData.tipoSangre,
                 allergies: formData.alergias,
                 emergencyContactName: formData.nombrePadre,
-                parentEmail: formData.correoPadre,
                 mainEmergencyPhone: formData.telefonoPrincipal,
                 alternativeEmergencyPhone: formData.telefonoAlternativo,
                 statusBadge: 'NEUTRAL',
