@@ -28,7 +28,7 @@ const navigationItems = [
   },
 ];
 
-const Header = ({ onOpenAuth, sessionUser, onLogout }) => {
+const Header = ({ sessionUser, onLogout }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -102,22 +102,20 @@ const Header = ({ onOpenAuth, sessionUser, onLogout }) => {
               </>
             ) : (
               <>
-                <button
-                  type="button"
+                <Link
+                  to="/login"
                   className="inline-flex items-center px-2 py-2 text-sm font-semibold text-slate-300 hover:text-slate-100"
-                  onClick={() => onOpenAuth('login')}
                   aria-label="Acceder a una cuenta"
                 >
                   Acceder
-                </button>
-                <button
-                  type="button"
+                </Link>
+                <Link
+                  to="/registro"
                   className="inline-flex items-center rounded-xl bg-accent-500 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-accent-400"
-                  onClick={() => onOpenAuth('register')}
                   aria-label="Registrar una cuenta"
                 >
                   Registrar ahora
-                </button>
+                </Link>
               </>
             )}
           </div>
@@ -186,28 +184,22 @@ const Header = ({ onOpenAuth, sessionUser, onLogout }) => {
               </>
             ) : (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOpenAuth('login');
-                    setIsMenuOpen(false);
-                  }}
+                <Link
+                  to="/login"
+                  onClick={() => setIsMenuOpen(false)}
                   className="inline-flex w-full items-center justify-center rounded-xl border border-brand-200/20 bg-surface-soft px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-brand-800"
                   aria-label="Acceder a una cuenta"
                 >
                   Acceder
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOpenAuth('register');
-                    setIsMenuOpen(false);
-                  }}
+                </Link>
+                <Link
+                  to="/registro"
+                  onClick={() => setIsMenuOpen(false)}
                   className="inline-flex w-full items-center justify-center rounded-xl bg-accent-500 px-4 py-3 text-sm font-bold text-slate-950 hover:bg-accent-400"
                   aria-label="Registrar una cuenta"
                 >
                   Registrar ahora
-                </button>
+                </Link>
               </>
             )}
           </div>
