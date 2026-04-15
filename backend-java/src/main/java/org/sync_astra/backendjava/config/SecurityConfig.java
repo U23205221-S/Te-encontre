@@ -66,7 +66,9 @@ public class SecurityConfig {
                                 "/api/auth/refresh-token",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/api/v1/uploads/badge/**"
+
                         ).permitAll()
 
                         // --- RUTAS PROTEGIDAS ---
