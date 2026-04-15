@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react';
+import { api } from '../lib/api';
 
 const AUTH_STORAGE_KEY = 'qr-utp.simulated-session';
 
@@ -24,44 +25,45 @@ export const AuthProvider = ({ children }) => {
     return readStoredSession();
   });
 
-  const startSession = (userData) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const startSession = (userData, accessToken) => {
     const payload = { fullName: userData.fullName, email: userData.email };
+    if (accessToken) {
+      payload.accessToken = accessToken;
+    }
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(payload));
     setSessionUser(payload);
   };
 
-  const handleLogin = ({ email, password }) => {
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if (password.length < 6) {
-      return { ok: false, error: 'La contraseña debe tener al menos 6 caracteres.' };
+  const login = async ({ email, password }) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post('/api/auth/login', { userName: email, password });
+      const { fullName, accessToken } = response.data;
+      startSession({ fullName, email }, accessToken);
+      return { ok: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error al iniciar sesión';
+      return { ok: false, error: message };
+    } finally {
+      setIsLoading(false);
     }
-
-    const storedSession = readStoredSession();
-
-    if (storedSession && storedSession.email.toLowerCase() !== normalizedEmail) {
-      return { ok: false, error: 'El correo no coincide con la cuenta simulada registrada.' };
-    }
-
-    if (!storedSession && normalizedEmail !== 'prueba@gmail.com') {
-      return { ok: false, error: 'Para el acceso demo usa prueba@gmail.com.' };
-    }
-
-    startSession({
-      fullName: storedSession?.fullName ?? normalizedEmail.split('@')[0],
-      email: normalizedEmail,
-    });
-
-    return { ok: true };
   };
 
-  const handleRegister = ({ fullName, email, password }) => {
-    if (password.length < 6) {
-      return { ok: false, error: 'La contraseña debe tener al menos 6 caracteres.' };
+  const register = async ({ fullName, email, password }) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post('/api/auth/register', { userName: email, password, fullName });
+      const { accessToken } = response.data;
+      startSession({ fullName, email }, accessToken);
+      return { ok: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error al registrar';
+      return { ok: false, error: message };
+    } finally {
+      setIsLoading(false);
     }
-
-    startSession({ fullName, email });
-    return { ok: true };
   };
 
   const logout = () => {
@@ -70,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ sessionUser, login: handleLogin, register: handleRegister, logout, startSession }}>
+    <AuthContext.Provider value={{ sessionUser, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
