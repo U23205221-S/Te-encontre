@@ -10,7 +10,7 @@ import org.sync_astra.backendjava.dtos.request.UserRequestDTO;
 import org.sync_astra.backendjava.dtos.response.AuthResponseDTO;
 import org.sync_astra.backendjava.service.auth.AuthService;
 
-@CrossOrigin(origins = "http://localhost:5173") // O el puerto de tu React
+@CrossOrigin(origins = "*") // Allow all origins for development
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor

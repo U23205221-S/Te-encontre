@@ -14,7 +14,7 @@ import org.sync_astra.backendjava.service.BadgeService;
 
 import java.util.UUID;
 
-@CrossOrigin(origins = "http://localhost:5173") // O el puerto de tu React
+@CrossOrigin(origins = "*") // Allow all origins for development
 @RestController
 @RequestMapping("/api/v1/badge")
 @RequiredArgsConstructor
