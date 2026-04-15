@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../lib/api';
 import * as faceapi from 'face-api.js';
 import { Camera, Send, Loader2, Link as LinkIcon, Download, CheckCircle, XCircle } from 'lucide-react';
 import QRGenerado from './QRGenerado';
@@ -264,7 +264,7 @@ const FormularioGafete = ({ formRef }) => {
             data.append('data', new Blob([JSON.stringify(dataToUpload)], { type: 'application/json' }));
             data.append('file', file);
 
-            const res = await axios.post('http://localhost:8080/api/v1/badge', data, {
+            const res = await api.post('/api/v1/badge', data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             const nuevoGafete = res.data;

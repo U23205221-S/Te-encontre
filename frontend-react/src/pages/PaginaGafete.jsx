@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../lib/api';
 import { Phone, User, Activity, AlertCircle, ArrowLeft, ShieldCheck, MapPin, Loader2 } from 'lucide-react';
 import { useGeolocationAlert } from '../hooks/useGeolocationAlert';
 

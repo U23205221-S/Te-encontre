@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Camera, CheckCircle, XCircle, Loader2, User } from 'lucide-react';
 
 const MODELS_URL = '/models';
+// Separate microservice for face recognition
 const API_URL = 'http://localhost:5001/api/rostros';
 
 const RegistrarRostro = () => {

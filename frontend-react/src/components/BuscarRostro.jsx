@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import * as faceapi from 'face-api.js';
-import axios from 'axios';
+import { api } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { Camera, Search, AlertTriangle, CheckCircle, Loader2, User, ExternalLink } from 'lucide-react';
 
 const MODELS_URL = '/models';
-const API_URL = 'http://localhost:8080/api/v1/badge';
 
 const BuscarRostro = () => {
     const videoRef = useRef(null);
@@ -192,7 +191,7 @@ const BuscarRostro = () => {
             }
 
             const descriptor = Array.from(detection.descriptor);
-            const res = await axios.post(`${API_URL}/identify`, descriptor);
+            const res = await api.post('/api/v1/badge/identify', descriptor);
 
             setResult({
                 found: true,
