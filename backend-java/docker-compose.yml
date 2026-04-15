@@ -22,6 +22,14 @@ services:
       - "6379:6379"
     volumes:
       - redis_qr_data_volume:/data
+    # NUEVO: Servidor de correos local para desarrollo
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit_dev
+    ports:
+      - "8025:8025" # Interfaz Web: http://localhost:8025 para ver los correos
+      - "1025:1025" # Puerto SMTP: Donde Spring Boot enviará los correos
 volumes:
   postgres_qr_data_volume:
     name: postgres_data_qr_volume

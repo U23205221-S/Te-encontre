@@ -14,6 +14,7 @@ import org.sync_astra.backendjava.model.Badge;
 import org.sync_astra.backendjava.model.Users;
 import org.sync_astra.backendjava.repository.BadgeRepository;
 import org.sync_astra.backendjava.repository.UserRepository;
+import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class BadgeService {
     private final ScanAlertService scanAlertService; // <-- Inyectamos el servicio de alertas
     private static final double MATCH_THRESHOLD = 0.6; // Ajustar según precisión del modelo
     // Ruta donde se guardarán las fotos (puedes ajustarla a tu monorepo)
-    private final Path rootLocation = Paths.get( "uploads", "badge").toAbsolutePath().normalize();
+    private final ImageStorageService imageStorageService;
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional
@@ -74,9 +75,8 @@ public class BadgeService {
                 .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + uuid));
         return badgeMapper.toDTO(badge);
     }
-
     /**
-     * REGISTRO: Crea un nuevo badge con su vector facial.
+     * REGISTRO MODIFICADO: Crea un nuevo badge subiendo la foto a Cloudinary.
      */
     @Transactional
     public BadgeResponseDTO createWithPhoto(BadgeRequestDTO requestDTO, MultipartFile file, String registerUserName) {
@@ -84,43 +84,24 @@ public class BadgeService {
             throw new IllegalArgumentException("La imagen no puede estar vacía.");
         }
 
-        String fileName = saveFile(file);
+        try {
+            // MODIFICACIÓN CRÍTICA: Delegamos el guardado a Cloudinary
+            // Esto devolverá una URL pública lista para usarse en React
+            String photoUrl = imageStorageService.uploadImage(file, "badges");
+            requestDTO.setPhoto(photoUrl);
 
-        // URL lógica para el WebMvcConfigurer
-        String photoUrl = "/api/v1/uploads/badge/" + fileName;
-        requestDTO.setPhoto(photoUrl);
+        } catch (IOException e) {
+            // Mantenemos el control de errores similar al que tenías para no romper la respuesta al frontend
+            log.error("Fallo crítico al subir archivo a la nube: {}", e.getMessage());
+            throw new RuntimeException("Error en el sistema de almacenamiento en la nube.");
+        }
 
         Badge badge = badgeMapper.toModel(requestDTO);
         badge.setUserParent(userRepository.findByUserName(registerUserName)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD")));
         Badge savedBadge = badgeRepository.save(badge);
 
-        log.info("Nuevo Badge registrado con éxito. UUID: {}", savedBadge.getUuid());
+        log.info("Nuevo Badge registrado con éxito en Cloudinary. UUID: {}", savedBadge.getUuid());
         return badgeMapper.toDTO(savedBadge);
-    }
-
-    private String saveFile(MultipartFile file) {
-        try {
-            // Aseguramos que el directorio exista
-            if (!Files.exists(rootLocation)) {
-                Files.createDirectories(rootLocation);
-            }
-
-            // Mantenemos la extensión original de forma segura
-            String originalFilename = file.getOriginalFilename();
-            String extension = (originalFilename != null && originalFilename.contains("."))
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                    : ".jpg";
-
-            String fileName = UUID.randomUUID().toString() + extension;
-            Path destinationFile = rootLocation.resolve(fileName);
-
-            Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
-
-            return fileName;
-        } catch (IOException e) {
-            log.error("Fallo crítico al guardar archivo: {}", e.getMessage());
-            throw new RuntimeException("Error en el sistema de almacenamiento de archivos.");
-        }
     }
 }
