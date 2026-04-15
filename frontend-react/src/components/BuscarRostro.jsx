@@ -190,13 +190,31 @@ const BuscarRostro = () => {
                 return;
             }
 
+            // Get geolocation
+            let latitude = null;
+            let longitude = null;
+            if (navigator.geolocation) {
+              try {
+                const position = await new Promise((resolve, reject) => {
+                  navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000 });
+                });
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+              } catch (geoErr) {
+                console.warn('Geolocation denied or unavailable:', geoErr);
+              }
+            }
+
             const descriptor = Array.from(detection.descriptor);
-            const res = await api.post('/api/v1/badge/identify', descriptor);
+            const res = await api.post('/api/v1/badge/scan/face', {
+              faceVector: descriptor,
+              latitude,
+              longitude
+            });
 
             setResult({
                 found: true,
                 childId: res.data.uuid,
-                distancia: null,
                 message: 'Niño encontrado',
             });
             stopCamera();

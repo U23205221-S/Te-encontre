@@ -27,10 +27,13 @@ export const AuthProvider = ({ children }) => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const startSession = (userData, accessToken) => {
+  const startSession = (userData, accessToken, refreshToken) => {
     const payload = { fullName: userData.fullName, email: userData.email };
     if (accessToken) {
       payload.accessToken = accessToken;
+    }
+    if (refreshToken) {
+      payload.refreshToken = refreshToken;
     }
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(payload));
     setSessionUser(payload);
@@ -40,8 +43,8 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await api.post('/api/auth/login', { userName: email, passwordHash: password });
-      const { fullName, accessToken } = response.data;
-      startSession({ fullName, email }, accessToken);
+      const { fullName, accessToken, refreshToken } = response.data;
+      startSession({ fullName, email }, accessToken, refreshToken);
       return { ok: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Error al iniciar sesión';
@@ -60,8 +63,8 @@ export const AuthProvider = ({ children }) => {
         confirmPasswordHash: password,
         fullName 
       });
-      const { accessToken } = response.data;
-      startSession({ fullName, email }, accessToken);
+      const { accessToken, refreshToken } = response.data;
+      startSession({ fullName, email }, accessToken, refreshToken);
       return { ok: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Error al registrar';
