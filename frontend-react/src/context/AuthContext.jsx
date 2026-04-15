@@ -85,8 +85,24 @@ export const AuthProvider = ({ children }) => {
     setSessionUser(null);
   };
 
+  const refreshToken = async () => {
+    const stored = readStoredSession();
+    if (!stored?.refreshToken) return false;
+
+    try {
+      const response = await api.post('/api/auth/refresh', { refreshToken: stored.refreshToken });
+      const { fullName, accessToken, refreshToken: newRefreshToken } = response.data;
+      startSession({ fullName, email: stored.email }, accessToken, newRefreshToken);
+      return true;
+    } catch {
+      // Refresh failed, logout
+      logout();
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ sessionUser, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ sessionUser, login, register, logout, refreshToken, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
