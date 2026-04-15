@@ -87,7 +87,7 @@ public class BadgeService {
         String fileName = saveFile(file);
 
         // URL lógica para el WebMvcConfigurer
-        String photoUrl = "/api/v1/uploads/badges/" + fileName;
+        String photoUrl = "/api/v1/uploads/badge/" + fileName;
         requestDTO.setPhoto(photoUrl);
 
         Badge badge = badgeMapper.toModel(requestDTO);

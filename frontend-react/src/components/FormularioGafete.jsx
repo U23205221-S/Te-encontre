@@ -8,6 +8,7 @@ const FormularioGafete = ({ formRef }) => {
     const [formData, setFormData] = useState({
         nombreNino: '',
         edad: '',
+        genero: 'MALE',
         tipoSangre: '',
         alergias: '',
         nombrePadre: '',
@@ -218,7 +219,7 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
     const validateForm = () => {
-        if (!formData.nombreNino || !formData.edad || !formData.tipoSangre || !formData.nombrePadre || !formData.correoPadre || !formData.telefonoPrincipal) {
+        if (!formData.nombreNino || !formData.edad || !formData.genero || !formData.tipoSangre || !formData.nombrePadre || !formData.correoPadre || !formData.telefonoPrincipal) {
             alert("Por favor, completa todos los campos obligatorios.");
             return false;
         }
@@ -256,7 +257,7 @@ const FormularioGafete = ({ formRef }) => {
                 alternativeEmergencyPhone: formData.telefonoAlternativo,
                 statusBadge: 'NEUTRAL',
                 faceVector: faceDescriptor,
-                gender: 'MALE'
+                gender: formData.genero
             };
 
             const data = new FormData();
@@ -297,7 +298,7 @@ const FormularioGafete = ({ formRef }) => {
                 </div>
                 <button onClick={() => {
                     setGafete(null);
-                    setFormData({ nombreNino: '', edad: '', tipoSangre: '', alergias: '', nombrePadre: '', correoPadre: '', telefonoPrincipal: '', telefonoAlternativo: '' });
+                    setFormData({ nombreNino: '', edad: '', genero: 'MALE', tipoSangre: '', alergias: '', nombrePadre: '', correoPadre: '', telefonoPrincipal: '', telefonoAlternativo: '' });
                     setFile(null);
                     setPreview(null);
                     setFaceDescriptor(null);
@@ -326,6 +327,13 @@ const FormularioGafete = ({ formRef }) => {
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-slate-700">Edad *</label>
                             <input required type="text" name="edad" value={formData.edad} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Años (ej. 5)" />
+                        </div>
+                        <div className="form-group">
+                            <label className="mb-1 block text-sm font-bold text-slate-700">Género *</label>
+                            <select required name="genero" value={formData.genero} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                                <option value="MALE">Masculino</option>
+                                <option value="FEMALE">Femenino</option>
+                            </select>
                         </div>
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-slate-700">Tipo de sangre *</label>
