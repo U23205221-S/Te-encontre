@@ -54,14 +54,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async ({ fullName, email, password }) => {
+  const register = async ({ fullName, email, password, dni }) => {
     setIsLoading(true);
     try {
       const response = await api.post('/api/auth/register', { 
         userName: email, 
         passwordHash: password,
         confirmPasswordHash: password,
-        fullName 
+        fullName,
+        dni
       });
       const { accessToken, refreshToken } = response.data;
       startSession({ fullName, email }, accessToken, refreshToken);

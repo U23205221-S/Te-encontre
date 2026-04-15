@@ -16,6 +16,7 @@ const RegistroPage = () => {
   const { register: handleRegister, isLoading } = useAuth();
   const [form, setForm] = useState({
     fullName: '',
+    dni: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -28,8 +29,13 @@ const RegistroPage = () => {
     event.preventDefault();
     setError('');
 
-    if (!form.fullName || !form.email || !form.password || !form.confirmPassword) {
+    if (!form.fullName || !form.dni || !form.email || !form.password || !form.confirmPassword) {
       setError('Completa todos los campos para crear tu cuenta.');
+      return;
+    }
+
+    if (!/^\d{8}$/.test(form.dni)) {
+      setError('El DNI debe tener exactamente 8 dígitos.');
       return;
     }
 
@@ -50,6 +56,7 @@ const RegistroPage = () => {
 
     const result = await handleRegister({
       fullName: form.fullName,
+      dni: form.dni,
       email: form.email,
       password: form.password,
     });
@@ -86,6 +93,23 @@ const RegistroPage = () => {
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 placeholder="Ej. María López"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="dni" className="mb-1 block text-sm font-semibold text-slate-200">
+                DNI
+              </label>
+              <input
+                id="dni"
+                type="text"
+                autoComplete="dni"
+                maxLength={8}
+                className="ui-input"
+                value={form.dni}
+                onChange={(e) => setForm({ ...form, dni: e.target.value.replace(/\D/g, '').slice(0, 8) })}
+                placeholder="12345678"
                 disabled={isLoading}
               />
             </div>
