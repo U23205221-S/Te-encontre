@@ -38,11 +38,17 @@ public class BadgeController {
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
-    // Endpoint para QR Code (Acceso por UUID)
-    @GetMapping("/scan/qr")
+    // Endpoint para Escaneo QR (Auditoría + Alerta)
+    @PostMapping("/scan/qr")
     public ResponseEntity<BadgeResponseDTO> getByUuid(@RequestBody ScanAlertRequestDTO request,
                                                       Authentication authentication) {
         return ResponseEntity.ok(badgeService.getByUuid(request, authentication.getName()));
+    }
+
+    // Endpoint para Consultar Badge por UUID (sin alerta)
+    @GetMapping("/uuid/{uuid}")
+    public ResponseEntity<BadgeResponseDTO> getBadgeByUuid(@PathVariable String uuid) {
+        return ResponseEntity.ok(badgeService.getBadgeByUuid(uuid));
     }
 
 }

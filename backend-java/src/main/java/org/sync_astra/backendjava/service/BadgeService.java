@@ -68,6 +68,13 @@ public class BadgeService {
         return badgeMapper.toDTO(badge);
     }
 
+    // Consulta simple de badge por UUID (sin alerta, requiere auth)
+    public BadgeResponseDTO getBadgeByUuid(String uuid) {
+        Badge badge = badgeRepository.findByUuid(UUID.fromString(uuid))
+                .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + uuid));
+        return badgeMapper.toDTO(badge);
+    }
+
     /**
      * REGISTRO: Crea un nuevo badge con su vector facial.
      */
