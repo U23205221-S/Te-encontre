@@ -25,9 +25,7 @@ function AppShell() {
           <Route
             path="/"
             element={
-              <RequireAuth>
-                <Home />
-              </RequireAuth>
+              <Home />
             }
           />
           <Route
