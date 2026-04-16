@@ -45,7 +45,7 @@ public class Badge {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    @Column(name = "blood_type", length = 5)
+    @Column(name = "blood_type", length = 50)
     @Convert(converter = DataEncrypt.class)
     private String bloodType;
 
