@@ -6,17 +6,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
-import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
 import org.sync_astra.backendjava.model.Badge;
 import org.sync_astra.backendjava.model.ScanAlert;
 import org.sync_astra.backendjava.model.Users;
-import org.sync_astra.backendjava.repository.BadgeRepository;
 import org.sync_astra.backendjava.repository.ScanAlertRepository;
-import org.sync_astra.backendjava.service.messaging.EmailSenderService;
+import org.sync_astra.backendjava.service.messaging.ResendEmailService;
 
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -25,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 public class ScanAlertService {
 
     private final ScanAlertRepository scanAlertRepository;
-    private final EmailSenderService emailSenderService;
+    private final ResendEmailService resendEmailService;
 
     @Value("${app.alert.group-email:admin@teencontre.com}")
     private String alertGroupEmail;
@@ -67,7 +62,7 @@ public class ScanAlertService {
 
         // 3. Intenta enviar el correo
         try {
-            CompletableFuture<Boolean> emailFuture = emailSenderService.sendEmailAsync(targetEmail, subject, body);
+            CompletableFuture<Boolean> emailFuture = resendEmailService.sendEmail(targetEmail, subject, body);
             Boolean result = emailFuture.join();
 
             if (Boolean.TRUE.equals(result)) {
