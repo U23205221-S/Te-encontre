@@ -4,8 +4,8 @@ import axios from 'axios';
 import { Camera, CheckCircle, XCircle, Loader2, User } from 'lucide-react';
 
 const MODELS_URL = '/models';
-// Separate microservice for face recognition
-const API_URL = 'http://localhost:5001/api/rostros';
+// Microservicio de reconocimiento facial - URL desde variables de entorno
+const API_URL = `${import.meta.env.VITE_FACE_API_URL || 'http://localhost:5001'}/api/rostros`;
 
 const RegistrarRostro = () => {
     const videoRef = useRef(null);
