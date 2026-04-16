@@ -10,6 +10,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.sync_astra.backendjava.model.Categories.Gender;
 import org.sync_astra.backendjava.model.Categories.StatusBadge;
+import org.sync_astra.backendjava.util.DataEncrypt;
 
 import java.time.Instant;
 import java.util.List;
@@ -34,6 +35,7 @@ public class Badge {
     private UUID uuid;
 
     @Column(name = "full_name", nullable = false)
+    @Convert(converter = DataEncrypt.class)
     private String fullName;
 
     @Column(name = "age")
@@ -44,21 +46,26 @@ public class Badge {
     private Gender gender;
 
     @Column(name = "blood_type", length = 5)
+    @Convert(converter = DataEncrypt.class)
     private String bloodType;
 
     @Column(name = "allergies", length = 255)
+    @Convert(converter = DataEncrypt.class)
     //Se asume que las alergias se almacenarán como una cadena de texto, posiblemente separada por comas si hay
     //múltiples alergias.
     //Si se requiere una estructura más compleja, se podría considerar una entidad separada para las alergias.
     private String allergies;
 
     @Column(name = "emergency_contact_name", length = 100)
+    @Convert(converter = DataEncrypt.class)
     private String emergencyContactName;
 
     @Column(name = "main_emergency_phone", length = 50)
+    @Convert(converter = DataEncrypt.class)
     private String mainEmergencyPhone;
 
     @Column(name = "alternative_emergency_phone", length = 50)
+    @Convert(converter = DataEncrypt.class)
     private String alternativeEmergencyPhone;
 
     @Column(name = "photo", length = 255)

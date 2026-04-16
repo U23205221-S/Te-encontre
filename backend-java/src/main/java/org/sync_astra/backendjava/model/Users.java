@@ -6,6 +6,7 @@ import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.sync_astra.backendjava.util.DataEncrypt;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,6 +33,7 @@ public class Users {
     @Column(name = "user_name", nullable = false, unique = true, length = 50)
     private String userName;
 
+    @Convert(converter = DataEncrypt.class)
     @Column(name = "dni", nullable = false, unique = true)
     private String dni;
 
