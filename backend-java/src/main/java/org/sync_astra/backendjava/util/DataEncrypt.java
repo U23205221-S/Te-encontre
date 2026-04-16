@@ -2,6 +2,7 @@ package org.sync_astra.backendjava.util;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -10,9 +11,11 @@ import java.util.Base64;
 @Converter
 public class DataEncrypt implements AttributeConverter<String, String> {
 
-    private static final String ALGORITMO = "AES/ECB/PKCS5Padding";
+    @Value("${app.encryption.algorithm}")
+    private String ALGORITMO;
     // Nota: Esta llave debería venir de una variable de entorno segura o un Vault
-    private static final String LLAVE_SECRETA = "MiLlaveSuperSecretaDe32Bytes!!";
+    @Value("${app.encryption.secret-key}")
+    private String LLAVE_SECRETA;
 
     @Override
     public String convertToDatabaseColumn(String datoSensible) {

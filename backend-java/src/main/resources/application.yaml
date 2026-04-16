@@ -73,3 +73,8 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:tu-cloud-name}
   api-key: ${CLOUDINARY_API_KEY:tu-api-key}
   api-secret: ${CLOUDINARY_API_SECRET:tu-api-secret}
+
+app:
+  encryption:
+    secret-key: ${ENCRYPTION_SECRET:tu-encryption-secret} #
+    algorithm: ${ENCRYPTION_ALGORITHM:tu-encryption-algorithm} # Esta clave debe ser de 16, 24 o 32 bytes para AES
