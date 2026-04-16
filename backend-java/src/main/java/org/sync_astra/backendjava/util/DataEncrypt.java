@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Base64;
 
 @Converter
@@ -17,16 +19,26 @@ public class DataEncrypt implements AttributeConverter<String, String> {
     @Value("${app.encryption.secret-key}")
     private String LLAVE_SECRETA;
 
+    private SecretKeySpec generarLlave() {
+        try {
+            // Aplicamos SHA-256 para garantizar que la llave siempre tenga 32 bytes (AES-256)
+            MessageDigest sha = MessageDigest.getInstance("SHA-256");
+            byte[] keyBytes = sha.digest(LLAVE_SECRETA.getBytes(StandardCharsets.UTF_8));
+            return new SecretKeySpec(keyBytes, "AES");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar la llave criptográfica", e);
+        }
+    }
+
     @Override
     public String convertToDatabaseColumn(String datoSensible) {
         if (datoSensible == null) return null;
         try {
             Cipher cipher = Cipher.getInstance(ALGORITMO);
-            SecretKeySpec key = new SecretKeySpec(LLAVE_SECRETA.getBytes(), "AES");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return Base64.getEncoder().encodeToString(cipher.doFinal(datoSensible.getBytes()));
+            cipher.init(Cipher.ENCRYPT_MODE, generarLlave());
+            return Base64.getEncoder().encodeToString(cipher.doFinal(datoSensible.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
-            throw new RuntimeException("Error al encriptar: " + e.getMessage());
+            throw new RuntimeException("Error al encriptar: " + e.getMessage(), e);
         }
     }
 
@@ -35,11 +47,10 @@ public class DataEncrypt implements AttributeConverter<String, String> {
         if (datoCifrado == null) return null;
         try {
             Cipher cipher = Cipher.getInstance(ALGORITMO);
-            SecretKeySpec key = new SecretKeySpec(LLAVE_SECRETA.getBytes(), "AES");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(Base64.getDecoder().decode(datoCifrado)));
+            cipher.init(Cipher.DECRYPT_MODE, generarLlave());
+            return new String(cipher.doFinal(Base64.getDecoder().decode(datoCifrado)), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw new RuntimeException("Error al desencriptar: " + e.getMessage());
+            throw new RuntimeException("Error al desencriptar: " + e.getMessage(), e);
         }
     }
 }
