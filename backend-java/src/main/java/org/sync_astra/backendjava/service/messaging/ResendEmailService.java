@@ -17,10 +17,7 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class ResendEmailService {
 
-    @Value("${resend.api-key}")
-    private String FROM_EMAIL = "";
-
-    private final Resend resend = new Resend(FROM_EMAIL);
+    private final Resend resend;
 
     @Async
     public CompletableFuture<Boolean> sendEmail(String to, String subject, String htmlContent) {
