@@ -26,7 +26,7 @@ public class ResendEmailService {
         try {
             CreateEmailOptions params = CreateEmailOptions.builder()
                     // RECUERDA: Usar onboarding@resend.dev para pruebas o un dominio propio verificado
-                    .from("Acme  <sync.astra0@gmail.com>")
+                    .from("SyncAstra <alertas@sync-astra.com>")
                     .to(to)
                     .subject(subject)
                     .html(htmlContent)
