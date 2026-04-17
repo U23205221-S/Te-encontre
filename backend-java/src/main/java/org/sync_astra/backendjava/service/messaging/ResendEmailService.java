@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 public class ResendEmailService {
 
     @Value("${resend.api-key}")
-    private static final String FROM_EMAIL = "";
+    private String FROM_EMAIL = "";
 
     private final Resend resend = new Resend(FROM_EMAIL);
 
