@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
 const AUTH_STORAGE_KEY = 'qr-utp.simulated-session';
@@ -100,6 +100,12 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
   };
+
+  useEffect(() => {
+    const handleRefresh = (e) => setSessionUser(e.detail);
+    window.addEventListener('auth:refresh', handleRefresh);
+    return () => window.removeEventListener('auth:refresh', handleRefresh);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ sessionUser, login, register, logout, refreshToken, isLoading }}>

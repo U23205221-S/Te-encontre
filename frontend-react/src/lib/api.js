@@ -64,9 +64,12 @@ api.interceptors.response.use(
 
         const { fullName, accessToken, refreshToken: newRefreshToken } = response.data;
 
-        // Guardar nuevos tokens
-        const newSession = { fullName: parsed.fullName, email: parsed.email, accessToken, refreshToken: newRefreshToken };
-        window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
+  // Guardar nuevos tokens
+  const newSession = { fullName: parsed.fullName, email: parsed.email, accessToken, refreshToken: newRefreshToken };
+  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
+
+  // Emitir evento para actualizar el AuthContext
+  window.dispatchEvent(new CustomEvent('auth:refresh', { detail: newSession }));
 
         // Reintentar request original
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;

@@ -7,11 +7,12 @@ import { Camera, Search, AlertTriangle, CheckCircle, Loader2, User, ExternalLink
 const MODELS_URL = '/models';
 
 const BuscarRostro = () => {
-    const videoRef = useRef(null);
-    const canvasRef = useRef(null);
-    const animFrameRef = useRef(null);
-    const streamRef = useRef(null);
-    const lightingHintTimeoutRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const animFrameRef = useRef(null);
+  const streamRef = useRef(null);
+  const lightingHintTimeoutRef = useRef(null);
+  const isScanningRef = useRef(false);
 
     const [modelsLoaded, setModelsLoaded] = useState(false);
     const [cameraOn, setCameraOn] = useState(false);
@@ -176,10 +177,14 @@ const BuscarRostro = () => {
         }
     };
 
-    const handleScan = async () => {
-        setLoading(true);
-        setResult(null);
-        try {
+  const handleScan = async () => {
+    // Prevenir doble petición
+    if (isScanningRef.current) return;
+    isScanningRef.current = true;
+
+    setLoading(true);
+    setResult(null);
+    try {
             const detection = await faceapi
                 .detectSingleFace(videoRef.current)
                 .withFaceLandmarks()
@@ -227,10 +232,11 @@ const BuscarRostro = () => {
             } else {
                 setResult({ found: false, message: err.response?.data?.message || 'Error al procesar la búsqueda.' });
             }
-        } finally {
-            setLoading(false);
-        }
-    };
+    } finally {
+      setLoading(false);
+      isScanningRef.current = false;
+    }
+  };
 
     return (
         <div className="space-y-6 text-slate-700">
