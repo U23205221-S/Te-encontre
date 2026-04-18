@@ -1,5 +1,4 @@
 import { useParams, Link } from 'react-router-dom';
-import { api } from '../lib/api';
 import { Phone, User, Activity, AlertCircle, ArrowLeft, ShieldCheck, MapPin, Loader2 } from 'lucide-react';
 import { useGeolocationAlert } from '../hooks/useGeolocationAlert';
 
@@ -92,7 +91,7 @@ const PaginaGafete = () => {
         <div className="flex flex-col items-center gap-6 border-b border-slate-700 pb-6 md:flex-row">
           {gafete.photo ? (
             <img
-              src={`${API_BASE_URL}${gafete.photo}`}
+              src={`${gafete.photo}`}
               alt={`Foto de ${gafete.fullName}`}
               className="h-32 w-32 rounded-full border-4 border-brand-700 object-cover shadow-md md:h-40 md:w-40"
             />
