@@ -35,6 +35,10 @@ public class Users {
     @Column(name = "dni", nullable = false, unique = true)
     private String dni;
 
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 

@@ -63,7 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/register", // Habilitamos todo lo de auth (register, pre-login, login)
                                 "/api/auth/login",
-                                "/api/auth/refresh-token",
+                                "/api/auth/refresh",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

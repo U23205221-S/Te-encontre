@@ -14,6 +14,7 @@ public class UserRequestDTO {
 
     private String dni;
 
+    private String email;
     private String passwordHash;
 
     // Incluido específicamente para que coincida con la validación de tu AuthService

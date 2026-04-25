@@ -14,7 +14,6 @@ import org.sync_astra.backendjava.service.BadgeService;
 
 import java.util.UUID;
 
-@CrossOrigin(origins = "*") // Allow all origins for development
 @RestController
 @RequestMapping("/api/v1/badge")
 @RequiredArgsConstructor
