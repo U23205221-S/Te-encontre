@@ -36,30 +36,29 @@ public class Badge {
     private UUID uuid;
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "dni_badge", nullable = false, length = 8, unique = true)
+    @Column(name = "dni_badge", nullable = false, unique = true)
     private String dni;
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "full_name_badge", nullable = false, length = 100)
+    @Column(name = "full_name_badge", nullable = false)
     private String fullName;
 
     @Column(name = "date_of_birth_badge", nullable = false)
     private Instant dateOfBirth;
 
-    @Convert(converter = DataEncrypt.class)
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender_badge", nullable = false, length = 20)
+    @Column(name = "gender_badge", nullable = false)
     private Gender gender;
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "blood_type_badge", nullable = false, length = 2)
+    @Column(name = "blood_type_badge", nullable = false)
     private String bloodType;
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "allergies_badge", nullable = false, length = 255)
+    @Column(name = "allergies_badge", nullable = false)
     private String allergies;
 
-    @Column(name = "medical_conditions_badge", nullable = false, length = 255)
+    @Column(name = "medical_conditions_badge", nullable = false)
     private String photoUrl;
 
     @Column(name = "face_vector_badge", nullable = false, columnDefinition = "vector(128)")

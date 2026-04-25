@@ -49,6 +49,4 @@ public class Users {
     @OneToMany(mappedBy = "userRegister", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Badge> badges;
 
-    @OneToMany(mappedBy = "scanByUser", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScanAlert> scanAlerts;
 }

@@ -31,25 +31,24 @@ public class Guardians {
     private UUID uuid;
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "dni_guardian", nullable = false, length = 8, unique = true)
+    @Column(name = "dni_guardian", nullable = false, unique = true)
     private String dni;
 
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "name_guardian", nullable = false, length = 100)
+    @Column(name = "name_guardian", nullable = false)
     private String name;
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "email_guardian", nullable = false, length = 15)
+    @Column(name = "email_guardian", nullable = false)
     private String email;
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "phone_guardian", nullable = false, length = 15)
+    @Column(name = "phone_guardian", nullable = false)
     private String phone;
 
-    @Convert(converter = DataEncrypt.class)
     @Enumerated(EnumType.STRING)
-    @Column(name = "relationship_guardian", nullable = false, length = 20)
+    @Column(name = "relationship_guardian", nullable = false)
     private RelationShip relationship;
 
     @Column(name = "legal_representative_guardian", nullable = false)

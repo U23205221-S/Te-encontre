@@ -40,7 +40,7 @@ public class AuthService {
      */
     @Transactional
     public AuthResponseDTO register(UserRequestDTO dto) {
-        log.info("Registrando nuevo usuario: {}", dto.getUserName());
+        log.info("Registrando nuevo usuario: {}", dto.getDni());
 
         // Validamos que las contraseñas coincidan antes de tocar la base de datos
         if (!dto.getPasswordHash().equals(dto.getConfirmPasswordHash())) {
@@ -69,11 +69,11 @@ public class AuthService {
      * Valida credenciales y devuelve los tokens. Se ignora el campo confirmPasswordHash.
      */
     public AuthResponseDTO login(UserRequestDTO request) {
-        log.info("Intento de login para: {}", request.getUserName());
+        log.info("Intento de login para: {}", request.getDni());
 
         // Validar credenciales contra la BD (Spring Security maneja esto con el UserDetailsService)
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPasswordHash())
+                new UsernamePasswordAuthenticationToken(request.getDni(), request.getPasswordHash())
         );
 
         MainUser mainUser = (MainUser) auth.getPrincipal();

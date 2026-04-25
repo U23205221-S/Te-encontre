@@ -18,8 +18,6 @@ public class UserResponseDTO {
 
     private UUID uuid;
 
-    private String userName;
-
     private String dni;
 
     private Instant createdAt;

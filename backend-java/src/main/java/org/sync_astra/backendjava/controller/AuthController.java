@@ -25,7 +25,7 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> register(@RequestBody UserRequestDTO request) {
-        log.info("Petición REST para registrar usuario: {}", request.getUserName());
+        log.info("Petición REST para registrar usuario: {}", request.getDni());
         AuthResponseDTO response = authService.register(request);
         return ResponseEntity.ok(response);
     }
@@ -36,7 +36,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@RequestBody UserRequestDTO request) {
-        log.info("Petición REST para login de usuario: {}", request.getUserName());
+        log.info("Petición REST para login de usuario: {}", request.getDni());
         AuthResponseDTO response = authService.login(request);
         return ResponseEntity.ok(response);
     }
