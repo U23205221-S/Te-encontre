@@ -31,7 +31,7 @@ public class ScanAlertService {
     public void processAndSendAlert(Badge badge, Double latitude, Double longitude, Users scannerUser) {
         log.info("Registrando alerta de escaneo para el Badge ID: {}", badge.getId());
 
-        String targetEmail = badge.getUserParent().getUserName();
+        String targetEmail = badge.getUserRegister().getDni();
         if (targetEmail == null || targetEmail.isBlank()) {
             log.warn("No hay correo registrado del padre o tutor para el Badge ID {}. No se enviará alerta.", badge.getId());
             return; // Salimos sin romper el flujo
@@ -42,8 +42,6 @@ public class ScanAlertService {
                 .badge(badge)
                 .latitude(latitude)
                 .longitude(longitude)
-                .scanByUser(scannerUser) // Ojo con este TODO que dejaste en tu código original
-                .emailSent(false)
                 .build();
 
         // 2. Guarda la entidad en BD
@@ -65,14 +63,10 @@ public class ScanAlertService {
             CompletableFuture<Boolean> emailFuture = resendEmailService.sendEmail(targetEmail, subject, body);
             Boolean result = emailFuture.join();
 
-            if (Boolean.TRUE.equals(result)) {
-                alert.setEmailSent(true);
-            }
         } catch (Exception e) {
             log.error("Fallo al enviar correo de alerta: {}", e.getMessage());
-            alert.setEmailSent(false);
+
             String errorMsg = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            alert.setEmailErrorLog(errorMsg);
         }
 
         // 4. Actualiza la alerta con el estado del correo

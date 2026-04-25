@@ -40,7 +40,7 @@ public class BadgeService {
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional
     public Optional<BadgeResponseDTO> identifyByFace(ScanAlertRequestDTO requestDTO, String scannerUserName) {
-        Users scannerUser = userRepository.findByUserName(scannerUserName)
+        Users scannerUser = userRepository.findByDni(scannerUserName)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
 
         return badgeRepository.findBestMatch(requestDTO.getFaceVector())
@@ -57,7 +57,7 @@ public class BadgeService {
     @Transactional
     public BadgeResponseDTO getByUuid(ScanAlertRequestDTO requestDTO, String scannerUserName) {
         // Buscamos quién está haciendo la petición
-        Users scannerUser = userRepository.findByUserName(scannerUserName)
+        Users scannerUser = userRepository.findByDni(scannerUserName)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
 
         Badge badge = badgeRepository.findByUuid(requestDTO.getQrCodeUuid())
@@ -97,7 +97,7 @@ public class BadgeService {
         }
 
         Badge badge = badgeMapper.toModel(requestDTO);
-        badge.setUserParent(userRepository.findByUserName(registerUserName)
+        badge.setUserRegister(userRepository.findByDni(registerUserName)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD")));
         Badge savedBadge = badgeRepository.save(badge);
 

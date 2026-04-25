@@ -27,11 +27,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     @NullMarked
     @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String dni) throws UsernameNotFoundException {
 
         // 1. Buscamos al usuario usando el parámetro 'email' contra el campo 'userName'
-        Users user = userRepository.findByUserName(email)
-                .orElseThrow(() -> new UsernameNotFoundException("No se encontró el usuario con el email: " + email));
+        Users user = userRepository.findByDni(dni)
+                .orElseThrow(() -> new UsernameNotFoundException("No se encontró el usuario con el email: " + dni));
 
         // 2. Como es un login de sesión simple sin sistema de roles,
         // pasamos una colección vacía. Spring Security lo maneja sin problemas.

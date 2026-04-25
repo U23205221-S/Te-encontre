@@ -13,7 +13,6 @@ public class MainUser extends User {
 
     // Campos extra extraídos directamente de tu entidad Users actual
     private final UUID uuid;
-    private final String dni;
 
     public MainUser(String username,
                     String password,
@@ -22,14 +21,12 @@ public class MainUser extends User {
                     boolean credentialsNonExpired,
                     boolean accountNonLocked,
                     Collection<? extends GrantedAuthority> authorities,
-                    UUID uuid,
-                    String dni) {
+                    UUID uuid) {
 
         // Spring Security usará el 'username' como el identificador principal de la sesión
         super(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
 
         this.uuid = uuid;
-        this.dni = dni;
     }
 
     public static MainUser build(Users user, Collection<? extends GrantedAuthority> authorities) {
@@ -40,7 +37,7 @@ public class MainUser extends User {
 
         return new MainUser(
                 // 1. Principal: Usamos el USERNAME para iniciar sesión (ya que no hay email)
-                user.getUserName(),
+                user.getDni(),
 
                 // 2. Contraseña: El hash de tu entidad
                 user.getPasswordHash(),
@@ -55,8 +52,7 @@ public class MainUser extends User {
                 authorities,
 
                 // 5. Campos personalizados para tener disponibles en sesión / JWT
-                user.getUuid(),
-                user.getDni()
+                user.getUuid()
         );
     }
 }
