@@ -9,6 +9,7 @@ import org.sync_astra.backendjava.model.Categories.RelationShip;
 import org.sync_astra.backendjava.model.Categories.StatusBadge;
 
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder
@@ -32,5 +33,5 @@ public class BadgeRequestDTO {
 
     //Comenzamos con los atributos de Entidad Guardianship
     //Opcional al modificar el badge, pero lo dejamos para que se pueda modificar el tutor legal.
-    private GuardiansRequestDTO guardian;
+    private List<GuardiansRequestDTO> guardians;
 }

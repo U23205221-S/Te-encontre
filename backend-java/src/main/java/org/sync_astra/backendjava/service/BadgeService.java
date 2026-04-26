@@ -13,21 +13,19 @@ import org.sync_astra.backendjava.mapper.mapperImpl.BadgeMapper;
 import org.sync_astra.backendjava.mapper.mapperImpl.GuardiansMapper;
 import org.sync_astra.backendjava.model.Badge;
 import org.sync_astra.backendjava.model.Guardians;
-import org.sync_astra.backendjava.model.Users;
 import org.sync_astra.backendjava.repository.BadgeRepository;
 import org.sync_astra.backendjava.repository.GuardiansRepository;
 import org.sync_astra.backendjava.repository.UserRepository;
 import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
 import org.sync_astra.backendjava.service.messaging.ResendEmailService;
 
-import java.io.File;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Service
 @Slf4j
@@ -98,20 +96,55 @@ public class BadgeService {
             throw new RuntimeException("Error en el sistema de almacenamiento en la nube.");
         }
 
+        // 1. Mapeamos el DTO a la entidad (Esto ya incluye a los guardianes dentro del Badge)
         Badge badge = badgeMapper.toModel(requestDTO);
         badge.setUserRegister(userRepository.findByDni(registerUserName)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD")));
+
+        // 2. Configuramos la relación bidireccional ANTES de guardar
+        if (badge.getGuardians() != null) {
+            for (int i = 0; i < badge.getGuardians().size(); i++) {
+                Guardians guardian = badge.getGuardians().get(i);
+
+                // Le indicamos al guardián a qué Badge pertenece para que no haya FK nula
+                guardian.setBadge(badge);
+
+                // Lógica de roles
+                if (i == 0) {
+                    guardian.setLegalRepresentative(true);
+                    guardian.setEmail(badge.getUserRegister().getEmail());
+                } else {
+                    guardian.setLegalRepresentative(false);
+                }
+            }
+        }
+
         Badge savedBadge = badgeRepository.save(badge);
 
-        Guardians guardian = guardiansMapper.toModel(requestDTO.getGuardian());
-        guardian.setLegalRepresentative(true);
-        guardian.setBadge(savedBadge);
-        guardian.setEmail(badge.getUserRegister().getEmail());
-        guardiansRepository.save(guardian); // Guardamos de nuevo para persistir la relación con el
         String urlPerfil = "https://qr-utp-rs.pages.dev/gafete/" + savedBadge.getUuid();
 
 
-        String htmlContent = """
+
+        for (Guardians guardian : savedBadge.getGuardians()) {
+            String htmlContent = buildEmailTemplate(guardian, savedBadge, urlPerfil);
+
+            resendEmailService.sendEmail(guardian.getEmail(), "Nuevo Registro... TE ENCONTRÉ", htmlContent);
+        }
+
+        log.info("Nuevo Badge registrado con éxito en Cloudinary. UUID: {}", savedBadge.getUuid());
+        return badgeMapper.toDTO(savedBadge);
+    }
+
+    // Método privado para generar el HTML
+    private String buildEmailTemplate(Guardians guardian, Badge savedBadge, String urlPerfil) {
+
+        // 1. Definimos el mensaje dinámico según el rol del guardián
+        String mensajeRol = guardian.isLegalRepresentative()
+                ? "Como <strong>Representante Legal</strong>, has sido asignado para recibir las notificaciones principales en caso de que este código sea escaneado por personal de asistencia o autoridades."
+                : "Como <strong>Contacto de Emergencia</strong>, has sido registrado en nuestro sistema para brindar apoyo y ser notificado en caso de requerir asistencia adicional.";
+
+        // 2. Retornamos el Text Block con los reemplazos
+        return """
         <!DOCTYPE html>
         <html lang="es">
         <head>
@@ -128,37 +161,33 @@ public class BadgeService {
                                     <h2 style="color: #ffffff; margin: 0;">NUEVO REGISTRO DE SEGURIDAD</h2>
                                 </td>
                             </tr>
-       \s
                             <tr>
                                 <td style="padding: 30px;">
                                     <p style="font-size: 16px; color: #333;">Hola <strong>{{nombre_apoderado}}</strong>,</p>
                                     <p style="font-size: 16px; color: #333;">Se ha generado correctamente una nueva credencial de identificación (Badge) para:</p>
-       \s
+
                                     <div style="background-color: #fff5f5; border: 1px solid #feb2b2; padding: 20px; border-radius: 5px; margin-bottom: 20px; text-align: center;">
-                                       \s
                                         <img src="{{foto_perfil}}" alt="Foto de {{nombre_persona}}" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px;">
-                                       \s
                                         <div style="text-align: left; background-color: #ffffff; padding: 15px; border-radius: 5px;">
                                             <p style="margin: 5px 0; font-size: 15px;"><strong>Nombre completo:</strong> {{nombre_persona}}</p>
                                             <p style="margin: 5px 0; font-size: 15px;"><strong>Alergias registradas:</strong> {{alergias}}</p>
-                                            <p style="margin: 5px 0; font-size: 15px;"><strong>Su vinculo:</strong> {{parentesco}}</p>
+                                            <p style="margin: 5px 0; font-size: 15px;"><strong>Su vínculo:</strong> {{parentesco}}</p>
                                         </div>
                                     </div>
-       \s
+
                                     <p style="font-size: 16px; color: #333; text-align: center;"><strong>Código QR de Emergencia:</strong></p>
                                     <div align="center" style="margin-bottom: 20px;">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{url_perfil}}"\s
-                                             alt="QR de Emergencia"\s
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{url_perfil}}" 
+                                             alt="QR de Emergencia" 
                                              style="border: 5px solid #eee; padding: 10px; border-radius: 10px; width: 180px; height: 180px;">
                                         <p style="font-size: 12px; color: #777; margin-top: 5px;">Este QR dirige a la información vital en caso de extravío.</p>
                                     </div>
-       \s
+
                                     <p style="font-size: 14px; color: #666; line-height: 1.5;">
-                                        Como <strong>Representante Legal</strong>, has sido asignado para recibir notificaciones en caso de que este código sea escaneado por personal de asistencia o autoridades.
+                                        {{mensaje_rol}}
                                     </p>
                                 </td>
                             </tr>
-       \s
                             <tr>
                                 <td align="center" style="padding: 20px; background-color: #f8fafc; font-size: 12px; color: #999; border-radius: 0 0 10px 10px;">
                                     © 2026 Plataforma TE ENCONTRÉ | Seguridad y Protección.
@@ -170,20 +199,13 @@ public class BadgeService {
             </table>
         </body>
         </html>
-       \s""".replace("{{nombre_apoderado}}", guardian.getName())
+        """
+                .replace("{{nombre_apoderado}}", guardian.getName())
                 .replace("{{nombre_persona}}", savedBadge.getFullName())
-                .replace("{{alergias}}", savedBadge.getAllergies())
+                .replace("{{alergias}}", savedBadge.getAllergies() != null ? savedBadge.getAllergies() : "Ninguna") // Pequeña validación de nulos
                 .replace("{{parentesco}}", guardian.getRelationship().toString())
                 .replace("{{url_perfil}}", urlPerfil)
-                .replace("{{foto_perfil}}", savedBadge.getPhotoUrl()); // NUEVO REPLACE AÑADIDO
-
-        resendEmailService.sendEmail(guardian.getEmail(), "Confirmación de Registro: " + savedBadge.getFullName(), htmlContent);
-
-
-
-
-        log.info("Nuevo Badge registrado con éxito en Cloudinary. UUID: {}", savedBadge.getUuid());
-        log.info("Guardian asociado(UUID:{}): {} ({}), relación: {}", guardian.getUuid(), guardian.getName(), guardian.getDni(), guardian.getRelationship());
-        return badgeMapper.toDTO(savedBadge);
+                .replace("{{foto_perfil}}", savedBadge.getPhotoUrl())
+                .replace("{{mensaje_rol}}", mensajeRol);
     }
 }
