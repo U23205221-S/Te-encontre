@@ -104,23 +104,25 @@ const openRegistro = () => setActionInUrl('registro');
                         </div>
 
                         <div className="border-t border-surface-border-light pt-6">
-                            <div className="mb-3 inline-flex items-center gap-2">
+                            <div className="flex flex-col items-start gap-3">
+                                <div className="inline-flex items-center gap-2">
                                 <span className="h-2 w-2 rounded-full bg-emergency" />
                                 <span className="text-sm text-emergency">¿Situación de emergencia?</span>
-                            </div>
+                                </div>
 
-                            <button onClick={openScanner} className="ui-btn-emergency">
-                                <img src={personSearchIcon} alt="" className="h-5 w-5" aria-hidden="true" />
-                                Encontré a alguien
-                            </button>
+                                <button onClick={openScanner} className="ui-btn-emergency">
+                                    <img src={personSearchIcon} alt="" className="h-5 w-5" aria-hidden="true" />
+                                    Encontré a alguien
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="relative min-h-[621px] overflow-hidden rounded-card border border-surface-border shadow-card">
+                    <div className="relative h-[621px] w-full overflow-hidden rounded-card border border-surface-border shadow-card">
                         <img
                             src={heroImage}
                             alt="Madre abrazando a su hija"
-                            className="h-full w-full object-cover"
+                            className="absolute inset-0 h-full w-full object-cover"
                         />
 
                         <div className="absolute bottom-6 left-6 rounded-module border border-white/20 bg-white/80 p-4 shadow-module backdrop-blur-[24px]">

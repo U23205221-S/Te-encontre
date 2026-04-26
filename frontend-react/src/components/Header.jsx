@@ -104,10 +104,10 @@ const Header = ({ sessionUser, onLogout }) => {
               <>
                 <Link
                   to="/login"
-                  className="inline-flex items-center px-2 py-2 text-sm font-semibold text-text-body hover:text-brand-500"
+                  className="inline-flex items-center rounded-module border border-surface-border bg-surface-soft px-4 py-2 text-sm font-semibold text-text-body hover:bg-surface-muted hover:text-brand-500"
                   aria-label="Acceder a una cuenta"
                 >
-                  Acceder
+                  Iniciar sesión
                 </Link>
                 <Link
                   to="/registro"
@@ -190,7 +190,7 @@ const Header = ({ sessionUser, onLogout }) => {
                   className="inline-flex w-full items-center justify-center rounded-module border border-surface-border bg-surface-soft px-4 py-3 text-sm font-semibold text-text-body hover:bg-surface-muted"
                   aria-label="Acceder a una cuenta"
                 >
-                  Acceder
+                  Iniciar sesión
                 </Link>
                 <Link
                   to="/registro"
