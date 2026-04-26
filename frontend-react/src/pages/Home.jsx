@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FormularioGafete from '../components/FormularioGafete';
 import PaginaReconocimiento from './PaginaReconocimiento';
 import ScannerQR from '../components/ScannerQR';
 import Footer from '../components/Footer';
-import { useHomeSectionSnap } from '../hooks/useHomeSectionSnap';
 import heroImage from '../assets/figma-redesign/hero-image.png';
 import shieldIcon from '../assets/figma-redesign/shield-icon.svg';
 import shieldCheckIcon from '../assets/figma-redesign/shield-check-icon.svg';
@@ -18,21 +17,8 @@ import stepIcon from '../assets/figma-redesign/step-icon.svg';
 import scanArrowIcon from '../assets/figma-redesign/scan-arrow-icon.svg';
 import faceArrowIcon from '../assets/figma-redesign/face-arrow-icon.svg';
 
-const resolveHeaderOffset = () => {
-    if (typeof window === 'undefined') {
-        return 0;
-    }
-
-    const rootStyles = window.getComputedStyle(document.documentElement);
-    const headerHeightCss = rootStyles.getPropertyValue('--header-height').trim();
-    const headerHeight = Number.parseFloat(headerHeightCss);
-
-    return Number.isFinite(headerHeight) ? headerHeight : 0;
-};
-
 const Home = () => {
     const formRef = useRef(null);
-    const containerRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
     const { sessionUser } = useAuth();
@@ -77,28 +63,20 @@ const openRegistro = () => setActionInUrl('registro');
     };
   }, [showModal, showReconocimientoModal, showScannerModal]);
 
-    const { scrollToSection } = useHomeSectionSnap({
-        containerRef,
-        sectionSelector: '[data-home-section]',
-        topOffset: resolveHeaderOffset,
-        desktopMinWidth: 1024,
-        duration: 0.52,
-        ease: 'power2.out',
-        tolerance: 16,
-    });
-
-    const scrollToComoFunciona = useCallback(() => {
-        scrollToSection('#como-funciona');
-    }, [scrollToSection]);
+    const scrollToComoFunciona = () => {
+        const section = document.getElementById('como-funciona');
+        section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 
     useEffect(() => {
         if (location.hash === '#como-funciona') {
-            requestAnimationFrame(scrollToComoFunciona);
+            const section = document.getElementById('como-funciona');
+            section?.scrollIntoView({ behavior: 'auto', block: 'start' });
         }
-    }, [location.hash, scrollToComoFunciona]);
+    }, [location.hash]);
 
     return (
-        <div ref={containerRef} className="relative bg-surface-base text-text-body">
+        <div className="relative bg-surface-base text-text-body">
             <section data-home-section className="ui-home-scroll-section ui-viewport-section ui-hero-section relative flex items-center overflow-hidden bg-surface-base">
                 <div className="relative mx-auto grid w-full max-w-[90rem] items-start gap-6 px-6 md:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8 lg:px-10 xl:px-12">
                     <div className="rounded-card border border-surface-border bg-surface-card p-8 shadow-card lg:p-12">

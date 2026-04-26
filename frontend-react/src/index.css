@@ -104,8 +104,7 @@ select:focus-visible {
   }
 
   .ui-viewport-section {
-    min-height: calc(100svh - var(--header-height));
-    min-height: calc(100dvh - var(--header-height));
+    min-height: auto;
   }
 
   .ui-hero-section {
@@ -115,12 +114,6 @@ select:focus-visible {
 
 .ui-home-scroll-section {
   scroll-margin-top: var(--header-height);
-}
-
-@media (min-width: 1024px) {
-  .ui-viewport-section {
-    height: calc(100dvh - var(--header-height));
-  }
 }
 
 code {
