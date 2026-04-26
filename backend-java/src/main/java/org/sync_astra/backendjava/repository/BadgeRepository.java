@@ -23,10 +23,10 @@ public interface BadgeRepository extends JpaRepository<Badge, Long> {
     }
 
     @Query(value = """
-        SELECT id, (face_vector <-> CAST(:embedding AS vector)) as distance
+        SELECT id_badge AS id, (face_vector_badge <-> CAST(:embedding AS vector)) AS distance
         FROM badge 
         ORDER BY distance 
         LIMIT 1
-        """, nativeQuery = true)
+    """, nativeQuery = true)
     Optional<BadgeMatchResult> findBestMatch(@Param("embedding") float[] embedding);
 }

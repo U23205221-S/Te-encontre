@@ -71,11 +71,11 @@ public class Badge {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant CreatedAt;
+    private Instant createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    private Instant UpdatedAt;
+    private Instant updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_user_register", nullable = false)

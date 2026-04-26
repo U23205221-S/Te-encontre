@@ -46,32 +46,27 @@ public class BadgeService {
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional
-    public Optional<BadgeResponseDTO> identifyByFace(ScanAlertRequestDTO requestDTO, String scannerUserName) {
-        Users scannerUser = userRepository.findByDni(scannerUserName)
-                .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
+    public Optional<BadgeResponseDTO> identifyByFace(ScanAlertRequestDTO requestDTO, MultipartFile file) {
 
         return badgeRepository.findBestMatch(requestDTO.getFaceVector())
                 .filter(result -> result.getDistance() < MATCH_THRESHOLD)
                 .flatMap(result -> badgeRepository.findById(result.getId()))
                 .map(badge -> {
                     // ¡Aquí disparamos la alerta!
-                    scanAlertService.processAndSendAlert(badge, requestDTO.getLatitude(), requestDTO.getLongitude(), scannerUser);
+                    scanAlertService.processAndSendAlert(badge, file, requestDTO);
                     return badgeMapper.toDTO(badge);
                 });
     }
 
     // BÚSQUEDA POR QR (UUID)
     @Transactional
-    public BadgeResponseDTO getByUuid(ScanAlertRequestDTO requestDTO, String scannerUserName) {
-        // Buscamos quién está haciendo la petición
-        Users scannerUser = userRepository.findByDni(scannerUserName)
-                .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
+    public BadgeResponseDTO getByUuid(ScanAlertRequestDTO requestDTO, MultipartFile file) {
 
         Badge badge = badgeRepository.findByUuid(requestDTO.getQrCodeUuid())
                 .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + requestDTO.getQrCodeUuid()));
 
         // ¡Aquí disparamos la alerta!
-        scanAlertService.processAndSendAlert(badge, requestDTO.getLatitude(), requestDTO.getLongitude(), scannerUser);
+        scanAlertService.processAndSendAlert(badge, file, requestDTO);
 
         return badgeMapper.toDTO(badge);
     }

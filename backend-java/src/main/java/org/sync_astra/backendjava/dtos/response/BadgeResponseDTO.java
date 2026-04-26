@@ -6,8 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.sync_astra.backendjava.model.Categories.Gender;
 import org.sync_astra.backendjava.model.Categories.StatusBadge;
+import org.sync_astra.backendjava.model.Guardians;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -30,6 +32,8 @@ public class BadgeResponseDTO {
     // Fechas de auditoría útiles para mostrar en el Frontend (Ej: "Registrado el...")
     private Instant createdAt;
     private Instant updatedAt;
+
+    private List<GuardiansResponseDTO> guardians;
 
     // ELIMINADO: faceVector.
     // Nunca devuelvas el vector de IA al cliente en un CRUD normal,

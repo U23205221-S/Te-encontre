@@ -30,18 +30,22 @@ public class BadgeController {
 
     // Endpoint para Reconocimiento Facial
     @PostMapping("/scan/face")
-    public ResponseEntity<BadgeResponseDTO> identify(@RequestBody ScanAlertRequestDTO request,
-                                                     Authentication authentication) {
-        return badgeService.identifyByFace(request, authentication.getName())
+    public ResponseEntity<BadgeResponseDTO> identify(
+            @RequestPart("data") ScanAlertRequestDTO request,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return badgeService.identifyByFace(request, file)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     // Endpoint para Escaneo QR (Auditoría + Alerta)
     @PostMapping("/scan/qr")
-    public ResponseEntity<BadgeResponseDTO> getByUuid(@RequestBody ScanAlertRequestDTO request,
-                                                      Authentication authentication) {
-        return ResponseEntity.ok(badgeService.getByUuid(request, authentication.getName()));
+    public ResponseEntity<BadgeResponseDTO> getByUuid(
+            @RequestPart("data") ScanAlertRequestDTO request,
+            @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(badgeService.getByUuid(request,file));
     }
 
     // Endpoint para Consultar Badge por UUID (sin alerta)

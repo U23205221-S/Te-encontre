@@ -22,5 +22,17 @@ public class ScanAlertRequestDTO {
     private Double latitude;
 
     private Double longitude;
+
+    private String dniReporter;
+
+    private String fullNameReporter;
+
+    private String phoneReporter;
+
+    private String nameDevice;
+
+    private String photoReport;
+
+    private String ipAddress;
 }
 
