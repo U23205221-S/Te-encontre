@@ -7,15 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
+import org.sync_astra.backendjava.dtos.request.GuardiansRequestDTO;
 import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
 import org.sync_astra.backendjava.mapper.mapperImpl.BadgeMapper;
 import org.sync_astra.backendjava.mapper.mapperImpl.GuardiansMapper;
 import org.sync_astra.backendjava.model.Badge;
+import org.sync_astra.backendjava.model.Categories.StatusBadge;
 import org.sync_astra.backendjava.model.Guardians;
+import org.sync_astra.backendjava.model.Users;
 import org.sync_astra.backendjava.repository.BadgeRepository;
 import org.sync_astra.backendjava.repository.GuardiansRepository;
 import org.sync_astra.backendjava.repository.UserRepository;
+import org.sync_astra.backendjava.service.apiCloud.DniService;
 import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
 import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
 import org.sync_astra.backendjava.service.email.ResendEmailService;
@@ -23,6 +27,7 @@ import org.sync_astra.backendjava.service.email.ResendEmailService;
 
 import java.io.IOException;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -36,9 +41,8 @@ public class BadgeService {
     private static final double MATCH_THRESHOLD = 0.6; // Ajustar según precisión del modelo
     // Ruta donde se guardarán las fotos (puedes ajustarla a tu monorepo)
     private final ImageStorageService imageStorageService;
-    private final GuardiansMapper guardiansMapper;
-    private final GuardiansRepository guardiansRepository;
     private final EmailOrchestratorService emailOrchestratorService;
+    private final DniService dniService;
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional
@@ -68,58 +72,57 @@ public class BadgeService {
                 .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + uuid));
         return badgeMapper.toDTO(badge);
     }
+
+
     /**
      * REGISTRO MODIFICADO: Crea un nuevo badge subiendo la foto a Cloudinary.
      */
     @Transactional
     public BadgeResponseDTO createWithPhoto(BadgeRequestDTO requestDTO, MultipartFile file, String registerUserName) {
-        if (file.isEmpty()) {
+
+        // 1. Validaciones rápidas (Fail-Fast)
+        if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("La imagen no puede estar vacía.");
         }
+        validarDnis(requestDTO);
 
+        // 2. Consultas a BD previas a operaciones costosas (Cloudinary)
+        Users userRegister = userRepository.findByDni(registerUserName)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
+
+        // 3. Operación externa costosa: Subida a Cloudinary
+        String photoUrl;
         try {
-            // MODIFICACIÓN CRÍTICA: Delegamos el guardado a Cloudinary
-            // Esto devolverá una URL pública lista para usarse en React
-            String photoUrl = imageStorageService.uploadImage(file, "badges");
-            requestDTO.setPhotoUrl(photoUrl);
-
+            photoUrl = imageStorageService.uploadImage(file, "badges");
         } catch (IOException e) {
-            // Mantenemos el control de errores similar al que tenías para no romper la respuesta al frontend
             log.error("Fallo crítico al subir archivo a la nube: {}", e.getMessage());
             throw new RuntimeException("Error en el sistema de almacenamiento en la nube.");
         }
 
-        // 1. Mapeamos el DTO a la entidad (Esto ya incluye a los guardianes dentro del Badge)
-        Badge badge = badgeMapper.toModel(requestDTO);
-        badge.setUserRegister(userRepository.findByDni(registerUserName)
-                .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD")));
+        // 4. Preparación y Mapeo de la Entidad
+        requestDTO.setPhotoUrl(photoUrl);
+        requestDTO.setStatusBadge(StatusBadge.NEUTRAL);
 
-        // 2. Configuramos la relación bidireccional ANTES de guardar
+        Badge badge = new Badge();
+        badgeMapper.updateFromDto(requestDTO, badge);
+        badge.setUserRegister(userRegister);
+
+        // 5. Configurar relación bidireccional
         if (badge.getGuardians() != null) {
             for (int i = 0; i < badge.getGuardians().size(); i++) {
                 Guardians guardian = badge.getGuardians().get(i);
-
-                // Le indicamos al guardián a qué Badge pertenece para que no haya FK nula
                 guardian.setBadge(badge);
-
-                // Lógica de roles
-                guardian.setLegalRepresentative(i == 0);
+                guardian.setLegalRepresentative(i == 0); // El índice 0 siempre será true, el resto false
             }
         }
 
+        // 6. Guardado en Base de Datos
         Badge savedBadge = badgeRepository.save(badge);
+        log.info("Nuevo Badge registrado con éxito. UUID: {}", savedBadge.getUuid());
 
-        String urlPerfil = "https://qr-utp-rs.pages.dev/gafete/" + savedBadge.getUuid();
+        // 7. Notificaciones
+        enviarCorreosNotificacion(savedBadge);
 
-
-
-        for (Guardians guardian : savedBadge.getGuardians()) {
-            String htmlContent = buildEmailTemplate(guardian, savedBadge, urlPerfil);
-
-            emailOrchestratorService.sendManageEmail("GUARDIANS",guardian.getUuid(),guardian.getEmail(), "Nuevo Registro... TE ENCONTRÉ", htmlContent);
-        }
-
-        log.info("Nuevo Badge registrado con éxito en Cloudinary. UUID: {}", savedBadge.getUuid());
         return badgeMapper.toDTO(savedBadge);
     }
 
@@ -195,5 +198,37 @@ public class BadgeService {
                 .replace("{{url_perfil}}", urlPerfil)
                 .replace("{{foto_perfil}}", savedBadge.getPhotoUrl())
                 .replace("{{mensaje_rol}}", mensajeRol);
+    }
+
+
+    private void enviarCorreosNotificacion(Badge savedBadge) {
+        if (savedBadge.getGuardians() == null) return;
+
+        String urlPerfil = "https://qr-utp-rs.pages.dev/gafete/" + savedBadge.getUuid();
+
+        for (Guardians guardian : savedBadge.getGuardians()) {
+            try {
+                String htmlContent = buildEmailTemplate(guardian, savedBadge, urlPerfil);
+                emailOrchestratorService.sendManageEmail("GUARDIANS", guardian.getUuid(), guardian.getEmail(), "Nuevo Registro... TE ENCONTRÉ", htmlContent);
+            } catch (Exception e) {
+                // CRÍTICO: Un error enviando el correo NO debe cancelar (rollback) la creación del Badge en la BD.
+                log.error("Error enviando correo de confirmación al guardián {}: {}", guardian.getEmail(), e.getMessage());
+            }
+        }
+    }
+
+    private void validarDnis(BadgeRequestDTO requestDTO) {
+        if (!dniService.existeDni(requestDTO.getDni())) {
+            throw new IllegalArgumentException(String.format("El DNI del gafete %s no existe en los registros oficiales.", requestDTO.getDni()));
+        }
+
+        List<GuardiansRequestDTO> guardians = requestDTO.getGuardians();
+        if (guardians != null) {
+            for (int i = 0; i < guardians.size(); i++) {
+                if (!dniService.existeDni(guardians.get(i).getDni())) {
+                    throw new IllegalArgumentException(String.format("El DNI %s del guardián [%d] no existe en los registros oficiales.", guardians.get(i).getDni(), i));
+                }
+            }
+        }
     }
 }

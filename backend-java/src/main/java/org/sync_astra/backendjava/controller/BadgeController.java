@@ -1,11 +1,13 @@
 package org.sync_astra.backendjava.controller;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
@@ -14,6 +16,7 @@ import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
 import org.sync_astra.backendjava.service.BadgeService;
 import org.sync_astra.backendjava.service.ScanAlertService;
+import org.sync_astra.backendjava.util.ValidateGroup;
 
 import java.util.UUID;
 
@@ -26,8 +29,8 @@ public class BadgeController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BadgeResponseDTO> register(
-            @RequestPart("data") BadgeRequestDTO request,
-            @RequestPart("file") MultipartFile file,
+            @RequestPart("data") @Validated(ValidateGroup.OnCreate.class) BadgeRequestDTO request,
+            @RequestPart("file") @NotNull(message = "El archivo de la foto es obligatorio") MultipartFile file,
             Authentication authentication) {
         return new ResponseEntity<>(badgeService.createWithPhoto(request, file, authentication.getName()), HttpStatus.CREATED);
     }
@@ -36,7 +39,7 @@ public class BadgeController {
     @PostMapping("/scan/face")
     public ResponseEntity<UUID> identify(
             @RequestPart("data") ScanAlertRequestDTO request,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("file") @NotNull(message = "El archivo de la foto es obligatorio") MultipartFile file
     ) {
         try {
             // El servicio retorna el UUID si es exitoso
@@ -52,7 +55,7 @@ public class BadgeController {
     @PostMapping("/scan/qr")
     public ResponseEntity<UUID> scanByQr(
             @RequestPart("data") ScanAlertRequestDTO request,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("file") @NotNull(message = "El archivo de la foto es obligatorio") MultipartFile file
     ) {
         try {
             UUID alertId = badgeService.getByUuid(request, file);

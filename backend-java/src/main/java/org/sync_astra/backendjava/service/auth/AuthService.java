@@ -135,10 +135,11 @@ public class AuthService {
         log.info("Intento de login para: {}", request.getDni());
 
         // Validar credenciales contra la BD (Spring Security maneja esto con el UserDetailsService)
+        log.info("Autenticando usuario: {}", request.getDni());
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getDni(), request.getPasswordHash())
         );
-
+        log.info("Autenticación exitosa para: {}", request.getDni());
         MainUser mainUser = (MainUser) auth.getPrincipal();
 
         // Generamos y devolvemos los tokens
@@ -213,6 +214,8 @@ public class AuthService {
         """.replace("{{fecha_hora}}", java.time.LocalDateTime.now().toString())
                 .replace("{{dispositivo}}", "Navegador Web (detalles no disponibles)"); // Aquí podrías integrar una librería para detectar el user agent real
         emailOrchestratorService.sendManageEmail("USERS",mainUser.getUuid(),mainUser.getEmail(), "Nuevo inicio de sesión en tu cuenta de TE ENCONTRÉ", htmlContent);
+
+
         return generateAndSaveTokens(auth, mainUser.getUsername());
     }
 
