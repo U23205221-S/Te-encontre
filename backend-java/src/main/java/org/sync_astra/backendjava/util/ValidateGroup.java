@@ -7,9 +7,6 @@ public abstract class ValidateGroup {
     public interface OnUpdate {
     }
 
-    public interface OnPreLogin {
-    }
-
     public interface OnLogin {
     }
 }

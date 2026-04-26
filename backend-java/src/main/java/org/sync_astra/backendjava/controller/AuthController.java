@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.sync_astra.backendjava.dtos.request.RefreshTokenRequestDTO;
 import org.sync_astra.backendjava.dtos.request.UserRequestDTO;
 import org.sync_astra.backendjava.dtos.response.AuthResponseDTO;
 import org.sync_astra.backendjava.service.auth.AuthService;
+import org.sync_astra.backendjava.util.ValidateGroup;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -23,7 +25,8 @@ public class AuthController {
      * POST /api/auth/register
      */
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(@RequestBody UserRequestDTO request) {
+    public ResponseEntity<AuthResponseDTO> register(@Validated(ValidateGroup.OnCreate.class)
+            @RequestBody UserRequestDTO request) {
         log.info("Petición REST para registrar usuario: {}", request.getDni());
         AuthResponseDTO response = authService.register(request);
         return ResponseEntity.ok(response);
