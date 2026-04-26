@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { LinkIcon, ArrowRightIcon, Camera, User } from '@heroicons/react/24/outline';
+import { LinkIcon, ArrowRightIcon, Camera, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 
