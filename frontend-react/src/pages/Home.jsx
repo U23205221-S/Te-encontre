@@ -272,18 +272,47 @@ const openRegistro = () => setActionInUrl('registro');
                 <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/35 p-4 backdrop-blur-sm">
                     <div className="relative w-full max-w-xl overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-card">
                         <div className="flex items-center justify-between border-b border-surface-border bg-surface-muted px-6 py-4">
-                            <h3 className="text-xl font-bold text-text-primary">Escanear gafete QR</h3>
+                            <h3 className="text-xl font-bold text-text-primary">Escanear gafete</h3>
                             <button
                                 type="button"
                                 onClick={closeScanner}
                                 className="ui-modal-close"
-                                aria-label="Cerrar modal de escaneo QR"
+                                aria-label="Cerrar modal de escaneo"
                             >
                                 ✕
                             </button>
                         </div>
-                        <div className="bg-surface-base p-6">
-                            <ScannerQR />
+                        <div className="bg-surface-base p-6 space-y-4">
+                            <p className="text-center text-text-body">¿Cómo deseas escanear el gafete?</p>
+                            
+                            <button
+                                onClick={closeScanner}
+                                className="flex w-full items-center gap-4 rounded-module border border-surface-border bg-surface-card p-4 shadow-card hover:border-brand-500 hover:shadow-module"
+                            >
+                                <div className="flex h-12 w-12 items-center justify-center rounded-module bg-brand-100">
+                                    <img src={qrIcon} alt="" className="h-6 w-6" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="font-bold text-text-primary">Escanear código QR</p>
+                                    <p className="text-sm text-text-body">Apunta la cámara al código QR del gafete</p>
+                                </div>
+                            </button>
+                            
+                            <button
+                                onClick={() => {
+                                    clearActionFromUrl();
+                                    navigate({ pathname: '/', search: '?action=reconocimiento', hash: location.hash });
+                                }}
+                                className="flex w-full items-center gap-4 rounded-module border border-surface-border bg-surface-card p-4 shadow-card hover:border-brand-500 hover:shadow-module"
+                            >
+                                <div className="flex h-12 w-12 items-center justify-center rounded-module bg-brand-100">
+                                    <img src={faceArrowIcon} alt="" className="h-6 w-6" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="font-bold text-text-primary">Buscar por reconocimiento facial</p>
+                                    <p className="text-sm text-text-body">Usa la cámara para buscar a la persona</p>
+                                </div>
+                            </button>
                         </div>
                     </div>
                 </div>

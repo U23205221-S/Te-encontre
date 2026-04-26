@@ -64,8 +64,8 @@ cloudinary:
 
 app:
   encryption:
-    secret-key: ${ENCRYPTION_SECRET:tu-encryption-secret} #
-    algorithm: ${ENCRYPTION_ALGORITHM:tu-encryption-algorithm} # Esta clave debe ser de 16, 24 o 32 bytes para AES
+    secret-key: ${ENCRYPTION_SECRET:tu-encryption-secret}
+    algorithm: ${ENCRYPTION_ALGORITHM:AES}
 
 resend:
     api-key: ${RESEND_API_KEY:tu-resend-api-key}
