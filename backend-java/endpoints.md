@@ -172,7 +172,7 @@ Dispara una alerta basada en el UUID contenido en el código QR escaneado.
 
 ### 3.1. Registrar Nuevo Badge
 
-Crea una nueva credencial de seguridad (Badge) y la asocia al usuario autenticado y a su tutor legal.
+Crea una nueva credencial de seguridad (Badge) y la asocia al usuario autenticado y a sus tutores legales.
 
 - **Método:** `POST`
 - **Ruta:** `/api/v1/badge`
@@ -183,19 +183,20 @@ Crea una nueva credencial de seguridad (Badge) y la asocia al usuario autenticad
 
 | Clave | Tipo | Descripción |
 |-------|------|-------------|
-| `data` | `application/json` | Datos médicos, personales y vector biométrico. |
+| `data` | `application/json` | Datos médicos, personales, vector biométrico y tutores. |
 | `file` | File (Imagen) | Fotografía de perfil para la credencial. |
 
 **Estructura del campo `data` (JSON):**
 
 ```json
 {
-  "dni": "60751404",
+  "dni": "78945632",
   "fullName": "Victor Elias Chung Coelho",
-  "dateOfBirth": "1995-10-24T14:30:00Z",
+  "dateOfBirth": "2006-03-07T10:00:00Z",
   "gender": "MASCULINO",
   "bloodType": "O+",
-  "allergies": "Penicilina, Nueces",
+  "allergies": "Penicilina",
+  "statusBadge": "NEUTRAL",
   "faceVector": [
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -205,15 +206,39 @@ Crea una nueva credencial de seguridad (Badge) y la asocia al usuario autenticad
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0
   ],
-  "statusBadge": "NEUTRAL",
-  "guardian": {
-    "dni": "60751404",
-    "name": "Victor Elias Chung",
-    "phone": "+51924781609",
-    "relationship": "PADRE"
-  }
+  "guardians": [
+    {
+      "dni": "12345678",
+      "name": "israel cubas gastulo",
+      "email": "u23271982@gmail.com",
+      "phone": "+51987654321",
+      "relationship": "PADRE"
+    },
+    {
+      "dni": "98765432",
+      "name": "Italo Fabian Vasquez Valderrama",
+      "email": "italofvv1028@gmail.com",
+      "phone": "+51912345678",
+      "relationship": "MADRE"
+    },
+    {
+      "dni": "42345678",
+      "name": "Renzo Sandoval Mio",
+      "email": "renzosa1906@gmail.com",
+      "phone": "+51999888777",
+      "relationship": "TIO"
+    }
+  ]
 }
 ```
+
+**Notas sobre Tutores Legales:**
+
+| Posición | Requerido | Descripción |
+|----------|-----------|-------------|
+| `guardians[0]` | ✅ Sí | Tutor legal principal (representante legal). |
+| `guardians[1]` | ✅ Sí | Segundo tutor legal (contacto auxiliar obligatorio). |
+| `guardians[2]` | ❌ No | Tercer contacto auxiliar (opcional). |
 
 ---
 
