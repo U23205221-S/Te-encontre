@@ -227,10 +227,10 @@ const openRegistro = () => setActionInUrl('registro');
             <Footer className="mt-auto" />
 
             {showModal && (
-                <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/65 p-4 backdrop-blur-sm">
-                    <div className="relative my-auto w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_48px_rgba(0,0,0,0.35)]">
-                        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
-                            <h3 className="text-xl font-bold text-slate-900">Registrar a mi hijo/a</h3>
+                <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-brand-900/35 p-4 backdrop-blur-sm">
+                    <div className="relative my-auto w-full max-w-4xl overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-card">
+                        <div className="flex items-center justify-between border-b border-surface-border bg-surface-muted px-6 py-4">
+                            <h3 className="text-xl font-bold text-text-primary">Registrar a mi hijo/a</h3>
                             <button
                                 type="button"
                                 onClick={closeRegistro}
@@ -240,7 +240,7 @@ const openRegistro = () => setActionInUrl('registro');
                                 ✕
                             </button>
                         </div>
-                        <div className="max-h-[80vh] w-full overflow-y-auto bg-white p-2 md:p-3">
+                        <div className="max-h-[80vh] w-full overflow-y-auto bg-surface-base p-3 md:p-4">
                             <FormularioGafete formRef={formRef} />
                         </div>
                     </div>
@@ -248,10 +248,10 @@ const openRegistro = () => setActionInUrl('registro');
             )}
 
             {showScannerModal && (
-                <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm">
-                    <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_48px_rgba(0,0,0,0.35)]">
-                        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
-                            <h3 className="text-xl font-bold text-slate-900">Escanear gafete QR</h3>
+                <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/35 p-4 backdrop-blur-sm">
+                    <div className="relative w-full max-w-xl overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-card">
+                        <div className="flex items-center justify-between border-b border-surface-border bg-surface-muted px-6 py-4">
+                            <h3 className="text-xl font-bold text-text-primary">Escanear gafete QR</h3>
                             <button
                                 type="button"
                                 onClick={closeScanner}
@@ -261,7 +261,7 @@ const openRegistro = () => setActionInUrl('registro');
                                 ✕
                             </button>
                         </div>
-                        <div className="bg-white p-6">
+                        <div className="bg-surface-base p-6">
                             <ScannerQR />
                         </div>
                     </div>
@@ -269,10 +269,10 @@ const openRegistro = () => setActionInUrl('registro');
             )}
 
             {showReconocimientoModal && (
-                <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm">
-                    <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-slate-200 bg-white shadow-[0_24px_48px_rgba(0,0,0,0.35)]">
-                        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
-                            <h3 className="text-xl font-bold text-slate-900">Buscar por reconocimiento facial</h3>
+                <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/35 p-4 backdrop-blur-sm">
+                    <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-card border border-surface-border bg-surface-card shadow-card">
+                        <div className="flex items-center justify-between border-b border-surface-border bg-surface-muted px-6 py-4">
+                            <h3 className="text-xl font-bold text-text-primary">Buscar por reconocimiento facial</h3>
                             <button
                                 type="button"
                                 onClick={closeReconocimiento}
@@ -282,7 +282,7 @@ const openRegistro = () => setActionInUrl('registro');
                                 ✕
                             </button>
                         </div>
-                        <div className="bg-white p-2 md:p-3">
+                        <div className="bg-surface-base p-3 md:p-4">
                             <PaginaReconocimiento />
                         </div>
                     </div>

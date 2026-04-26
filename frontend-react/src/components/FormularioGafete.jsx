@@ -307,10 +307,10 @@ const FormularioGafete = ({ formRef }) => {
         );
     }
     return (
-        <div ref={formRef} className="mx-auto mb-10 max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
-            <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
-                <h2 className="text-center text-2xl font-bold text-slate-900">Registro integral del menor</h2>
-                <p className="mt-1 text-center text-sm text-slate-600">Generación de gafete QR y registro de reconocimiento facial</p>
+        <div ref={formRef} className="mx-auto mb-10 max-w-3xl overflow-hidden rounded-card border border-surface-border bg-surface-base shadow-card">
+            <div className="border-b border-surface-border bg-surface-muted px-6 py-4">
+                <h2 className="text-center text-2xl font-bold text-text-primary">Registro integral del menor</h2>
+                <p className="mt-1 text-center text-sm text-text-body">Generación de gafete QR y registro de reconocimiento facial</p>
             </div>
             {!modelsLoaded ? (
                 <div className="flex flex-col items-center justify-center space-y-4 p-12">
@@ -321,27 +321,27 @@ const FormularioGafete = ({ formRef }) => {
                 <form onSubmit={handleSubmit} className="space-y-6 p-6 md:p-8">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div className="form-group col-span-1 md:col-span-2">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Nombre completo del niño(a) *</label>
-                            <input required type="text" name="nombreNino" value={formData.nombreNino} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Nombres y Apellidos" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Nombre completo del niño(a) *</label>
+                            <input required type="text" name="nombreNino" value={formData.nombreNino} onChange={handleChange} className="ui-input" placeholder="Nombres y Apellidos" />
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Edad *</label>
-                            <input required type="text" name="edad" value={formData.edad} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Años (ej. 5)" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Edad *</label>
+                            <input required type="text" name="edad" value={formData.edad} onChange={handleChange} className="ui-input" placeholder="Años (ej. 5)" />
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Género *</label>
-                            <select required name="genero" value={formData.genero} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Género *</label>
+                            <select required name="genero" value={formData.genero} onChange={handleChange} className="ui-input">
                                 <option value="MALE">Masculino</option>
                                 <option value="FEMALE">Femenino</option>
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Tipo de sangre *</label>
-                            <input required type="text" name="tipoSangre" value={formData.tipoSangre} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Ej. O+" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Tipo de sangre *</label>
+                            <input required type="text" name="tipoSangre" value={formData.tipoSangre} onChange={handleChange} className="ui-input" placeholder="Ej. O+" />
                         </div>
                         <div className="form-group col-span-1 md:col-span-2">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Condiciones médicas / alergias</label>
-                            <input type="text" name="alergias" value={formData.alergias} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Ninguna, o especificar" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Condiciones médicas / alergias</label>
+                            <input type="text" name="alergias" value={formData.alergias} onChange={handleChange} className="ui-input" placeholder="Ninguna, o especificar" />
                         </div>
                         <div className="form-group col-span-1 md:col-span-2 mt-4">
                             <h3 className="mb-2 border-b border-slate-200 pb-2 font-bold text-slate-900">Contacto de emergencia</h3>
