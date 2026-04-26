@@ -4,10 +4,8 @@ services:
     container_name: postgres-pgvector
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_DB: qr_utp_db
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
+    env_file:
+      - .env # <-- ¡La BD ahora también lee de tu archivo seguro!
     volumes:
       # Volumen para que los datos no se borren si apagas el contenedor
       - postgres_qr_data_volume:/var/lib/postgresql/data
@@ -22,14 +20,20 @@ services:
       - "6379:6379"
     volumes:
       - redis_qr_data_volume:/data
-    # NUEVO: Servidor de correos local para desarrollo
 
-  mailpit:
-    image: axllent/mailpit:latest
-    container_name: mailpit_dev
+  backend-java:
+    build:
+      context: .
+      args:
+        NAME_MICROSERVICE: backend-java
     ports:
-      - "8025:8025" # Interfaz Web: http://localhost:8025 para ver los correos
-      - "1025:1025" # Puerto SMTP: Donde Spring Boot enviará los correos
+      - "8080:8080"
+    env_file:
+      - .env  # Aquí Docker inyecta las variables del archivo que se pasan por privado
+    depends_on:
+      - db
+      - cache_redis_qr
+
 volumes:
   postgres_qr_data_volume:
     name: postgres_data_qr_volume
