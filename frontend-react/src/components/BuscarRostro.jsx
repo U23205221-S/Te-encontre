@@ -278,14 +278,16 @@ const BuscarRostro = () => {
         ipAddress
       };
 
-      // Convert captured photo to File
-      const file = await fetch(capturedPhotoUrl)
-        .then(r => r.blob())
-        .then(blob => new File([blob], `scan-face-${Date.now()}.jpg`, { type: 'image/jpeg' }));
-
+      // Photo is optional - only add if captured
       const formData = new FormData();
       formData.append('data', new Blob([JSON.stringify(scanData)], { type: 'application/json' }));
-      formData.append('file', file);
+      
+      if (capturedPhotoUrl) {
+        const file = await fetch(capturedPhotoUrl)
+          .then(r => r.blob())
+          .then(blob => new File([blob], `scan-face-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+        formData.append('file', file);
+      }
 
       const res = await api.post('/api/v1/badge/scan/face', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -419,14 +421,24 @@ const BuscarRostro = () => {
             {loading ? 'Detectando...' : 'Detectar Rostro'}
           </button>
         ) : !photoCaptured ? (
-          <button
-            onClick={handleCapturePhoto}
-            disabled={loading}
-            className="flex flex-1 items-center justify-center gap-2 rounded-module bg-accent-500 py-3 font-bold text-accent-800 hover:bg-accent-600 disabled:opacity-50"
-          >
-            <Camera size={20} />
-            Tomar Foto
-          </button>
+          <div className="flex flex-1 gap-2">
+            <button
+              onClick={handleCapturePhoto}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 rounded-module bg-accent-500 py-3 font-bold text-accent-800 hover:bg-accent-600 disabled:opacity-50"
+            >
+              <Camera size={20} />
+              Tomar Foto
+            </button>
+            <button
+              onClick={handleSubmitScan}
+              disabled={loading || sendingToBackend || !faceDetected}
+              className="flex-1 flex items-center justify-center gap-2 rounded-module bg-brand-500 py-3 font-bold text-white hover:bg-brand-600 disabled:opacity-50"
+            >
+              {sendingToBackend ? <Loader2 className="animate-spin" size={20} /> : null}
+              {sendingToBackend ? 'Enviando...' : 'Siguiente (sin foto)'}
+            </button>
+          </div>
         ) : (
           <>
             <button
