@@ -1,13 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { LinkIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { LinkIcon, ArrowRightIcon, Camera } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../lib/api';
 
-const resolveScannedUrl = (url, navigate) => {
+const resolveScannedUrl = async (url, navigate) => {
     try {
         const urlObj = new URL(url);
         if (urlObj.pathname.startsWith('/gafete/')) {
-            navigate(urlObj.pathname);
+            const qrCodeUuid = urlObj.pathname.split('/gafete/')[1];
+            
+            // Request geolocation for scan payload
+            let latitude = null;
+            let longitude = null;
+            if (navigator.geolocation) {
+                try {
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000 });
+                    });
+                    latitude = position.coords.latitude;
+                    longitude = position.coords.longitude;
+                } catch (geoErr) {
+                    console.warn('Geolocation denied:', geoErr);
+                }
+            }
+
+            const nameDevice = navigator.userAgent;
+            const ipAddress = '192.0.2.0'; // Placeholder
+
+            const scanData = {
+                qrCodeUuid,
+                latitude,
+                longitude,
+                nameDevice,
+                ipAddress
+            };
+
+            // Check if user wants to add photo (optional)
+            const addPhoto = confirm("¿Deseas agregar una foto del contexto? (Opcional)");
+            let file = null;
+            if (addPhoto) {
+                // In a full impl, we'd show a camera capture UI
+                // For now, we proceed without photo
+                console.log('Photo capture not implemented in this flow');
+            }
+
+            const formData = new FormData();
+            formData.append('data', new Blob([JSON.stringify(scanData)], { type: 'application/json' }));
+            if (file) {
+                formData.append('file', file);
+            }
+
+            const res = await api.post('/api/v1/badge/scan/qr', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            const alertUuid = res.data;
+            window.sessionStorage.setItem('pendingAlertUuid', alertUuid);
+            
+            // Navigate home to show reporter modal
+            navigate('/?action=scanner');
         } else {
             window.location.href = url;
         }

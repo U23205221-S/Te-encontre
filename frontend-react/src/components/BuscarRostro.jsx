@@ -311,20 +311,37 @@ const BuscarRostro = () => {
             </div>
 
             {result && (
-                <div className={`rounded-card border p-5 ${result.found ? 'border-brand-200 bg-brand-50' : 'border-red-200 bg-red-50'}`}>
+                <div className={`rounded-card border p-5 ${
+                    result.requiresReporterStep 
+                        ? 'border-brand-200 bg-brand-50' // Success - needs reporter step
+                        : result.found 
+                            ? 'border-brand-200 bg-brand-50' // Found 
+                            : 'border-red-200 bg-red-50' // Not found / error
+                }`}>
                     <div className="flex items-start gap-3">
-                        {result.found
-                            ? <CheckCircle className="text-brand-300 mt-0.5 flex-shrink-0" size={22} />
-                            : <AlertTriangle className="mt-0.5 flex-shrink-0 text-red-500" size={22} />}
+                        {result.requiresReporterStep 
+                            ? <CheckCircle className="text-brand-500 mt-0.5 flex-shrink-0" size={22} />
+                            : result.found 
+                                ? <CheckCircle className="text-brand-500 mt-0.5 flex-shrink-0" size={22} />
+                                : <AlertTriangle className="mt-0.5 flex-shrink-0 text-red-500" size={22} />}
                         <div className="flex-1">
-                            <p className={`text-sm font-bold ${result.found ? 'text-brand-800' : 'text-red-700'}`}>
+                            <p className={`text-sm font-bold ${
+                                result.requiresReporterStep || result.found 
+                                    ? 'text-brand-800' 
+                                    : 'text-red-700'
+                            }`}>
                                 {result.message}
                             </p>
-                            {result.found && result.childId && (
+                            {(result.found || result.requiresReporterStep) && result.childId && (
                                 <div className="mt-3 space-y-2">
                                     <p className="text-sm text-slate-700"><span className="font-semibold">ID:</span> {result.childId}</p>
                                     {result.distancia && (
                                         <p className="text-xs text-slate-600">Distancia de coincidencia: {result.distancia} (umbral: 0.6)</p>
+                                    )}
+                                    {result.requiresReporterStep && (
+                                        <p className="text-xs text-brand-600 mt-2">
+                                            → Completa los datos del reportante para continuar
+                                        </p>
                                     )}
                                     <Link
                                         to={`/gafete/${result.childId}`}
