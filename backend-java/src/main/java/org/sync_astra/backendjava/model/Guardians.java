@@ -31,7 +31,7 @@ public class Guardians {
     private UUID uuid;
 
     @Convert(converter = DataEncrypt.class)
-    @Column(name = "dni_guardian", nullable = false, unique = true)
+    @Column(name = "dni_guardian", nullable = false)
     private String dni;
 
 

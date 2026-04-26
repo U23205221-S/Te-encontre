@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 "/api/auth/register", // Habilitamos todo lo de auth (register, pre-login, login)
                                 "/api/auth/login",
                                 "/api/auth/refresh",
+                                "/api/v1/badge/scan/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

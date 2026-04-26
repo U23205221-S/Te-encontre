@@ -17,6 +17,7 @@ import org.sync_astra.backendjava.dtos.response.AuthResponseDTO;
 import org.sync_astra.backendjava.jwt.JwtUtil;
 import org.sync_astra.backendjava.mapper.mapperImpl.UserMapper;
 import org.sync_astra.backendjava.model.Users;
+import org.sync_astra.backendjava.service.messaging.ResendEmailService;
 
 import java.util.Collections;
 
@@ -33,6 +34,7 @@ public class AuthService {
     private final RedisAuthService redisAuthService;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserDetailsService userDetailsService;
+    private final ResendEmailService resendEmailService;
 
     /**
      * 1. REGISTRO + AUTO-LOGIN
@@ -60,6 +62,69 @@ public class AuthService {
                 mainUser, null, mainUser.getAuthorities()
         );
 
+        String htmlContent = """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Bienvenido a TE ENCONTRÉ</title>
+                </head>
+                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f7f6; padding: 40px 20px;">
+                        <tr>
+                            <td align="center">
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                                    <tr>
+                                        <td align="center" style="background-color: #2b6cb0; padding: 30px 20px;">
+                                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 1px;">TE ENCONTRÉ</h1>
+                                        </td>
+                                    </tr>
+                
+                                    <tr>
+                                        <td style="padding: 40px 30px; color: #333333;">
+                                            <h2 style="margin-top: 0; color: #2d3748; font-size: 24px;">¡Hola! Bienvenido a la comunidad</h2>
+                                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                                ¡Gracias por registrarte! Nos alegra mucho tenerte con nosotros. Tu cuenta ha sido creada exitosamente.
+                                            </p>
+                                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                                                Con <strong>TE ENCONTRÉ</strong>, tienes en tus manos la herramienta ideal para mantener a tus seres queridos seguros. Ahora puedes crear credenciales (badges), registrar información médica vital y asignar tutores de confianza.
+                                            </p>
+                
+                                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                <tr>
+                                                    <td align="center">
+                                                        <a href="https://tu-dominio.com/login" style="display: inline-block; background-color: #2b6cb0; color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 5px; font-size: 16px; font-weight: bold;">Configurar mi perfil</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                
+                                            <p style="font-size: 16px; line-height: 1.6; margin-top: 30px; margin-bottom: 0;">
+                                                Si tienes alguna duda o necesitas ayuda, no dudes en contactar a nuestro equipo de soporte.
+                                            </p>
+                                        </td>
+                                    </tr>
+                
+                                    <tr>
+                                        <td align="center" style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #e2e8f0;">
+                                            <p style="font-size: 13px; color: #718096; margin: 0;">
+                                                © 2026 TE ENCONTRÉ. Todos los derechos reservados.
+                                            </p>
+                                            <p style="font-size: 13px; color: #718096; margin: 5px 0 0 0;">
+                                                Estás recibiendo este correo porque te registraste en nuestra plataforma.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """;
+
+        resendEmailService.sendEmail(savedUser.getEmail(), "Bienvenido a TE ENCONTRÉ", htmlContent);
+
         // Generamos y devolvemos los tokens
         return generateAndSaveTokens(auth, mainUser.getUsername());
     }
@@ -80,6 +145,86 @@ public class AuthService {
 
         // Generamos y devolvemos los tokens
         assert mainUser != null;
+
+        String htmlContent = """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Nuevo inicio de sesión - TE ENCONTRÉ</title>
+                </head>
+                <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f7f6; padding: 40px 20px;">
+                        <tr>
+                            <td align="center">
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                                    <tr>
+                                        <td align="center" style="background-color: #1a365d; padding: 30px 20px;">
+                                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 1px;">TE ENCONTRÉ</h1>
+                                        </td>
+                                    </tr>
+                
+                                    <tr>
+                                        <td style="padding: 40px 30px; color: #333333;">
+                                            <h2 style="margin-top: 0; color: #2d3748; font-size: 24px;">¡Qué bueno verte de nuevo!</h2>
+                                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                                Hola, te informamos que acabas de iniciar sesión exitosamente en tu cuenta de <strong>TE ENCONTRÉ</strong>.
+                                            </p>
+                
+                                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border-left: 4px solid #2b6cb0; margin-bottom: 25px; border-radius: 4px;">
+                                                <tr>
+                                                    <td style="padding: 15px;">
+                                                        <p style="margin: 0; font-size: 14px; color: #4a5568; line-height: 1.5;">
+                                                            <strong>Detalles del acceso:</strong><br>
+                                                            Fecha y hora: {{fecha_hora}}<br>
+                                                            Navegador/Dispositivo: {{dispositivo}}
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                
+                                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                                                <strong>¿Fuiste tú?</strong><br>
+                                                Si es así, puedes ignorar este correo y seguir navegando tranquilamente.
+                                            </p>
+                
+                                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px; color: #c53030;">
+                                                <strong>¿No reconoces esta actividad?</strong><br>
+                                                Si no iniciaste sesión recientemente, alguien más podría tener acceso a tu cuenta. Por favor, protege tu información cambiando tu contraseña de inmediato.
+                                            </p>
+                
+                                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                <tr>
+                                                    <td align="center">
+                                                        <a href="https://tu-dominio.com/dashboard" style="display: inline-block; background-color: #2b6cb0; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-size: 15px; font-weight: bold; margin-right: 10px;">Ir a mi cuenta</a>
+                
+                                                        <a href="https://tu-dominio.com/cambiar-password" style="display: inline-block; background-color: #ffffff; color: #c53030; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-size: 15px; font-weight: bold; border: 1px solid #c53030;">Cambiar contraseña</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                
+                                    <tr>
+                                        <td align="center" style="background-color: #f8fafc; padding: 20px; border-top: 1px solid #e2e8f0;">
+                                            <p style="font-size: 13px; color: #718096; margin: 0;">
+                                                © 2026 TE ENCONTRÉ. Todos los derechos reservados.
+                                            </p>
+                                            <p style="font-size: 13px; color: #718096; margin: 5px 0 0 0;">
+                                                Este es un mensaje de seguridad automático. Por favor, no respondas a este correo.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """.replace("{{fecha_hora}}", java.time.LocalDateTime.now().toString())
+                .replace("{{dispositivo}}", "Navegador Web (detalles no disponibles)"); // Aquí podrías integrar una librería para detectar el user agent real
+        resendEmailService.sendEmail(mainUser.getEmail(), "Nuevo inicio de sesión en tu cuenta de TE ENCONTRÉ", htmlContent);
         return generateAndSaveTokens(auth, mainUser.getUsername());
     }
 

@@ -18,15 +18,13 @@ public class BadgeResponseDTO {
     // Exponemos el UUID público (seguro) en lugar del ID secuencial interno de la BD
     private UUID uuid;
 
+    private String dni;
     private String fullName;
-    private int age;
+    private Instant dateOfBirth;
     private Gender gender;
     private String bloodType;
     private String allergies;
-    private String emergencyContactName;
-    private String mainEmergencyPhone;
-    private String alternativeEmergencyPhone;
-    private String photo;
+    private String photoUrl;
     private StatusBadge statusBadge;
 
     // Fechas de auditoría útiles para mostrar en el Frontend (Ej: "Registrado el...")

@@ -67,7 +67,7 @@ public class Badge {
 
     @Column(name = "status_badge", length = 50)
     @Enumerated(EnumType.STRING)
-    private StatusBadge statusBadge = StatusBadge.NEUTRAL;
+    private StatusBadge statusBadge;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

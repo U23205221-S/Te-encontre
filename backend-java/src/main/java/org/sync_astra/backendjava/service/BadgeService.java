@@ -10,9 +10,12 @@ import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
 import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
 import org.sync_astra.backendjava.mapper.mapperImpl.BadgeMapper;
+import org.sync_astra.backendjava.mapper.mapperImpl.GuardiansMapper;
 import org.sync_astra.backendjava.model.Badge;
+import org.sync_astra.backendjava.model.Guardians;
 import org.sync_astra.backendjava.model.Users;
 import org.sync_astra.backendjava.repository.BadgeRepository;
+import org.sync_astra.backendjava.repository.GuardiansRepository;
 import org.sync_astra.backendjava.repository.UserRepository;
 import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
 
@@ -36,6 +39,8 @@ public class BadgeService {
     private static final double MATCH_THRESHOLD = 0.6; // Ajustar según precisión del modelo
     // Ruta donde se guardarán las fotos (puedes ajustarla a tu monorepo)
     private final ImageStorageService imageStorageService;
+    private final GuardiansMapper guardiansMapper;
+    private final GuardiansRepository guardiansRepository;
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional
@@ -88,7 +93,7 @@ public class BadgeService {
             // MODIFICACIÓN CRÍTICA: Delegamos el guardado a Cloudinary
             // Esto devolverá una URL pública lista para usarse en React
             String photoUrl = imageStorageService.uploadImage(file, "badges");
-            requestDTO.setPhoto(photoUrl);
+            requestDTO.setPhotoUrl(photoUrl);
 
         } catch (IOException e) {
             // Mantenemos el control de errores similar al que tenías para no romper la respuesta al frontend
@@ -101,7 +106,13 @@ public class BadgeService {
                 .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD")));
         Badge savedBadge = badgeRepository.save(badge);
 
+        Guardians guardian = guardiansMapper.toModel(requestDTO.getGuardian());
+        guardian.setLegalRepresentative(true);
+        guardian.setBadge(savedBadge);
+        guardiansRepository.save(guardian); // Guardamos de nuevo para persistir la relación con el
+
         log.info("Nuevo Badge registrado con éxito en Cloudinary. UUID: {}", savedBadge.getUuid());
+        log.info("Guardian asociado(UUID:{}): {} ({}), relación: {}", guardian.getUuid(), guardian.getName(), guardian.getDni(), guardian.getRelationship());
         return badgeMapper.toDTO(savedBadge);
     }
 }

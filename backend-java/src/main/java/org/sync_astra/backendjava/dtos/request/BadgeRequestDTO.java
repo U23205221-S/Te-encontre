@@ -5,7 +5,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.sync_astra.backendjava.model.Categories.Gender;
+import org.sync_astra.backendjava.model.Categories.RelationShip;
 import org.sync_astra.backendjava.model.Categories.StatusBadge;
+
+import java.time.Instant;
 
 @Data
 @Builder
@@ -14,18 +17,20 @@ import org.sync_astra.backendjava.model.Categories.StatusBadge;
 public class BadgeRequestDTO {
     // Se omiten id, uuid, createdAt y updatedAt porque los genera el Backend/Base de datos.
 
+    private String dni;
     private String fullName;
-    private int age;
+    private Instant dateOfBirth;
     private Gender gender;
     private String bloodType;
     private String allergies;
-    private String emergencyContactName;
-    private String mainEmergencyPhone;
-    private String alternativeEmergencyPhone;
-    private String photo;
-    private StatusBadge statusBadge;
-
+    private String photoUrl;
     // Lo pedimos en el request asumiendo que al crear el usuario,
     // el frontend/Python te enviará el vector generado para guardarlo.
     private float[] faceVector;
+    private StatusBadge statusBadge;
+
+
+    //Comenzamos con los atributos de Entidad Guardianship
+    //Opcional al modificar el badge, pero lo dejamos para que se pueda modificar el tutor legal.
+    private GuardiansRequestDTO guardian;
 }

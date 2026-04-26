@@ -13,6 +13,7 @@ public class MainUser extends User {
 
     // Campos extra extraídos directamente de tu entidad Users actual
     private final UUID uuid;
+    private final String email;
 
     public MainUser(String username,
                     String password,
@@ -21,12 +22,14 @@ public class MainUser extends User {
                     boolean credentialsNonExpired,
                     boolean accountNonLocked,
                     Collection<? extends GrantedAuthority> authorities,
-                    UUID uuid) {
+                    UUID uuid,
+                    String email) {
 
         // Spring Security usará el 'username' como el identificador principal de la sesión
         super(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
 
         this.uuid = uuid;
+        this.email = email;
     }
 
     public static MainUser build(Users user, Collection<? extends GrantedAuthority> authorities) {
@@ -52,7 +55,8 @@ public class MainUser extends User {
                 authorities,
 
                 // 5. Campos personalizados para tener disponibles en sesión / JWT
-                user.getUuid()
+                user.getUuid(),
+                user.getEmail() // <-- Aunque no se use para login, lo incluimos para tenerlo en el JWT y en la sesión
         );
     }
 }
