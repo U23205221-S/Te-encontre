@@ -17,15 +17,13 @@ import org.sync_astra.backendjava.repository.BadgeRepository;
 import org.sync_astra.backendjava.repository.GuardiansRepository;
 import org.sync_astra.backendjava.repository.UserRepository;
 import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
-import org.sync_astra.backendjava.service.messaging.ResendEmailService;
+import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
+import org.sync_astra.backendjava.service.email.ResendEmailService;
 
 
 import java.io.IOException;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
 @Service
 @Slf4j
@@ -40,7 +38,7 @@ public class BadgeService {
     private final ImageStorageService imageStorageService;
     private final GuardiansMapper guardiansMapper;
     private final GuardiansRepository guardiansRepository;
-    private final ResendEmailService resendEmailService;
+    private final EmailOrchestratorService emailOrchestratorService;
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional
@@ -118,7 +116,7 @@ public class BadgeService {
         for (Guardians guardian : savedBadge.getGuardians()) {
             String htmlContent = buildEmailTemplate(guardian, savedBadge, urlPerfil);
 
-            resendEmailService.sendEmail(guardian.getEmail(), "Nuevo Registro... TE ENCONTRÉ", htmlContent);
+            emailOrchestratorService.sendManageEmail("GUARDIANS",guardian.getUuid(),guardian.getEmail(), "Nuevo Registro... TE ENCONTRÉ", htmlContent);
         }
 
         log.info("Nuevo Badge registrado con éxito en Cloudinary. UUID: {}", savedBadge.getUuid());

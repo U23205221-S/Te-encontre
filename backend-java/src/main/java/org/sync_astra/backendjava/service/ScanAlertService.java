@@ -17,15 +17,13 @@ import org.sync_astra.backendjava.mapper.mapperImpl.ScanAlertMapper;
 import org.sync_astra.backendjava.model.Badge;
 import org.sync_astra.backendjava.model.Guardians;
 import org.sync_astra.backendjava.model.ScanAlert;
-import org.sync_astra.backendjava.model.Users;
 import org.sync_astra.backendjava.repository.ScanAlertRepository;
 import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
-import org.sync_astra.backendjava.service.messaging.ResendEmailService;
+import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
+import org.sync_astra.backendjava.service.email.ResendEmailService;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 public class ScanAlertService {
 
     private final ScanAlertRepository scanAlertRepository;
-    private final ResendEmailService resendEmailService;
+    private final EmailOrchestratorService emailOrchestratorService;
     private final ScanAlertMapper scanAlertMapper;
     private final ImageStorageService imageStorageService;
     private final BadgeMapper badgeMapper;
@@ -173,7 +171,7 @@ public class ScanAlertService {
             // Creamos una copia final del HTML reemplazando específicamente el nombre de este guardián
             String finalHtmlContent = baseHtmlContent.replace("{{nombre_apoderado}}", nombreApoderado);
 
-            resendEmailService.sendEmail(guardian.getEmail(), subject, finalHtmlContent);
+            emailOrchestratorService.sendManageEmail("GUARDIANS",guardian.getUuid(),guardian.getEmail(), subject, finalHtmlContent);
         }
 
         return alert.getUuid();
@@ -271,7 +269,7 @@ public class ScanAlertService {
                         .replace("{{dni_reportante}}", dniReportante)
                         .replace("{{telefono_reportante}}", telefonoReportante);
 
-                resendEmailService.sendEmail(guardian.getEmail(), subject, htmlContent);
+                emailOrchestratorService.sendManageEmail("GUARDIANS",guardian.getUuid(),guardian.getEmail(), subject, htmlContent);
             }
         }
 

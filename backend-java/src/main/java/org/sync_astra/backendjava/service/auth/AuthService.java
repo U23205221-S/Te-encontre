@@ -17,7 +17,8 @@ import org.sync_astra.backendjava.dtos.response.AuthResponseDTO;
 import org.sync_astra.backendjava.jwt.JwtUtil;
 import org.sync_astra.backendjava.mapper.mapperImpl.UserMapper;
 import org.sync_astra.backendjava.model.Users;
-import org.sync_astra.backendjava.service.messaging.ResendEmailService;
+import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
+import org.sync_astra.backendjava.service.email.ResendEmailService;
 
 import java.util.Collections;
 
@@ -34,7 +35,7 @@ public class AuthService {
     private final RedisAuthService redisAuthService;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserDetailsService userDetailsService;
-    private final ResendEmailService resendEmailService;
+    private final EmailOrchestratorService emailOrchestratorService;
 
     /**
      * 1. REGISTRO + AUTO-LOGIN
@@ -114,7 +115,7 @@ public class AuthService {
         </html>
         """;
 
-        resendEmailService.sendEmail(savedUser.getEmail(), "Bienvenido a TE ENCONTRÉ", htmlContent);
+        emailOrchestratorService.sendManageEmail("USERS",savedUser.getUuid(),savedUser.getEmail(), "Bienvenido a TE ENCONTRÉ", htmlContent);
 
         // Generamos y devolvemos los tokens
         return generateAndSaveTokens(auth, mainUser.getUsername());
@@ -205,7 +206,7 @@ public class AuthService {
         </html>
         """.replace("{{fecha_hora}}", java.time.LocalDateTime.now().toString())
                 .replace("{{dispositivo}}", "Navegador Web (detalles no disponibles)"); // Aquí podrías integrar una librería para detectar el user agent real
-        resendEmailService.sendEmail(mainUser.getEmail(), "Nuevo inicio de sesión en tu cuenta de TE ENCONTRÉ", htmlContent);
+        emailOrchestratorService.sendManageEmail("USERS",mainUser.getUuid(),mainUser.getEmail(), "Nuevo inicio de sesión en tu cuenta de TE ENCONTRÉ", htmlContent);
         return generateAndSaveTokens(auth, mainUser.getUsername());
     }
 
