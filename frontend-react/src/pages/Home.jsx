@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FormularioGafete from '../components/FormularioGafete';
 import PaginaReconocimiento from './PaginaReconocimiento';
 import ScannerQR from '../components/ScannerQR';
 import Footer from '../components/Footer';
+import ReporterStepModal from '../components/ReporterStepModal';
 import heroImage from '../assets/figma-redesign/hero-image.png';
 import shieldIcon from '../assets/figma-redesign/shield-icon.svg';
 import shieldCheckIcon from '../assets/figma-redesign/shield-check-icon.svg';
@@ -22,10 +23,30 @@ const Home = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { sessionUser } = useAuth();
+    const [pendingReporterAlert, setPendingReporterAlert] = useState(null);
+    const [reporterBadgeData, setReporterBadgeData] = useState(null);
     const action = new URLSearchParams(location.search).get('action');
     const showModal = action === 'registro';
     const showReconocimientoModal = action === 'reconocimiento';
     const showScannerModal = action === 'scanner';
+
+    // Check for pending reporter step on mount
+    useEffect(() => {
+        const pendingUuid = window.sessionStorage.getItem('pendingAlertUuid');
+        if (pendingUuid) {
+            setPendingReporterAlert(pendingUuid);
+        }
+    }, []);
+
+    const handleReporterSuccess = (badgeData) => {
+        setReporterBadgeData(badgeData);
+        setPendingReporterAlert(null);
+    };
+
+    const closeReporterModal = () => {
+        window.sessionStorage.removeItem('pendingAlertUuid');
+        setPendingReporterAlert(null);
+    };
 
     useEffect(() => {
         if ((showModal || showReconocimientoModal || showScannerModal) && !sessionUser) {
@@ -285,6 +306,34 @@ const openRegistro = () => setActionInUrl('registro');
                         <div className="bg-surface-base p-3 md:p-4">
                             <PaginaReconocimiento />
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reporter Step Modal - 2nd step after scan */}
+            {pendingReporterAlert && (
+                <ReporterStepModal
+                    alertUuid={pendingReporterAlert}
+                    onClose={closeReporterModal}
+                    onSuccess={handleReporterSuccess}
+                />
+            )}
+
+            {/* Badge Data Display after reporter step */}
+            {reporterBadgeData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/35 p-4 backdrop-blur-sm">
+                    <div className="relative w-full max-w-lg overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-card p-6">
+                        <h3 className="mb-4 text-xl font-bold text-text-primary">Datos del niño/a</h3>
+                        <pre className="text-sm text-text-body overflow-auto max-h-[60vh]">
+                            {JSON.stringify(reporterBadgeData, null, 2)}
+                        </pre>
+                        <button
+                            type="button"
+                            onClick={() => setReporterBadgeData(null)}
+                            className="ui-btn-primary w-full mt-4"
+                        >
+                            Cerrar
+                        </button>
                     </div>
                 </div>
             )}
