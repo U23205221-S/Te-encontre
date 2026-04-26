@@ -239,13 +239,13 @@ const BuscarRostro = () => {
   };
 
     return (
-        <div className="space-y-6 text-slate-700">
-            <p className="text-sm text-slate-600">
+        <div className="space-y-6 text-text-body">
+            <p className="text-sm text-text-body">
                 Enciende la cámara, apunta al niño encontrado y presiona <strong>"Escanear"</strong>.
                 El sistema buscará una coincidencia entre los niños desaparecidos registrados.
             </p>
 
-            <div className={`relative flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-900 transition-all duration-300 ${cameraOn ? 'h-[65vh] md:h-[70vh]' : 'aspect-video'}`}>
+            <div className={`relative flex items-center justify-center overflow-hidden rounded-card border border-surface-border bg-slate-900 transition-all duration-300 ${cameraOn ? 'h-[65vh] md:h-[70vh]' : 'aspect-video'}`}>
                 <video
                     ref={videoRef}
                     autoPlay muted playsInline
@@ -276,7 +276,7 @@ const BuscarRostro = () => {
             </div>
 
             {result && (
-                <div className={`rounded-xl border p-5 ${result.found ? 'border-brand-200 bg-brand-50' : 'border-red-200 bg-red-50'}`}>
+                <div className={`rounded-card border p-5 ${result.found ? 'border-brand-200 bg-brand-50' : 'border-red-200 bg-red-50'}`}>
                     <div className="flex items-start gap-3">
                         {result.found
                             ? <CheckCircle className="text-brand-300 mt-0.5 flex-shrink-0" size={22} />
@@ -293,7 +293,7 @@ const BuscarRostro = () => {
                                     )}
                                     <Link
                                         to={`/gafete/${result.childId}`}
-                                        className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-brand-700 text-white rounded-lg text-sm font-bold hover:bg-brand-600 transition"
+                                        className="mt-2 inline-flex items-center gap-2 rounded-module bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-600"
                                     >
                                         <ExternalLink size={16} />
                                         Ver datos del gafete
@@ -313,7 +313,7 @@ const BuscarRostro = () => {
         <button
           onClick={startCamera}
           disabled={!modelsLoaded}
-          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-700 py-3 font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex flex-1 items-center justify-center gap-2 rounded-module bg-brand-500 py-3 font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Camera size={20} />
           {modelsLoaded ? 'Encender cámara' : 'Cargando modelos...'}
@@ -323,14 +323,14 @@ const BuscarRostro = () => {
           <button
             onClick={handleScan}
             disabled={loading}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent-500 py-3 font-bold text-slate-950 hover:bg-accent-400 disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-module bg-accent-500 py-3 font-bold text-accent-800 hover:bg-accent-600 disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Search size={20} />}
             {loading ? 'Procesando...' : 'Escanear rostro'}
           </button>
           <button
             onClick={stopCamera}
-            className="rounded-lg border border-slate-300 px-6 py-3 font-medium text-slate-700 hover:bg-slate-100"
+            className="rounded-module border border-surface-border bg-surface-base px-6 py-3 font-medium text-text-body hover:bg-surface-muted"
           >
             Cancelar
           </button>

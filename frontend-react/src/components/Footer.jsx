@@ -15,11 +15,11 @@ const footerActions = [
 
 const Footer = ({ className = '' }) => {
   return (
-    <footer className={`border-t border-brand-200/15 bg-surface-base ${className}`}>
+    <footer className={`border-t border-surface-border bg-surface-base ${className}`}>
       <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-8 px-6 py-12 text-center md:flex-row md:px-8 md:text-left">
         <div className="space-y-2">
-          <p className="text-lg font-bold text-brand-200">¡ Te encontré !</p>
-          <p className="text-sm text-slate-300">© 2026 ¡ Te encontré !. Protegemos lo que más importa.</p>
+          <p className="text-lg font-bold text-brand-500">¡ Te encontré !</p>
+          <p className="text-sm text-text-body">© 2026 ¡ Te encontré !. Protegemos lo que más importa.</p>
         </div>
 
         <nav aria-label="Enlaces legales" className="w-full md:w-auto">
@@ -28,7 +28,7 @@ const Footer = ({ className = '' }) => {
               <li key={link.label}>
                 <Link
                   to={link.to}
-                  className="text-slate-300/85 transition-colors hover:text-slate-100"
+                  className="text-text-body transition-colors hover:text-brand-500"
                 >
                   {link.label}
                 </Link>
@@ -46,7 +46,7 @@ const Footer = ({ className = '' }) => {
                 key={action.label}
                 type="button"
                 aria-label={action.label}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-soft text-slate-200 transition-colors hover:bg-brand-800 hover:text-brand-100"
+                className="flex h-10 w-10 items-center justify-center rounded-pill border border-surface-border bg-surface-soft text-brand-500 transition-colors hover:bg-surface-muted hover:text-brand-600"
               >
                 <Icon size={18} aria-hidden="true" />
               </button>

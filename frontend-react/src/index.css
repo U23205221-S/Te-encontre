@@ -1,11 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   --header-height: 5rem;
   --hero-block-padding: clamp(4.5rem, 11vh, 7.75rem);
 }
@@ -16,11 +16,11 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Manrope', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: rgb(6 11 22 / 1);
-  color: rgb(226 232 240 / 1);
+  background-color: #FFFFFF;
+  color: #434653;
   line-height: 1.5;
 }
 
@@ -30,8 +30,9 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Manrope', 'Inter', sans-serif;
+  font-family: 'Manrope', sans-serif;
   letter-spacing: -0.01em;
+  color: #00327D;
 }
 
 #root {
@@ -53,29 +54,37 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid rgb(255 152 0 / 1);
+  outline: 2px solid #00327D;
   outline-offset: 2px;
 }
 
 @layer components {
   .ui-card {
-    @apply rounded-3xl border border-brand-200/15 bg-surface-card shadow-[0_24px_48px_rgba(0,0,0,0.35)];
+    @apply rounded-card border border-surface-border bg-surface-card shadow-card;
   }
 
   .ui-input {
-    @apply w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 placeholder:text-slate-500 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30;
+    @apply w-full rounded-module border border-surface-border bg-surface-muted px-4 py-2 text-text-body placeholder:text-text-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30;
   }
 
   .ui-btn-primary {
-    @apply inline-flex items-center justify-center rounded-xl bg-accent-500 px-6 py-3 font-bold text-slate-950 shadow-sm hover:bg-accent-400 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-pill bg-accent-500 px-8 py-4 text-sm font-bold tracking-wide text-accent-800 shadow-sm hover:bg-accent-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .ui-btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-brand-200/20 bg-surface-soft px-6 py-3 font-semibold text-slate-200 hover:border-brand-200/30 hover:bg-brand-900 active:scale-[0.99];
+    @apply inline-flex items-center justify-center rounded-pill border border-surface-border bg-brand-500 px-8 py-4 text-sm font-bold tracking-wide text-white hover:bg-brand-600 active:scale-[0.99];
+  }
+
+  .ui-btn-emergency {
+    @apply inline-flex items-center justify-center gap-3 rounded-card border border-emergency-light bg-emergency px-8 py-4 text-lg font-normal text-white shadow-emergency hover:bg-emergency-dark active:scale-[0.99];
+  }
+
+  .ui-btn-teal {
+    @apply inline-flex items-center justify-between rounded-module bg-teal-50 px-4 py-3 text-sm font-bold text-teal-300 hover:bg-teal-200/30;
   }
 
   .ui-glass {
-    @apply border border-brand-200/15 bg-brand-900/70 backdrop-blur-2xl;
+    @apply rounded-card border border-white/20 bg-white/80 shadow-module backdrop-blur-[24px];
   }
 
   .ui-modal-close {
@@ -83,20 +92,19 @@ select:focus-visible {
   }
 
   .ui-muted-copy {
-    @apply text-slate-300;
+    @apply text-text-body;
   }
 
   .ui-status-badge {
-    @apply inline-flex items-center gap-2 rounded-full border border-brand-200/20 bg-surface-soft px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-300;
+    @apply inline-flex items-center gap-2 rounded-pill bg-brand-50/30 px-3 py-1 text-sm font-bold tracking-wide text-brand-500;
   }
 
   .ui-header-height {
     height: var(--header-height);
   }
 
-.ui-viewport-section {
-    min-height: calc(100svh - var(--header-height));
-    min-height: calc(100dvh - var(--header-height));
+  .ui-viewport-section {
+    min-height: auto;
   }
 
   .ui-hero-section {
@@ -106,12 +114,6 @@ select:focus-visible {
 
 .ui-home-scroll-section {
   scroll-margin-top: var(--header-height);
-}
-
-@media (min-width: 1024px) {
-  .ui-viewport-section {
-    height: calc(100dvh - var(--header-height));
-  }
 }
 
 code {

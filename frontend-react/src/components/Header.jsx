@@ -47,11 +47,11 @@ const Header = ({ sessionUser, onLogout }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-brand-900/80 text-slate-100 shadow-[0_24px_48px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-surface-border bg-white/95 text-text-primary shadow-card backdrop-blur-xl">
       <div className="ui-header-height relative flex w-full items-center px-3 md:px-4 lg:px-5">
         <Link to="/" className="inline-flex h-10 items-center gap-2.5 transition-opacity hover:opacity-90" aria-label="Inicio CodeQR Alerta">
-          <ShieldAlert size={24} className="text-brand-200" aria-hidden="true" />
-          <span className="inline-flex items-baseline gap-1 text-xl font-extrabold tracking-tight text-brand-200 md:text-[1.4rem] md:leading-none">
+          <ShieldAlert size={24} className="text-brand-500" aria-hidden="true" />
+          <span className="inline-flex items-baseline gap-1 text-xl font-extrabold tracking-tight text-brand-500 md:text-[1.4rem] md:leading-none">
             ¡ Te encontré !
           </span>
         </Link>
@@ -71,9 +71,9 @@ const Header = ({ sessionUser, onLogout }) => {
                     to={item.to}
                     className={`inline-flex items-center border-b-2 pb-1 text-[0.95rem] transition-colors duration-300 ${
                       isActive
-                        ? 'border-accent-300 text-accent-300'
-                        : 'border-transparent text-slate-300 hover:text-brand-200'
-                    }`}
+                        ? 'border-accent-500 text-accent-700'
+                        : 'border-transparent text-text-body hover:text-brand-500'
+                     }`}
                     aria-current={isActive ? 'page' : undefined}
                   >
                     {item.label}
@@ -88,13 +88,13 @@ const Header = ({ sessionUser, onLogout }) => {
           <div className="hidden items-center gap-3 md:flex">
             {isLoggedIn ? (
               <>
-                <span className="inline-flex items-center rounded-full border border-brand-200/20 bg-surface-soft px-3 py-1 text-xs font-semibold text-slate-200">
+                <span className="inline-flex items-center rounded-pill border border-surface-border bg-surface-soft px-3 py-1 text-xs font-semibold text-text-body">
                   {sessionUser.fullName}
                 </span>
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="inline-flex items-center rounded-lg border border-brand-200/20 bg-surface-soft px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-brand-800"
+                  className="inline-flex items-center rounded-module border border-surface-border bg-surface-soft px-4 py-2 text-sm font-semibold text-text-body hover:bg-surface-muted"
                   aria-label="Cerrar sesión"
                 >
                   Cerrar sesión
@@ -104,14 +104,14 @@ const Header = ({ sessionUser, onLogout }) => {
               <>
                 <Link
                   to="/login"
-                  className="inline-flex items-center px-2 py-2 text-sm font-semibold text-slate-300 hover:text-slate-100"
+                  className="inline-flex items-center rounded-module border border-surface-border bg-surface-soft px-4 py-2 text-sm font-semibold text-text-body hover:bg-surface-muted hover:text-brand-500"
                   aria-label="Acceder a una cuenta"
                 >
-                  Acceder
+                  Iniciar sesión
                 </Link>
                 <Link
                   to="/registro"
-                  className="inline-flex items-center rounded-xl bg-accent-500 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-accent-400"
+                  className="inline-flex items-center rounded-pill bg-accent-500 px-4 py-2 text-sm font-bold text-accent-800 hover:bg-accent-600"
                   aria-label="Registrar una cuenta"
                 >
                   Registrar ahora
@@ -122,7 +122,7 @@ const Header = ({ sessionUser, onLogout }) => {
 
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-lg border border-brand-200/20 bg-surface-soft p-2 text-slate-100 transition-colors hover:bg-brand-800 md:hidden"
+            className="inline-flex items-center justify-center rounded-module border border-surface-border bg-surface-soft p-2 text-brand-500 transition-colors hover:bg-surface-muted md:hidden"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'}
             aria-expanded={isMenuOpen}
@@ -136,7 +136,7 @@ const Header = ({ sessionUser, onLogout }) => {
       <nav
         id="main-navigation"
         aria-label="Accesos rápidos"
-        className={`overflow-hidden border-t border-brand-200/15 bg-brand-900/95 transition-all duration-300 ease-out md:hidden ${
+        className={`overflow-hidden border-t border-surface-border bg-white transition-all duration-300 ease-out md:hidden ${
           isMenuOpen ? 'max-h-96 translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
         }`}
       >
@@ -152,9 +152,9 @@ const Header = ({ sessionUser, onLogout }) => {
                     onClick={() => setIsMenuOpen(false)}
                     className={`inline-flex w-full items-center rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
                       isActive
-                        ? 'border-accent-400 bg-accent-500 text-slate-950 shadow-sm'
-                        : 'border-brand-200/15 bg-surface-soft text-slate-200 hover:border-brand-200/30 hover:bg-brand-800 hover:text-slate-100'
-                    }`}
+                        ? 'border-accent-500 bg-accent-500 text-accent-800 shadow-sm'
+                        : 'border-surface-border bg-surface-soft text-text-body hover:bg-surface-muted hover:text-brand-500'
+                     }`}
                     aria-current={isActive ? 'page' : undefined}
                   >
                     {item.label}
@@ -164,10 +164,10 @@ const Header = ({ sessionUser, onLogout }) => {
             })}
           </ul>
 
-          <div className="mt-4 grid grid-cols-1 gap-2 border-t border-brand-200/15 pt-4">
+          <div className="mt-4 grid grid-cols-1 gap-2 border-t border-surface-border pt-4">
             {isLoggedIn ? (
               <>
-                <p className="rounded-lg border border-brand-200/20 bg-surface-soft px-3 py-2 text-sm font-semibold text-slate-200">
+                <p className="rounded-module border border-surface-border bg-surface-soft px-3 py-2 text-sm font-semibold text-text-body">
                   Sesión iniciada: {sessionUser.fullName}
                 </p>
                 <button
@@ -176,7 +176,7 @@ const Header = ({ sessionUser, onLogout }) => {
                     onLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-brand-200/20 bg-surface-soft px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-brand-800"
+                  className="inline-flex w-full items-center justify-center rounded-module border border-surface-border bg-surface-soft px-4 py-3 text-sm font-semibold text-text-body hover:bg-surface-muted"
                   aria-label="Cerrar sesión"
                 >
                   Cerrar sesión
@@ -187,15 +187,15 @@ const Header = ({ sessionUser, onLogout }) => {
                 <Link
                   to="/login"
                   onClick={() => setIsMenuOpen(false)}
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-brand-200/20 bg-surface-soft px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-brand-800"
+                  className="inline-flex w-full items-center justify-center rounded-module border border-surface-border bg-surface-soft px-4 py-3 text-sm font-semibold text-text-body hover:bg-surface-muted"
                   aria-label="Acceder a una cuenta"
                 >
-                  Acceder
+                  Iniciar sesión
                 </Link>
                 <Link
                   to="/registro"
                   onClick={() => setIsMenuOpen(false)}
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-accent-500 px-4 py-3 text-sm font-bold text-slate-950 hover:bg-accent-400"
+                  className="inline-flex w-full items-center justify-center rounded-pill bg-accent-500 px-4 py-3 text-sm font-bold text-accent-800 hover:bg-accent-600"
                   aria-label="Registrar una cuenta"
                 >
                   Registrar ahora

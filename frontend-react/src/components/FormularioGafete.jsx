@@ -281,18 +281,18 @@ const FormularioGafete = ({ formRef }) => {
     if (gafete) {
         const urlGafete = `${window.location.origin}/gafete/${gafete.uuid}`;
         return (
-            <div className="mx-auto mb-10 max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-700">
-                <h2 className="mb-4 text-2xl font-bold text-slate-900">Registro completo!</h2>
+            <div className="mx-auto mb-10 max-w-2xl rounded-card border border-surface-border bg-surface-base p-8 text-center text-text-body shadow-card">
+                <h2 className="mb-4 text-2xl font-bold text-text-primary">Registro completo!</h2>
                 <div className="mb-6 rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-brand-800">
                     Los datos del nio/a se han guardado correctamente. Se ha generado su gafete QR y su rostro est listo para ser reconocido en caso de emergencia.
                 </div>
-                <p className="mb-4 text-slate-600">Imprime este cdigo QR o descrgalo para usarlo como gafete, pulsera, o etiqueta en la ropa de tu hijo/a.</p>
-                <div className="mx-auto mb-6 flex max-w-sm flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4">
+                <p className="mb-4 text-text-body">Imprime este cdigo QR o descrgalo para usarlo como gafete, pulsera, o etiqueta en la ropa de tu hijo/a.</p>
+                <div className="mx-auto mb-6 flex max-w-sm flex-col items-center justify-center rounded-card border border-surface-border bg-surface-base p-4">
                     <QRGenerado url={urlGafete} id={`qr-gafete-${gafete.uuid}`} />
                 </div>
                 <div className="mb-6 mt-4 rounded-lg border border-brand-200 bg-brand-50 p-4 text-left">
                     <p className="mb-2 font-semibold text-brand-800">Enlace del gafete (redirección QR):</p>
-                    <a href={urlGafete} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 break-all text-brand-700 hover:text-brand-600 hover:underline">
+                    <a href={urlGafete} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 break-all text-brand-600 hover:text-brand-500 hover:underline">
                         <LinkIcon size={16} /> {urlGafete}
                     </a>
                 </div>
@@ -307,76 +307,76 @@ const FormularioGafete = ({ formRef }) => {
         );
     }
     return (
-        <div ref={formRef} className="mx-auto mb-10 max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
-            <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
-                <h2 className="text-center text-2xl font-bold text-slate-900">Registro integral del menor</h2>
-                <p className="mt-1 text-center text-sm text-slate-600">Generación de gafete QR y registro de reconocimiento facial</p>
+        <div ref={formRef} className="mx-auto mb-10 max-w-3xl overflow-hidden rounded-card border border-surface-border bg-surface-base shadow-card">
+            <div className="border-b border-surface-border bg-surface-muted px-6 py-4">
+                <h2 className="text-center text-2xl font-bold text-text-primary">Registro integral del menor</h2>
+                <p className="mt-1 text-center text-sm text-text-body">Generación de gafete QR y registro de reconocimiento facial</p>
             </div>
             {!modelsLoaded ? (
                 <div className="flex flex-col items-center justify-center space-y-4 p-12">
                     <Loader2 className="animate-spin text-accent-500" size={48} />
-                    <p className="text-slate-600">Cargando modelos de Inteligencia Artificial...</p>
+                    <p className="text-text-body">Cargando modelos de Inteligencia Artificial...</p>
                 </div>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-6 p-6 md:p-8">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div className="form-group col-span-1 md:col-span-2">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Nombre completo del niño(a) *</label>
-                            <input required type="text" name="nombreNino" value={formData.nombreNino} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Nombres y Apellidos" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Nombre completo del niño(a) *</label>
+                            <input required type="text" name="nombreNino" value={formData.nombreNino} onChange={handleChange} className="ui-input" placeholder="Nombres y Apellidos" />
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Edad *</label>
-                            <input required type="text" name="edad" value={formData.edad} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Años (ej. 5)" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Edad *</label>
+                            <input required type="text" name="edad" value={formData.edad} onChange={handleChange} className="ui-input" placeholder="Años (ej. 5)" />
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Género *</label>
-                            <select required name="genero" value={formData.genero} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Género *</label>
+                            <select required name="genero" value={formData.genero} onChange={handleChange} className="ui-input">
                                 <option value="MALE">Masculino</option>
                                 <option value="FEMALE">Femenino</option>
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Tipo de sangre *</label>
-                            <input required type="text" name="tipoSangre" value={formData.tipoSangre} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Ej. O+" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Tipo de sangre *</label>
+                            <input required type="text" name="tipoSangre" value={formData.tipoSangre} onChange={handleChange} className="ui-input" placeholder="Ej. O+" />
                         </div>
                         <div className="form-group col-span-1 md:col-span-2">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Condiciones médicas / alergias</label>
-                            <input type="text" name="alergias" value={formData.alergias} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Ninguna, o especificar" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Condiciones médicas / alergias</label>
+                            <input type="text" name="alergias" value={formData.alergias} onChange={handleChange} className="ui-input" placeholder="Ninguna, o especificar" />
                         </div>
                         <div className="form-group col-span-1 md:col-span-2 mt-4">
-                            <h3 className="mb-2 border-b border-slate-200 pb-2 font-bold text-slate-900">Contacto de emergencia</h3>
+                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">Contacto de emergencia</h3>
                         </div>
                         <div className="form-group col-span-1 md:col-span-2">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Nombre del padre/madre/tutor *</label>
-                            <input required type="text" name="nombrePadre" value={formData.nombrePadre} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Nombre del padre/madre/tutor *</label>
+                            <input required type="text" name="nombrePadre" value={formData.nombrePadre} onChange={handleChange} className="ui-input" />
                         </div>
                         <div className="form-group col-span-1 md:col-span-2">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Correo electrónico del padre/madre/tutor *</label>
-                            <input required type="email" name="correoPadre" value={formData.correoPadre} onChange={handleChange} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="ejemplo@correo.com" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Correo electrónico del padre/madre/tutor *</label>
+                            <input required type="email" name="correoPadre" value={formData.correoPadre} onChange={handleChange} className="ui-input" placeholder="ejemplo@correo.com" />
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Teléfono principal *</label>
-                            <input required type="text" name="telefonoPrincipal" value={formData.telefonoPrincipal} onChange={handleChange} maxLength={9} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Solo 9 dígitos" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Teléfono principal *</label>
+                            <input required type="text" name="telefonoPrincipal" value={formData.telefonoPrincipal} onChange={handleChange} maxLength={9} className="ui-input" placeholder="Solo 9 dígitos" />
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-slate-700">Teléfono alternativo</label>
-                            <input type="text" name="telefonoAlternativo" value={formData.telefonoAlternativo} onChange={handleChange} maxLength={9} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-800 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20" placeholder="Solo 9 dígitos" />
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Teléfono alternativo</label>
+                            <input type="text" name="telefonoAlternativo" value={formData.telefonoAlternativo} onChange={handleChange} maxLength={9} className="ui-input" placeholder="Solo 9 dígitos" />
                         </div>
                         {/* FOTO ESTATICA */}
                         <div className="form-group col-span-1 md:col-span-2 mt-4">
-                            <h3 className="mb-2 border-b border-slate-200 pb-2 font-bold text-slate-900">1. Foto del menor</h3>
-                            <p className="mb-3 text-sm text-slate-600">Sube una fotografía. Esta imagen será mostrada a la persona que escanee el código QR para que pueda identificar visualmente al niño/a.</p>
-                            <input required type="file" onChange={handleFileChange} accept="image/*" className="w-full cursor-pointer rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2 text-slate-700 hover:border-slate-400 hover:bg-slate-100" />
+                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">1. Foto del menor</h3>
+                            <p className="mb-3 text-sm text-text-body">Sube una fotografía. Esta imagen será mostrada a la persona que escanee el código QR para que pueda identificar visualmente al niño/a.</p>
+                            <input required type="file" onChange={handleFileChange} accept="image/*" className="w-full cursor-pointer rounded-module border border-dashed border-surface-border bg-surface-muted p-2 text-text-body hover:bg-surface-soft" />
                             {preview && (
                                 <div className="mt-4 flex flex-col items-center">
-                                    <img src={preview} alt="Vista previa" className="h-40 object-cover rounded-lg shadow-sm" />
+                                    <img src={preview} alt="Vista previa" className="h-40 rounded-module object-cover shadow-sm" />
                                 </div>
                             )}
                         </div>
                         {/* ESCANEO FACIAL */}
                         <div className="form-group col-span-1 md:col-span-2 mt-4">
-                            <h3 className="mb-2 border-b border-slate-200 pb-2 font-bold text-slate-900">2. Registro de reconocimiento facial en vivo</h3>
-                            <p className="mb-3 text-sm text-slate-600">Enciende la cámara y sitúa al niño/a frente a ella. Este escaneo garantiza mayor precisión en el momento de la búsqueda si está extraviado.</p>
+                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">2. Registro de reconocimiento facial en vivo</h3>
+                            <p className="mb-3 text-sm text-text-body">Enciende la cámara y sitúa al niño/a frente a ella. Este escaneo garantiza mayor precisión en el momento de la búsqueda si está extraviado.</p>
                             {faceDescriptor ? (
                                 <div className="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4">
                                     <CheckCircle className="text-brand-300" size={30} />
@@ -387,7 +387,7 @@ const FormularioGafete = ({ formRef }) => {
                                     <button 
                                         type="button" 
                                         onClick={() => setFaceDescriptor(null)} 
-                                        className="ml-auto rounded border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:bg-slate-100"
+                                        className="ml-auto rounded-module border border-surface-border bg-surface-base px-3 py-1 text-sm text-text-body hover:bg-surface-muted"
                                     >
                                         Repetir
                                     </button>
@@ -438,7 +438,7 @@ const FormularioGafete = ({ formRef }) => {
                 <button
                   type="button"
                   onClick={startCamera}
-                  className="inline-flex items-center gap-2 rounded-lg bg-brand-700 px-6 py-2 font-bold text-white hover:bg-brand-600"
+                  className="inline-flex items-center gap-2 rounded-module bg-brand-500 px-6 py-2 font-bold text-white hover:bg-brand-600"
                 >
                   <Camera size={18} /> Encender cámara
                 </button>
@@ -448,14 +448,14 @@ const FormularioGafete = ({ formRef }) => {
                     type="button"
                     disabled={loading}
                     onClick={handleCaptureFace}
-                    className="inline-flex items-center gap-2 rounded-lg bg-accent-500 px-6 py-2 font-bold text-slate-950 hover:bg-accent-400"
+                    className="inline-flex items-center gap-2 rounded-module bg-accent-500 px-6 py-2 font-bold text-accent-800 hover:bg-accent-600"
                   >
                     Capturar rostro
                   </button>
                   <button
                     type="button"
                     onClick={stopCamera}
-                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-100"
+                    className="rounded-module border border-surface-border bg-surface-base px-4 py-2 text-text-body hover:bg-surface-muted"
                   >
                     Cancelar
                   </button>
