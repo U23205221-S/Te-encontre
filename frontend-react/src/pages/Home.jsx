@@ -7,6 +7,11 @@ import ScannerQR from '../components/ScannerQR';
 import Footer from '../components/Footer';
 import { QrCodeIcon, CameraIcon, ArrowRightIcon, ShieldCheckIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { useHomeSectionSnap } from '../hooks/useHomeSectionSnap';
+import heroImage from '../assets/figma-redesign/hero-image.png';
+import shieldIcon from '../assets/figma-redesign/shield-icon.svg';
+import shieldCheckIcon from '../assets/figma-redesign/shield-check-icon.svg';
+import arrowRightIcon from '../assets/figma-redesign/arrow-right-icon.svg';
+import personSearchIcon from '../assets/figma-redesign/person-search-icon.svg';
 
 const resolveHeaderOffset = () => {
     if (typeof window === 'undefined') {
@@ -88,46 +93,61 @@ const openRegistro = () => setActionInUrl('registro');
     }, [location.hash, scrollToComoFunciona]);
 
     return (
-        <div ref={containerRef} className="relative bg-surface-base text-slate-100">
-            <div className="pointer-events-none absolute -left-20 top-12 h-80 w-80 rounded-full bg-brand-600/15 blur-3xl" />
-            <div className="pointer-events-none absolute -right-16 top-80 h-72 w-72 rounded-full bg-accent-500/10 blur-3xl" />
+        <div ref={containerRef} className="relative bg-surface-base text-text-body">
+            <section data-home-section className="ui-home-scroll-section ui-viewport-section ui-hero-section relative flex items-center overflow-hidden bg-surface-base">
+                <div className="relative mx-auto grid w-full max-w-[90rem] items-start gap-6 px-6 md:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8 lg:px-10 xl:px-12">
+                    <div className="rounded-card border border-surface-border bg-surface-card p-8 shadow-card lg:p-12">
+                        <div className="mb-6 inline-flex items-center gap-2 rounded-pill bg-brand-50/30 px-3 py-1.5">
+                            <img src={shieldIcon} alt="Escudo" className="h-3.5 w-3.5" />
+                            <span className="text-sm font-bold tracking-[0.05em] text-brand-500">Seguridad de Nueva Generación</span>
+                        </div>
 
-            <section data-home-section className="ui-home-scroll-section ui-viewport-section ui-hero-section relative flex items-center overflow-hidden bg-surface-muted">
-                <div className="relative mx-auto grid w-full max-w-[90rem] items-center gap-12 px-6 md:grid-cols-2 md:gap-14 md:px-10 lg:grid-cols-[1.12fr_0.88fr] lg:gap-20 lg:px-14 xl:px-16">
-                    <div className="max-w-2xl text-left">
-
-                        <h1 className="mb-8 text-5xl font-extrabold leading-[1.03] text-slate-100 md:text-6xl lg:text-7xl xl:text-[5.2rem]">
-                            Protege a tu hijo/a de la manera más <span className="text-accent-400">segura</span>.
+                        <h1 className="mb-6 text-4xl font-extrabold leading-[1.05] text-text-primary md:text-5xl lg:text-[56px] lg:leading-[1.05]">
+                            Protege a tu hijo/a de la manera más segura.
                         </h1>
 
-                        <p className="ui-muted-copy mb-10 max-w-xl text-lg leading-relaxed md:text-xl lg:text-2xl lg:leading-relaxed">
-                            Registra su información en minutos y activa identificación dual (QR + reconocimiento facial) para actuar rápido cuando más importa.
+                        <p className="mb-10 max-w-[576px] text-base leading-7 text-text-body md:text-lg md:leading-8">
+                            Tecnología biométrica y códigos de identificación rápida diseñados para la tranquilidad de tu familia. Un sistema intuitivo que actúa en segundos cuando más lo necesitas.
                         </p>
 
-                        <div className="mb-12 flex flex-wrap gap-4 lg:mb-14">
-                            <button className="ui-btn-primary px-7 py-3.5 text-base md:text-lg" onClick={openRegistro}>
+                        <div className="mb-8 flex flex-wrap gap-4">
+                            <button className="ui-btn-primary" onClick={openRegistro}>
                                 Registrar a mi hijo/a
+                                <img src={arrowRightIcon} alt="" className="ml-2 h-4 w-4" aria-hidden="true" />
                             </button>
-                            <button className="ui-btn-secondary px-7 py-3.5 text-base md:text-lg" onClick={scrollToComoFunciona}>
+                            <button className="ui-btn-secondary" onClick={scrollToComoFunciona}>
                                 ¿Cómo funciona?
+                            </button>
+                        </div>
+
+                        <div className="border-t border-surface-border-light pt-6">
+                            <div className="mb-3 inline-flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-emergency" />
+                                <span className="text-sm text-emergency">¿Situación de emergencia?</span>
+                            </div>
+
+                            <button onClick={openScanner} className="ui-btn-emergency">
+                                <img src={personSearchIcon} alt="" className="h-5 w-5" aria-hidden="true" />
+                                Encontré a alguien
                             </button>
                         </div>
                     </div>
 
-                    <div className="relative flex justify-center md:justify-end lg:justify-center">
-                        <div className="absolute -inset-5 rounded-[2.4rem] bg-brand-500/10 blur-2xl" />
+                    <div className="relative min-h-[621px] overflow-hidden rounded-card border border-surface-border shadow-card">
                         <img
-                            src="https://peaceathomeparenting.com/wp-content/uploads/2022/07/Anxious-Children_-What-Really-Helps_-1-scaled.jpg"
+                            src={heroImage}
                             alt="Madre abrazando a su hija"
-                            className="relative aspect-[6/5] w-full max-w-[700px] rounded-[2rem] object-cover shadow-[0_24px_48px_rgba(0,0,0,0.45)] lg:max-w-[760px]"
+                            className="h-full w-full object-cover"
                         />
 
-                        <div className="ui-glass absolute -bottom-7 left-0 max-w-xs rounded-2xl p-4 shadow-[0_24px_48px_rgba(0,0,0,0.4)] md:-left-8 md:max-w-sm md:p-5 lg:-bottom-8 lg:left-4">
-                            <div className="mb-2 flex items-center gap-2.5">
-                                <ShieldCheckIcon className="h-5 w-5 text-accent-400 md:h-6 md:w-6" />
-                                <p className="text-sm font-bold text-slate-100 md:text-base">Protección 24/7</p>
+                        <div className="absolute bottom-6 left-6 rounded-module border border-white/20 bg-white/80 p-4 shadow-module backdrop-blur-[24px]">
+                            <div className="flex items-center gap-3">
+                                <img src={shieldCheckIcon} alt="" className="h-9 w-8" aria-hidden="true" />
+                                <div>
+                                    <p className="text-sm font-bold tracking-[0.05em] text-text-primary">Protección 24/7</p>
+                                    <p className="text-xs font-medium text-text-body">Cifrado de extremo a extremo.</p>
+                                </div>
                             </div>
-                            <p className="text-xs leading-relaxed text-slate-300 md:text-sm">Monitoreo constante para acelerar el contacto con la familia ante cualquier incidente.</p>
                         </div>
                     </div>
                 </div>
