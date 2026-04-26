@@ -15,7 +15,6 @@ const RegistroPage = () => {
   const navigate = useNavigate();
   const { register: handleRegister, isLoading } = useAuth();
   const [form, setForm] = useState({
-    fullName: '',
     dni: '',
     email: '',
     password: '',
@@ -29,7 +28,7 @@ const RegistroPage = () => {
     event.preventDefault();
     setError('');
 
-    if (!form.fullName || !form.dni || !form.email || !form.password || !form.confirmPassword) {
+    if (!form.dni || !form.email || !form.password || !form.confirmPassword) {
       setError('Completa todos los campos para crear tu cuenta.');
       return;
     }
@@ -81,22 +80,6 @@ const RegistroPage = () => {
 
         <div className="rounded-card border border-surface-border bg-surface-card p-6 shadow-card">
           <form className="space-y-4" autoComplete="off" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="fullName" className="mb-1 block text-sm font-semibold text-text-heading">
-                Nombre completo
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                autoComplete="name"
-                className="ui-input"
-                value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                placeholder="Ej. María López"
-                disabled={isLoading}
-              />
-            </div>
-
             <div>
               <label htmlFor="dni" className="mb-1 block text-sm font-semibold text-text-heading">
                 DNI
