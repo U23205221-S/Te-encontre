@@ -45,6 +45,8 @@ public class ResendEmailService {
             audit.setProviderId(data.getId());
             audit.setStatus(StatusEmail.ENTREGADO);
             notificationAuditRepository.save(audit);
+
+            log.info("Auditoría actualizada a ENTREGADO para email a: {}", to);
             return CompletableFuture.completedFuture(true);
 
         } catch (ResendException e) {
@@ -52,6 +54,7 @@ public class ResendEmailService {
             log.error("Fallo de la API de Resend enviando email a {}: {}", to, e.getMessage(), e);
             audit.setStatus(StatusEmail.FALLIDO);
             notificationAuditRepository.save(audit);
+            log.info("Auditoría actualizada a FALLIDO para email a: {}", to);
             return CompletableFuture.completedFuture(false);
 
         } catch (Exception e) {
@@ -59,6 +62,7 @@ public class ResendEmailService {
             log.error("Error inesperado en el hilo asíncrono enviando email a {}: {}", to, e.getMessage(), e);
             audit.setStatus(StatusEmail.FALLIDO);
             notificationAuditRepository.save(audit);
+            log.info("Auditoría actualizada a FALLIDO para emails a: {}", to);
             return CompletableFuture.completedFuture(false);
         }
     }

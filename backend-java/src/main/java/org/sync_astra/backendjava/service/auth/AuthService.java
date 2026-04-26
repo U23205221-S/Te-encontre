@@ -57,8 +57,6 @@ public class AuthService {
             throw new RuntimeException("El DNI proporcionado no es valido o no existe en la base de datos oficial.");
         }
 
-
-
         Users model = userMapper.toModel(dto);
         model.setPasswordHash(passwordEncoder.encode(dto.getPasswordHash()));
 

@@ -24,8 +24,5 @@ public class EmailOrchestratorService {
         audit = notificationAuditRepository.save(audit);
 
         resendEmailService.sendEmail(audit, to, subject, htmlContent);
-
-
-
     }
 }
