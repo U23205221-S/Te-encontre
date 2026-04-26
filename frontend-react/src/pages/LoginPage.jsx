@@ -3,14 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 
-const DEMO_LOGIN_EMAIL = 'prueba@gmail.com';
-
-const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
-
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login: handleLogin, isLoading } = useAuth();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ dni: '', passwordHash: '' });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -18,17 +14,17 @@ const LoginPage = () => {
     event.preventDefault();
     setError('');
 
-    if (!form.email || !form.password) {
-      setError('Completa tu correo y contraseña para continuar.');
+    if (!form.dni || !form.passwordHash) {
+      setError('Completa tu DNI y contraseña para continuar.');
       return;
     }
 
-    if (!isValidEmail(form.email)) {
-      setError('Ingresa un correo electrónico válido.');
+    if (form.dni.length !== 8) {
+      setError('El DNI debe tener exactamente 8 dígitos.');
       return;
     }
 
-    const result = await handleLogin({ email: form.email, password: form.password });
+    const result = await handleLogin({ dni: form.dni, passwordHash: form.passwordHash });
 
     if (!result.ok) {
       setError(result.error);
@@ -46,42 +42,44 @@ const LoginPage = () => {
           <p className="text-text-body">
             Ingresa con tu cuenta para gestionar tus registros.
             <br />
-            <span className="text-sm text-text-body">Demo: {DEMO_LOGIN_EMAIL}</span>
+            <span className="text-sm text-text-body">Demo DNI: 60751404</span>
           </p>
         </div>
 
         <div className="rounded-card border border-surface-border bg-surface-card p-6 shadow-card">
           <form className="space-y-4" autoComplete="off" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-semibold text-text-heading">
-                Correo electrónico
+              <label htmlFor="dni" className="mb-1 block text-sm font-semibold text-text-heading">
+                DNI
               </label>
               <input
-                id="email"
-                name="username"
-                type="email"
+                id="dni"
+                name="dni"
+                type="text"
+                inputMode="numeric"
                 autoComplete="username"
                 className="ui-input"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder={DEMO_LOGIN_EMAIL}
+                value={form.dni}
+                onChange={(e) => setForm({ ...form, dni: e.target.value.replace(/\D/g, '').slice(0, 8) })}
+                placeholder="8 dígitos"
+                maxLength={8}
                 spellCheck={false}
                 disabled={isLoading}
               />
             </div>
 
             <div className="relative">
-              <label htmlFor="password" className="mb-1 block text-sm font-semibold text-text-heading">
+              <label htmlFor="passwordHash" className="mb-1 block text-sm font-semibold text-text-heading">
                 Contraseña
               </label>
               <input
-                id="password"
+                id="passwordHash"
                 name="current-password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 className="ui-input pr-10"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                value={form.passwordHash}
+                onChange={(e) => setForm({ ...form, passwordHash: e.target.value })}
                 placeholder="Mínimo 6 caracteres"
                 disabled={isLoading}
               />

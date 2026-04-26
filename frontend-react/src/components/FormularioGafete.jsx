@@ -6,15 +6,17 @@ import QRGenerado from './QRGenerado';
 const MODELS_URL = '/models';
 const FormularioGafete = ({ formRef }) => {
     const [formData, setFormData] = useState({
+        // Niño
         nombreNino: '',
-        edad: '',
-        genero: 'MALE',
+        dniNino: '',
+        fechaNacimiento: '', // YYYY-MM-DD
+        genero: 'MASCULINO',
         tipoSangre: '',
         alergias: '',
-        nombrePadre: '',
-        correoPadre: '',
-        telefonoPrincipal: '',
-        telefonoAlternativo: '',
+        // Guardianes (2 obligatorios + 1 opcional)
+        dniGuardian1: '', nombreGuardian1: '', correoGuardian1: '', telefonoGuardian1: '', parentescoGuardian1: 'PADRE',
+        dniGuardian2: '', nombreGuardian2: '', correoGuardian2: '', telefonoGuardian2: '', parentescoGuardian2: 'MADRE',
+        dniGuardian3: '', nombreGuardian3: '', correoGuardian3: '', telefonoGuardian3: '', parentescoGuardian3: 'OTRO',
     });
     // Para la foto subida
     const [file, setFile] = useState(null);
@@ -248,16 +250,37 @@ const FormularioGafete = ({ formRef }) => {
         setLoading(true);
         try {
             const dataToUpload = {
+                dni: formData.dniNino,
                 fullName: formData.nombreNino,
-                age: parseInt(formData.edad),
-                bloodType: formData.tipoSangre,
-                allergies: formData.alergias,
-                emergencyContactName: formData.nombrePadre,
-                mainEmergencyPhone: formData.telefonoPrincipal,
-                alternativeEmergencyPhone: formData.telefonoAlternativo,
+                dateOfBirth: formData.fechaNacimiento, // format: YYYY-MM-DD
+                gender: formData.genero,
+                bloodType: formData.tipoSangre || null,
+                allergies: formData.alergias || null,
                 statusBadge: 'NEUTRAL',
                 faceVector: faceDescriptor,
-                gender: formData.genero
+                guardians: [
+                    {
+                        dni: formData.dniGuardian1,
+                        name: formData.nombreGuardian1,
+                        email: formData.correoGuardian1,
+                        phone: formData.telefonoGuardian1,
+                        relationship: formData.parentescoGuardian1
+                    },
+                    {
+                        dni: formData.dniGuardian2,
+                        name: formData.nombreGuardian2,
+                        email: formData.correoGuardian2,
+                        phone: formData.telefonoGuardian2,
+                        relationship: formData.parentescoGuardian2
+                    },
+                    ...(formData.dniGuardian3 ? [{
+                        dni: formData.dniGuardian3,
+                        name: formData.nombreGuardian3,
+                        email: formData.correoGuardian3,
+                        phone: formData.telefonoGuardian3,
+                        relationship: formData.parentescoGuardian3
+                    }] : [])
+                ].filter(g => g.dni && g.name) // filter empty guardians
             };
 
             const data = new FormData();
@@ -331,12 +354,12 @@ const FormularioGafete = ({ formRef }) => {
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-text-heading">Género *</label>
                             <select required name="genero" value={formData.genero} onChange={handleChange} className="ui-input">
-                                <option value="MALE">Masculino</option>
-                                <option value="FEMALE">Femenino</option>
+                                <option value="MASCULINO">Masculino</option>
+                                <option value="FEMENINO">Femenino</option>
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-text-heading">Tipo de sangre *</label>
+                            <label className="mb-1 block text-sm font-bold text-text-heading">Tipo de sangre</label>
                             <input required type="text" name="tipoSangre" value={formData.tipoSangre} onChange={handleChange} className="ui-input" placeholder="Ej. O+" />
                         </div>
                         <div className="form-group col-span-1 md:col-span-2">

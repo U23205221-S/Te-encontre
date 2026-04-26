@@ -211,16 +211,51 @@ const BuscarRostro = () => {
             }
 
             const descriptor = Array.from(detection.descriptor);
-            const res = await api.post('/api/v1/badge/scan/face', {
-              faceVector: descriptor,
-              latitude,
-              longitude
+
+            // Capture current frame as File
+            const captureFrameAsFile = (): Promise<File> => {
+                const canvas = document.createElement('canvas');
+                canvas.width = videoRef.current.videoWidth;
+                canvas.height = videoRef.current.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+                return new Promise((resolve) => {
+                    canvas.toBlob((blob) => {
+                        resolve(new File([blob!], `scan-face-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+                    }, 'image/jpeg', 0.9);
+                });
+            };
+
+            const nameDevice = navigator.userAgent;
+            const ipAddress = '192.0.2.0'; // Placeholder - real IP requires backend
+
+            const scanData = {
+                faceVector: descriptor,
+                latitude,
+                longitude,
+                nameDevice,
+                ipAddress
+            };
+
+            const file = await captureFrameAsFile();
+            const formData = new FormData();
+            formData.append('data', new Blob([JSON.stringify(scanData)], { type: 'application/json' }));
+            formData.append('file', file);
+
+            const res = await api.post('/api/v1/badge/scan/face', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
+
+            const alertUuid = res.data;
+
+            // Store alertUuid for second step
+            window.sessionStorage.setItem('pendingAlertUuid', alertUuid);
 
             setResult({
                 found: true,
-                childId: res.data.uuid,
-                message: 'Niño encontrado',
+                childId: alertUuid,
+                message: 'Escaneo exitoso. Completa los datos del reportante.',
+                requiresReporterStep: true,
             });
             stopCamera();
         } catch (err) {
