@@ -76,7 +76,7 @@ const openRegistro = () => setActionInUrl('registro');
     }, [location.hash]);
 
     return (
-        <div className="relative bg-surface-base text-text-body">
+        <div className="relative flex min-h-screen flex-col bg-surface-base text-text-body">
             <section data-home-section className="ui-home-scroll-section relative overflow-hidden bg-surface-base px-6 pb-20 pt-24 md:px-8 md:pb-24 md:pt-28 lg:px-10 lg:pt-32 xl:px-12">
                 <div className="relative mx-auto grid w-full max-w-[1376px] items-start gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8">
                     <div className="rounded-card border border-surface-border bg-surface-card p-8 shadow-card lg:p-12">
@@ -138,7 +138,7 @@ const openRegistro = () => setActionInUrl('registro');
                 </div>
             </section>
 
-            <section data-home-section className="ui-home-scroll-section bg-surface-base px-6 py-10 md:px-8 md:py-12 lg:px-10 xl:px-12">
+            <section data-home-section className="ui-home-scroll-section bg-surface-base px-6 py-12 md:px-8 md:py-16 lg:px-10 xl:px-12">
                 <div className="mx-auto w-full max-w-[1376px]">
                     <div className="mx-auto mb-10 max-w-[672px] space-y-4 text-center">
                         <h2 className="text-[32px] font-bold leading-10 text-text-primary">¿Has encontrado a un niño perdido?</h2>
@@ -188,8 +188,8 @@ const openRegistro = () => setActionInUrl('registro');
                 </div>
             </section>
 
-            <section id="como-funciona" data-home-section className="ui-home-scroll-section bg-surface-base px-6 pb-20 md:px-8 lg:px-10 xl:px-12">
-                <div className="mx-auto w-full max-w-[1376px] rounded-card border border-surface-border-medium bg-[#EDEEEF] px-8 py-12 md:px-10 md:py-12">
+            <section id="como-funciona" data-home-section className="ui-home-scroll-section bg-surface-base px-6 pb-8 pt-6 md:px-8 md:pt-8 lg:px-10 xl:px-12">
+                <div className="mx-auto w-full max-w-[1440px] rounded-card border border-surface-border-medium bg-[#EDEEEF] px-8 py-14 md:px-10 md:py-16">
                     <div className="mb-10 text-center">
                         <h2 className="text-[32px] font-semibold leading-8 text-text-primary">Tu tranquilidad en 3 simples pasos</h2>
                     </div>
@@ -222,8 +222,9 @@ const openRegistro = () => setActionInUrl('registro');
                         ))}
                     </div>
                 </div>
-                <Footer className="mt-auto" />
             </section>
+
+            <Footer className="mt-auto" />
 
             {showModal && (
                 <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/65 p-4 backdrop-blur-sm">
