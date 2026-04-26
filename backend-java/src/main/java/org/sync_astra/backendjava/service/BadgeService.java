@@ -110,12 +110,7 @@ public class BadgeService {
                 guardian.setBadge(badge);
 
                 // Lógica de roles
-                if (i == 0) {
-                    guardian.setLegalRepresentative(true);
-                    guardian.setEmail(badge.getUserRegister().getEmail());
-                } else {
-                    guardian.setLegalRepresentative(false);
-                }
+                guardian.setLegalRepresentative(i == 0);
             }
         }
 
