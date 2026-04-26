@@ -5,12 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.sync_astra.backendjava.util.ValidateGroup;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class RefreshTokenRequestDTO {
-    @NotBlank
+    @NotBlank(message = "El refresh token no puede estar vacío", groups = {ValidateGroup.OnCreate.class})
     private String refreshToken;
 }

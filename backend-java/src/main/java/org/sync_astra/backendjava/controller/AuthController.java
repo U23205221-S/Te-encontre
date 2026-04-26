@@ -49,7 +49,7 @@ public class AuthController {
      * POST /api/auth/refresh
      */
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponseDTO> refreshToken(@RequestBody RefreshTokenRequestDTO request) {
+    public ResponseEntity<AuthResponseDTO> refreshToken(@Validated(ValidateGroup.OnCreate.class) @RequestBody RefreshTokenRequestDTO request) {
         log.info("Petición REST para refrescar token");
         AuthResponseDTO response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
