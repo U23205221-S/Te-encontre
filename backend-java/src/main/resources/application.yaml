@@ -70,5 +70,5 @@ app:
 resend:
     api-key: ${RESEND_API_KEY:tu-resend-api-key}
 mi-api-cloud:
-  token: ${MI_API_CLOUD_TOKEN:}
-  url: ${MI_API_CLOUD_URL:}
+  token: ${MI_API_CLOUD_TOKEN:token-de-prueba}
+  url: ${MI_API_CLOUD_URL:https://url/v1}
