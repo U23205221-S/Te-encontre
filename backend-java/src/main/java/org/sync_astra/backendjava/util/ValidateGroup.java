@@ -9,4 +9,10 @@ public abstract class ValidateGroup {
 
     public interface OnLogin {
     }
+
+    public interface OnScanQR {
+    }
+
+    public interface OnScanFace {
+    }
 }

@@ -38,7 +38,7 @@ public class BadgeController {
     // Endpoint para Reconocimiento Facial
     @PostMapping("/scan/face")
     public ResponseEntity<UUID> identify(
-            @RequestPart("data") ScanAlertRequestDTO request,
+            @RequestPart("data") @Validated(ValidateGroup.OnScanFace.class) ScanAlertRequestDTO request,
             @RequestPart("file") @NotNull(message = "El archivo de la foto es obligatorio") MultipartFile file
     ) {
         try {
@@ -54,7 +54,7 @@ public class BadgeController {
 
     @PostMapping("/scan/qr")
     public ResponseEntity<UUID> scanByQr(
-            @RequestPart("data") ScanAlertRequestDTO request,
+            @RequestPart("data") @Validated(ValidateGroup.OnScanQR.class) ScanAlertRequestDTO request,
             @RequestPart("file") @NotNull(message = "El archivo de la foto es obligatorio") MultipartFile file
     ) {
         try {
