@@ -55,10 +55,10 @@ const RegistroPage = () => {
     }
 
     const result = await handleRegister({
-      fullName: form.fullName,
       dni: form.dni,
       email: form.email,
-      password: form.password,
+      passwordHash: form.password,
+      confirmPasswordHash: form.confirmPassword,
     });
 
     if (!result.ok) {

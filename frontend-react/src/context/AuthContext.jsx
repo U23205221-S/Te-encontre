@@ -39,12 +39,12 @@ export const AuthProvider = ({ children }) => {
     setSessionUser(payload);
   };
 
-  const login = async ({ email, password }) => {
+  const login = async ({ dni, passwordHash }) => {
     setIsLoading(true);
     try {
-      const response = await api.post('/api/auth/login', { userName: email, passwordHash: password });
+      const response = await api.post('/api/auth/login', { dni, passwordHash });
       const { fullName, accessToken, refreshToken } = response.data;
-      startSession({ fullName, email }, accessToken, refreshToken);
+      startSession({ fullName, email: response.data.email }, accessToken, refreshToken);
       return { ok: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Error al iniciar sesión';
@@ -54,17 +54,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async ({ fullName, email, password, dni }) => {
+  const register = async ({ dni, email, passwordHash, confirmPasswordHash }) => {
     setIsLoading(true);
     try {
       const response = await api.post('/api/auth/register', { 
-        userName: email, 
-        passwordHash: password,
-        confirmPasswordHash: password,
-        fullName,
-        dni
+        dni, 
+        email, 
+        passwordHash,
+        confirmPasswordHash
       });
-      const { accessToken, refreshToken } = response.data;
+      const { fullName, accessToken, refreshToken } = response.data;
       startSession({ fullName, email }, accessToken, refreshToken);
       return { ok: true };
     } catch (error) {
