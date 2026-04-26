@@ -1,53 +1,62 @@
-# Documentación de API - TE ENCONTRÉ
+# 📖 Documentación de API - Plataforma "Te Encontré"
 
 **URL Base:** `http://localhost:8080`
 
----
-
-## 🔑 Notas Globales de Autenticación
-
-Los endpoints que requieren autenticación deben incluir el Access Token en las cabeceras (Headers) de la petición HTTP usando el esquema Bearer:
-
-```
-Authorization: Bearer <tu_access_token_aqui>
-```
+Esta documentación detalla los flujos de autenticación y el módulo principal de registro y escaneo de gafetes (Badges) mediante códigos QR y reconocimiento facial.
 
 ---
 
-## 1. Autenticación (Auth)
+## 🔐 1. Módulo de Autenticación (`/api/auth`)
 
 ### 1.1. Registrar Usuario
 
-Crea una nueva cuenta en el sistema.
+Crea un nuevo usuario en el sistema con validaciones de seguridad.
 
 - **Método:** `POST`
 - **Ruta:** `/api/auth/register`
 - **Content-Type:** `application/json`
-- **Autenticación:** No requerida
+- **Autenticación:** ❌ No requerida (Público)
 
-**Body:**
+**Estructura del Body:**
 
 ```json
 {
-  "dni": "60751404",
+  "dni": "123456718",
   "email": "chungcoelhove070@gmail.com",
-  "passwordHash": "SHccVE07@",
-  "confirmPasswordHash": "SHccVE07@"
+  "passwordHash": "SHccVE07.",
+  "confirmPasswordHash": "SHccVE07."
 }
 ```
+
+**Validaciones:**
+
+| Campo | Validación | Ejemplo |
+|-------|-----------|---------|
+| `dni` | Debe ser válido y único en el sistema | `"123456718"` |
+| `email` | Formato de correo válido | `"usuario@gmail.com"` |
+| `passwordHash` | Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial | `"SHccVE07."` |
+| `confirmPasswordHash` | Debe coincidir exactamente con `passwordHash` | `"SHccVE07."` |
+
+**Respuestas:**
+
+| Código | Descripción |
+|--------|-------------|
+| `200 OK` | Usuario registrado exitosamente |
+| `400 Bad Request` | Datos inválidos o contraseñas no coinciden |
+| `409 Conflict` | El DNI o email ya están registrados |
 
 ---
 
 ### 1.2. Iniciar Sesión
 
-Autentica al usuario y devuelve los tokens de acceso.
+Autentica al usuario y devuelve los tokens de acceso necesarios.
 
 - **Método:** `POST`
 - **Ruta:** `/api/auth/login`
 - **Content-Type:** `application/json`
-- **Autenticación:** No requerida
+- **Autenticación:** ❌ No requerida (Público)
 
-**Body:**
+**Estructura del Body:**
 
 ```json
 {
@@ -56,288 +65,534 @@ Autentica al usuario y devuelve los tokens de acceso.
 }
 ```
 
+**Respuesta (200 OK):**
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+**Respuestas de Error:**
+
+| Código | Descripción |
+|--------|-------------|
+| `401 Unauthorized` | DNI o contraseña incorrectos |
+| `404 Not Found` | El usuario no existe |
+
 ---
 
-### 1.3. Cerrar Sesión (Logout)
+### 1.3. Refrescar Token
+
+Genera un nuevo token de acceso utilizando un Refresh Token válido.
+
+- **Método:** `POST`
+- **Ruta:** `/api/auth/refresh`
+- **Content-Type:** `application/json`
+- **Autenticación:** ❌ No requerida
+
+**Estructura del Body:**
+
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2MDc1MTQwNCIsInV1YWlkIjoiYmJkZDQyM2ItZDM5ZC00ODE4LTkyNmUtMDA0ZTMyNGY4MzEwIiwiaWF0IjoxNzc3MTUwOTE5LCJleHAiOjE3Nzc3NTU3MTl9.4givfokvRuqLaAsZwdgxWjYQL2Fq-Zf2dZ12wvARBhc"
+}
+```
+
+**Respuesta (200 OK):**
+
+```json
+{
+   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+   "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+**Respuestas de Error:**
+
+| Código | Descripción |
+|--------|-------------|
+| `401 Unauthorized` | Refresh token inválido o expirado |
+| `400 Bad Request` | Token no proporcionado |
+
+---
+
+### 1.4. Cerrar Sesión
 
 Invalida el token actual del usuario.
 
 - **Método:** `POST`
 - **Ruta:** `/api/auth/logout`
-- **Autenticación:** Requerida (`Authorization: Bearer <token>`)
-- **Body:** No requiere cuerpo (el backend identifica la sesión mediante el token en la cabecera)
-
----
-
-### 1.4. Refrescar Token
-
-Obtiene un nuevo Access Token válido utilizando un Refresh Token activo.
-
-- **Método:** `POST`
-- **Ruta:** `/api/auth/refresh`
 - **Content-Type:** `application/json`
-- **Autenticación:** No requerida
+- **Autenticación:** ✅ Requerida (`Authorization: Bearer <token>`)
 
-**Body:**
-
-```json
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2MDc1MTQwNCIsInV1aWQiOiJiYmRkNDIzYi1kMzlkLTQ4MTgtOTI2ZS0wMDRlMzI0ZjgzMTAiLCJpYXQiOjE3NzcxNTA5MTksImV4cCI6MTc3Nzc1NTcxOX0.4givfokvRuqLaAsZwdgxWjYQL2Fq-Zf2dZ12wvARBhc"
-}
-```
-
----
-
-## 2. Escaneo y Alertas (Badge Scan)
-
-⚠️ **IMPORTANTE PARA FRONTEND (Multipart/form-data):**
-
-Para los siguientes 3 endpoints, no se envía un JSON plano. Se debe usar un objeto `FormData` en JavaScript. La parte `data` debe enviarse como un Blob de tipo `application/json` (o un string JSON parseable, dependiendo de la configuración exacta de Spring Boot), y la parte `file` es el archivo binario de la imagen.
-
----
-
-### 2.1. Escaneo por Reconocimiento Facial
-
-Recibe un vector biométrico facial y una fotografía para intentar identificar a la persona encontrada. Si la similitud supera el umbral establecido, se registra la alerta de ubicación y se notifica a los guardianes asignados.
-
-- **Método:** `POST`
-- **Ruta:** `/api/v1/badge/scan/face`
-- **Content-Type:** `multipart/form-data`
-- **Autenticación:** No requerida (Pública)
-
-**FormData (Parámetros):**
-
-| Clave | Tipo | Descripción |
-|-------|------|-------------|
-| `data` | `application/json` | Objeto ScanAlertRequestDTO con los datos del vector biométrico y ubicación. |
-| `file` | File (Imagen) | Fotografía tomada en el lugar del hallazgo (JPEG, PNG, etc). |
-
-**Estructura del campo `data` (ScanAlertRequestDTO):**
-
-```json
-{
-  "faceVector": [
-    0.1543, -0.8765, 0.4321, 0.9876, -0.1234, ...
-  ],
-  "latitude": -6.77137,
-  "longitude": -79.84088,
-  "nameDevice": "iPhone 14 Pro",
-  "ipAddress": "190.235.12.34"
-}
-```
-
-**Notas Importantes:**
-
-- El `faceVector` es un array numérico que representa la extracción biométrica facial (típicamente 128 o 512 dimensiones).
-- `latitude` y `longitude` son opcionales pero recomendados para establecer el punto de geolocalización del reporte.
-- `nameDevice` e `ipAddress` ayudan a rastrear desde qué dispositivo se generó la alerta.
+**Body:** No requiere cuerpo
 
 **Respuestas:**
 
-| Código | Descripción | Body |
-|--------|-------------|------|
-| `200 OK` | El rostro coincidió con un Badge registrado. Alerta disparada. | `"3a2daae0-dd34-4857-b146-5c0405dda911"` (UUID de la alerta generada) |
-| `401 Unauthorized` | No se encontró ninguna coincidencia biométrica que supere el umbral mínimo establecido. | Mensaje de error |
-
-**⚠️ Flujo Importante:**
-
-1. Este endpoint **devuelve solo el UUID de la alerta generada** en la respuesta `200 OK`.
-2. Los datos completos del Badge (credencial escaneada) **no se devuelven en esta primera petición**.
-3. Para obtener los datos del Badge, el cliente debe:
-   - Llamar al endpoint `2.3` (Actualizar Datos del Reportante) con el UUID de la alerta
-   - En la respuesta del endpoint `2.3` recibirá el `BadgeResponseDTO` con los datos completos de la credencial
+| Código | Descripción |
+|--------|-------------|
+| `200 OK` | Sesión cerrada exitosamente |
+| `401 Unauthorized` | Token inválido o expirado |
 
 ---
 
-### 2.2. Escaneo por Código QR
+## 🪪 2. Módulo de Gafetes (Badges) (`/api/v1/badge`)
 
-Se activa cuando alguien escanea físicamente el código QR de la credencial. Busca la credencial por su UUID, registra la ubicación y envía la alerta de emergencia a los guardianes.
+### 2.1. Registrar Nuevo Badge
 
-- **Método:** `POST`
-- **Ruta:** `/api/v1/badge/scan/qr`
-- **Content-Type:** `multipart/form-data`
-- **Autenticación:** No requerida (Pública)
-
-**FormData (Parámetros):**
-
-| Clave | Tipo | Descripción |
-|-------|------|-------------|
-| `data` | `application/json` | Objeto ScanAlertRequestDTO con el UUID del QR y ubicación. |
-| `file` | File (Imagen) | Fotografía tomada en el lugar del hallazgo (JPEG, PNG, etc). |
-
-**Estructura del campo `data` (ScanAlertRequestDTO):**
-
-```json
-{
-  "qrCodeUuid": "3c2160f8-8c1a-4556-a901-1a3400a79125",
-  "latitude": -6.77137,
-  "longitude": -79.84088,
-  "nameDevice": "iPhone 14 Pro",
-  "ipAddress": "190.235.12.34"
-}
-```
-
-**Notas Importantes:**
-
-- El `qrCodeUuid` es el identificador único extraído del código QR que se escanea.
-- `latitude` y `longitude` registran la ubicación geográfica donde se encontró la credencial.
-- Este endpoint es directo: si el UUID existe en la base de datos, la alerta se dispara automáticamente.
-
-**Respuestas:**
-
-| Código | Descripción | Body |
-|--------|-------------|------|
-| `200 OK` | El QR es válido y la alerta se ha enviado a los guardianes. | `"3a2daae0-dd34-4857-b146-5c0405dda911"` (UUID de la alerta generada) |
-| `404 Not Found` | El UUID proporcionado no existe en la base de datos de credenciales. | Mensaje de error |
-
-**⚠️ Flujo Importante:**
-
-1. Este endpoint **devuelve solo el UUID de la alerta generada** en la respuesta `200 OK`.
-2. Los datos completos del Badge (credencial escaneada) **no se devuelven en esta primera petición**.
-3. Para obtener los datos del Badge, el cliente debe:
-   - Llamar al endpoint `2.3` (Actualizar Datos del Reportante) con el UUID de la alerta
-   - En la respuesta del endpoint `2.3` recibirá el `BadgeResponseDTO` con los datos completos de la credencial
-
----
-
-### 2.3. Actualizar Datos del Reportante
-
-Permite a la persona que encontró al familiar (y que generó la alerta previa) proporcionar sus datos de contacto. Si se proporciona al menos uno de los dos datos (DNI o Teléfono), el sistema enviará un correo adicional a los guardianes con esta información de contacto.
-
-- **Método:** `POST`
-- **Ruta:** `/api/v1/badge/scan/{uuid_de_la_alerta}`
-- **Content-Type:** `application/json`
-- **Autenticación:** No requerida
-
-**Parámetros de la URL (Path Variable):**
-
-| Parámetro | Tipo | Descripción |
-|-----------|------|-------------|
-| `uuid_de_la_alerta` | `UUID` | El identificador de la alerta generada en `/scan/face` o `/scan/qr`. |
-
-**Body de la Petición (ScanAlertPart2RequestDTO):**
-
-```json
-{
-  "dniReporter": "60751404",
-  "phoneReporter": "924781609"
-}
-```
-
-**Notas Importantes:**
-
-- Ambos campos (`dniReporter` y `phoneReporter`) son **opcionales**, pero al menos uno debe estar presente.
-- El correo de notificación solo se enviará si se proporciona información válida en al menos uno de los campos.
-- Este endpoint se utiliza como un segundo paso después de generar una alerta (ya sea por cara o QR).
-
-**Respuestas:**
-
-| Código | Descripción | Body |
-|--------|-------------|------|
-| `200 OK` | Los datos se actualizaron correctamente. | `BadgeResponseDTO` (Datos públicos de la credencial escaneada) |
-| `404 Not Found` | El UUID de la alerta no existe en la base de datos. | Mensaje de error |
-
----
-
-## 3. Gestión de Credenciales (Badge)
-
-### 3.1. Registrar Nuevo Badge
-
-Crea una nueva credencial de seguridad (Badge) y la asocia al usuario autenticado y a sus tutores legales.
+Registra el perfil completo de un Badge, sube la imagen a la nube (Cloudinary) y vincula a los tutores legales.
 
 - **Método:** `POST`
 - **Ruta:** `/api/v1/badge`
 - **Content-Type:** `multipart/form-data`
-- **Autenticación:** Requerida (`Authorization: Bearer <token>`)
+- **Autenticación:** ✅ Requerida (`Authorization: Bearer <token>`)
 
-**FormData (Parámetros):**
+**Parámetros Form-Data:**
 
-| Clave | Tipo | Descripción |
-|-------|------|-------------|
-| `data` | `application/json` | Datos médicos, personales, vector biométrico y tutores. |
-| `file` | File (Imagen) | Fotografía de perfil para la credencial. |
+| Parámetro | Tipo | Requerido | Descripción |
+|-----------|------|----------|-------------|
+| `file` | `File (Imagen)` | ✅ Sí | Fotografía del perfil del usuario (JPEG, PNG) |
+| `data` | `JSON (Blob)` | ✅ Sí | Objeto JSON con los datos del badge y tutores |
 
-**Estructura del campo `data` (JSON):**
+**Estructura del campo `data`:**
 
 ```json
 {
-  "dni": "78945632",
+  "dni": "05371954",
   "fullName": "Victor Elias Chung Coelho",
   "dateOfBirth": "2006-03-07T10:00:00Z",
   "gender": "MASCULINO",
   "bloodType": "O+",
   "allergies": "Penicilina",
-  "statusBadge": "NEUTRAL",
   "faceVector": [
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0
   ],
   "guardians": [
     {
-      "dni": "12345678",
-      "name": "israel cubas gastulo",
-      "email": "u23271982@gmail.com",
-      "phone": "+51987654321",
+      "dni": "60751404",
+      "name": "victor elias chung",
+      "email": "chungcoelhove070@gmail.com",
+      "phone": "987654321",
       "relationship": "PADRE"
     },
     {
-      "dni": "98765432",
+      "dni": "12345678",
       "name": "Italo Fabian Vasquez Valderrama",
       "email": "italofvv1028@gmail.com",
-      "phone": "+51912345678",
+      "phone": "912345678",
       "relationship": "MADRE"
-    },
-    {
-      "dni": "42345678",
-      "name": "Renzo Sandoval Mio",
-      "email": "renzosa1906@gmail.com",
-      "phone": "+51999888777",
-      "relationship": "TIO"
     }
   ]
 }
 ```
 
-**Notas sobre Tutores Legales:**
+**Validaciones Críticas:**
 
-| Posición | Requerido | Descripción |
-|----------|-----------|-------------|
-| `guardians[0]` | ✅ Sí | Tutor legal principal (representante legal). |
-| `guardians[1]` | ✅ Sí | Segundo tutor legal (contacto auxiliar obligatorio). |
-| `guardians[2]` | ❌ No | Tercer contacto auxiliar (opcional). |
+| Validación | Descripción | Notas |
+|-----------|-------------|-------|
+| `faceVector` | Debe contener exactamente **128** elementos numéricos | Array de puntos biométricos faciales |
+| `guardians` | Mínimo **2** registros obligatorios, máximo **3** | Posición [0]: Tutor legal principal; [1]: Tutor auxiliar; [2]: Opcional |
+| `dni` | Validado contra registros externos | Debe ser válido y único |
+| `guardians[*].dni` | Todos los DNIs de tutores son validados | Deben ser válidos |
+| `bloodType` | Valores permitidos: `O+`, `O-`, `A+`, `A-`, `B+`, `B-`, `AB+`, `AB-` | |
+| `gender` | Valores permitidos: `MASCULINO`, `FEMENINO`, `OTRO` | |
+
+**Respuesta (200 OK):**
+
+```json
+{
+   "uuid": "87031864-7bbd-4a98-832d-9427c1878427",
+   "dni": "71276626",
+   "fullName": "Victor Elias Chung Coelho",
+   "dateOfBirth": "2006-03-07T10:00:00Z",
+   "gender": "MASCULINO",
+   "bloodType": "O+",
+   "allergies": "Penicilina",
+   "photoUrl": "http://res.cloudinary.com/dhfa49vfa/image/upload/v1777247795/syncastra/badges/caxmf4ejmigg8dxpbukc.png",
+   "statusBadge": "NEUTRAL",
+   "createdAt": "2026-04-26T23:56:35.324706200Z",
+   "updatedAt": "2026-04-26T23:56:35.324706200Z",
+   "guardians": [
+      {
+         "dni": "60751404",
+         "name": "victor elias chung",
+         "email": "chungcoelhove070@gmail.com",
+         "phone": "987654321",
+         "relationship": "PADRE"
+      },
+      {
+         "dni": "60751404",
+         "name": "Italo Fabian Vasquez Valderrama",
+         "email": "italofvv1028@gmail.com",
+         "phone": "912345678",
+         "relationship": "MADRE"
+      }
+   ]
+}
+```
+
+**Respuestas de Error:**
+
+| Código | Descripción |
+|--------|-------------|
+| `400 Bad Request` | Validaciones fallidas (vector facial inválido, tutores insuficientes, etc.) |
+| `401 Unauthorized` | Token inválido o expirado |
+| `409 Conflict` | DNI ya tiene un badge registrado |
 
 ---
 
-## 💡 Tip para el equipo Frontend
+## 🔍 3. Módulo de Escaneo y Alertas (`/api/v1/badge/scan`)
 
-Para enviar correctamente los endpoints de tipo `multipart/form-data` usando la API fetch o Axios, el código debe verse similar a esto:
+⚠️ **IMPORTANTE PARA FRONTEND:**
+
+Los endpoints de escaneo utilizan `multipart/form-data`. Debes enviar dos partes:
+1. **`file`**: Archivo binario de imagen (JPEG, PNG)
+2. **`data`**: Objeto JSON convertido a Blob
+
+---
+
+### 3.1. Escaneo por Reconocimiento Facial
+
+Registra un intento de escaneo basado en un vector facial capturado por el dispositivo, cruzándolo con los datos biométricos de la base de datos.
+
+- **Método:** `POST`
+- **Ruta:** `/api/v1/badge/scan/face`
+- **Content-Type:** `multipart/form-data`
+- **Autenticación:** ❌ No requerida (Público)
+
+**Parámetros Form-Data:**
+
+| Parámetro | Tipo | Requerido | Descripción |
+|-----------|------|----------|-------------|
+| `file` | `File (Imagen)` | ✅ Sí | Fotografía del entorno o del usuario capturada durante el escaneo |
+| `data` | `JSON (Blob)` | ✅ Sí | Metadatos del dispositivo, ubicación y vector facial |
+
+**Estructura del campo `data`:**
+
+```json
+{
+  "faceVector": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0
+  ],
+  "latitude": -6.77137,
+  "longitude": -79.84088,
+  "nameDevice": "iPhone 14 Pro",
+  "ipAddress": "190.235.12.34"
+}
+```
+
+**Validaciones:**
+
+| Campo | Validación |
+|-------|-----------|
+| `faceVector` | Array de exactamente **128** números decimales o enteros |
+| `latitude` | Número entre -90 y 90 (opcional pero recomendado) |
+| `longitude` | Número entre -180 y 180 (opcional pero recomendado) |
+| `nameDevice` | String con identificación del dispositivo |
+| `ipAddress` | Formato de dirección IPv4 válida |
+
+**Respuesta (200 OK):**
+
+```json
+"0ff1a1c4-31bf-4e52-b475-e3450ee34081"
+```
+
+El endpoint devuelve el **UUID del reporte generado**. Este UUID es necesario para confirmar los datos del informante en el siguiente paso.
+
+**Respuestas de Error:**
+
+| Código | Descripción |
+|--------|-------------|
+| `400 Bad Request` | Vector facial inválido o datos incompletos |
+| `401 Unauthorized` | No se encontró coincidencia facial que supere el umbral mínimo |
+| `500 Internal Server Error` | Error al procesar el vector biométrico |
+
+---
+
+### 3.2. Escaneo por Código QR
+
+Registra un escaneo directo de la tarjeta física/digital mediante su identificador único (UUID).
+
+- **Método:** `POST`
+- **Ruta:** `/api/v1/badge/scan/qr`
+- **Content-Type:** `multipart/form-data`
+- **Autenticación:** ❌ No requerida (Público)
+
+**Parámetros Form-Data:**
+
+| Parámetro | Tipo | Requerido | Descripción |
+|-----------|------|----------|-------------|
+| `file` | `File (Imagen)` | ✅ Sí | Evidencia fotográfica del lugar o del código QR escaneado |
+| `data` | `JSON (Blob)` | ✅ Sí | Metadatos del dispositivo y el identificador del QR |
+
+**Estructura del campo `data`:**
+
+```json
+{
+  "qrCodeUuid": "917ae991-37b8-48fb-a0d0-d39c16dc6a36",
+  "latitude": -6.77137,
+  "longitude": -79.84088,
+  "nameDevice": "iPhone 14 Pro",
+  "ipAddress": "190.235.12.34"
+}
+```
+
+**Validaciones:**
+
+| Campo | Validación |
+|-------|-----------|
+| `qrCodeUuid` | UUID válido en formato estándar (debe existir en BD) |
+| `latitude` | Número entre -90 y 90 (opcional pero recomendado) |
+| `longitude` | Número entre -180 y 180 (opcional pero recomendado) |
+| `nameDevice` | String con identificación del dispositivo |
+| `ipAddress` | Formato de dirección IPv4 válida |
+
+**Respuesta (200 OK):**
+
+```json
+"917ae991-37b8-48fb-a0d0-d39c16dc6a36"
+```
+
+El endpoint devuelve el **UUID del reporte generado**. Este UUID es necesario para confirmar los datos del informante en el siguiente paso.
+
+**Respuestas de Error:**
+
+| Código | Descripción |
+|--------|-------------|
+| `400 Bad Request` | Datos incompletos o formato inválido |
+| `404 Not Found` | El UUID del QR no existe en la base de datos |
+| `500 Internal Server Error` | Error al procesar la solicitud |
+
+---
+
+### 3.3. Confirmar Datos del Informante
+
+Actualiza el reporte de escaneo (generado por `/scan/face` o `/scan/qr`) con la información de contacto de la persona que encontró a la persona extraviada.
+
+- **Método:** `POST`
+- **Ruta:** `/api/v1/badge/scan/{reportUuid}`
+- **Content-Type:** `application/json`
+- **Autenticación:** ❌ No requerida
+
+**Variables de Ruta (Path Variable):**
+
+| Variable | Tipo | Descripción |
+|----------|------|-------------|
+| `reportUuid` | `UUID` | El UUID del reporte devuelto por `/scan/face` o `/scan/qr` |
+
+**Estructura del Body:**
+
+```json
+{
+  "dniReporter": "60751404",
+  "phoneReporter": "987654321"
+}
+```
+
+**Validaciones:**
+
+| Campo | Validación | Requerido |
+|-------|-----------|----------|
+| `dniReporter` | DNI válido (8 dígitos típicamente) | Opcional* |
+| `phoneReporter` | Número de teléfono válido | Opcional* |
+
+> \* **Nota Crítica:** Al menos UNO de estos dos campos debe estar presente. Si ambos están vacíos, la solicitud será rechazada.
+
+**Respuesta (200 OK):**
+
+```json
+{
+  "badgeUuid": "0ff1a1c4-31bf-4e52-b475-e3450ee34081",
+  "dni": "05371954",
+  "fullName": "Victor Elias Chung Coelho",
+  "photoUrl": "https://cloudinary.com/...",
+  "bloodType": "O+",
+  "allergies": "Penicilina",
+  "gender": "MASCULINO",
+  "dateOfBirth": "2006-03-07",
+  "guardians": [
+    {
+      "dni": "60751404",
+      "name": "victor elias chung",
+      "email": "chungcoelhove070@gmail.com",
+      "phone": "987654321",
+      "relationship": "PADRE"
+    },
+    {
+      "dni": "12345678",
+      "name": "Italo Fabian Vasquez Valderrama",
+      "email": "italofvv1028@gmail.com",
+      "phone": "912345678",
+      "relationship": "MADRE"
+    }
+  ]
+}
+```
+
+**Respuestas de Error:**
+
+| Código | Descripción |
+|--------|-------------|
+| `400 Bad Request` | Ambos campos están vacíos o datos inválidos |
+| `404 Not Found` | El UUID del reporte no existe en la base de datos |
+| `500 Internal Server Error` | Error al actualizar los datos |
+
+**⚠️ Flujo Importante:**
+
+1. Cuando se genera una alerta con `/scan/face` o `/scan/qr`, el sistema devuelve un **UUID del reporte**.
+2. Este endpoint (`/scan/{reportUuid}`) **complementa** la información del reporte anterior.
+3. La respuesta devuelve los **datos completos del Badge** (credencial escaneada) para que el informante pueda verificar que reportó al contacto correcto.
+4. Los guardianes reciben una notificación por correo con la información de contacto del reportante (si fue proporcionada).
+
+---
+
+## 📝 Guía de Implementación Frontend
+
+### Cómo Enviar multipart/form-data Correctamente
+
+Para los endpoints que requieren `multipart/form-data`, debes usar el objeto `FormData`. Aquí te mostramos cómo hacerlo con **Fetch API** y **Axios**:
+
+#### Opción 1: Usando Fetch API
 
 ```javascript
-const formData = new FormData();
+async function crearBadge(fileInput, datosJson, accessToken) {
+  const formData = new FormData();
 
-// 1. Agregar el archivo (imagen)
-formData.append("file", inputFoto.files[0]);
+  // 1. Agregar archivo de imagen
+  formData.append("file", fileInput.files[0]);
 
-// 2. Agregar el JSON como un Blob para que Spring Boot lo lea como application/json
-const dataJson = {
-  // ... tu objeto json aquí ...
+  // 2. Agregar datos JSON como Blob
+  formData.append("data", new Blob([JSON.stringify(datosJson)], {
+    type: "application/json"
+  }));
+
+  const response = await fetch('http://localhost:8080/api/v1/badge', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+      // NO incluyas 'Content-Type' aquí - el navegador lo añadirá automáticamente
+    },
+    body: formData
+  });
+
+  return await response.json();
+}
+
+// Uso:
+const datosJson = {
+  dni: "05371954",
+  fullName: "Victor Elias Chung Coelho",
+  // ... resto de campos ...
 };
-formData.append("data", new Blob([JSON.stringify(dataJson)], {
-  type: "application/json"
-}));
 
-// 3. Enviar (NO establecer Content-Type manualmente, el navegador lo hará añadiendo el boundary)
-fetch('http://localhost:8080/api/v1/badge', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${accessToken}`
-  },
-  body: formData
-});
+const resultado = await crearBadge(fileInputElement, datosJson, miAccessToken);
+console.log(resultado);
 ```
+
+#### Opción 2: Usando Axios
+
+```javascript
+async function escaneoFacial(fileInput, datosJson) {
+  const formData = new FormData();
+
+  // 1. Agregar archivo de imagen
+  formData.append("file", fileInput.files[0]);
+
+  // 2. Agregar datos JSON como Blob
+  formData.append("data", new Blob([JSON.stringify(datosJson)], {
+    type: "application/json"
+  }));
+
+  const response = await axios.post(
+    'http://localhost:8080/api/v1/badge/scan/face',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+        // Axios configurará automáticamente el boundary
+      }
+    }
+  );
+
+  return response.data;
+}
+
+// Uso:
+const datosEscaneo = {
+   faceVector: [
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0
+   ],
+  latitude: -6.77137,
+  longitude: -79.84088,
+  nameDevice: "iPhone 14 Pro",
+  ipAddress: "190.235.12.34"
+};
+
+const reporteUuid = await escaneoFacial(fileInputElement, datosEscaneo);
+console.log("Reporte creado:", reporteUuid);
+```
+
+### Notas Importantes de Implementación
+
+1. **No establezcas `Content-Type` manualmente en headers** - El navegador/Axios lo añadirá automáticamente con el boundary correcto.
+2. **Usa `Blob` para el JSON** - Esto asegura que Spring Boot lo interprete como `application/json`.
+3. **El orden no importa** - Puedes agregar primero `data` y luego `file` a FormData.
+4. **Valida los datos antes de enviar** - Especialmente el `faceVector` (debe tener exactamente 128 elementos) y los DNIs.
+5. **Maneja errores correctamente** - Los códigos `4xx` y `5xx` indican problemas que debes reportar al usuario.
+
+---
+
+## 🔒 Notas Globales de Seguridad
+
+✅ **Todos los tokens deben incluirse en las cabeceras:**
+
+```
+Authorization: Bearer <tu_access_token_aqui>
+```
+
+✅ **Validaciones de datos:**
+- Los DNIs son validados contra registros externos.
+- Los vectores faciales deben tener exactamente 128 elementos.
+- Las contraseñas requieren 8+ caracteres, mayúsculas, minúsculas, números y caracteres especiales.
+
+✅ **Tiempos de expiración:**
+- Access Token: 1 hora (3600 segundos)
+- Refresh Token: 7 días
+- Usa el endpoint `/api/auth/refresh` para obtener nuevos tokens antes de que expiren.
+
+---
+
+## 📞 Soporte y Contacto
+
+Para dudas sobre la implementación, contacta al equipo backend o revisa los ejemplos en esta documentación.
 
