@@ -1,12 +1,37 @@
 import { useState, useEffect, useRef } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { LinkIcon, ArrowRightIcon, Camera } from '@heroicons/react/24/outline';
+import { LinkIcon, ArrowRightIcon, Camera, User } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 
-const resolveScannedUrl = async (url, navigate) => {
+const capturePhotoFromHtml5Reader = async (readerElementId) => {
+    // The html5-qrcode library creates a video element inside the reader div
+    const readerDiv = document.getElementById(readerElementId);
+    if (!readerDiv) return null;
+    
+    const video = readerDiv.querySelector('video');
+    if (!video || !video.videoWidth) return null;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+            if (blob) {
+                resolve(new File([blob], `scan-qr-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+            } else {
+                resolve(null);
+            }
+        }, 'image/jpeg', 0.9);
+    });
+};
+
+const resolveScannedUrl = async (decodedText, navigate, readerElementId = 'reader') => {
     try {
-        const urlObj = new URL(url);
+        const urlObj = new URL(decodedText);
         if (urlObj.pathname.startsWith('/gafete/')) {
             const qrCodeUuid = urlObj.pathname.split('/gafete/')[1];
             
@@ -26,7 +51,7 @@ const resolveScannedUrl = async (url, navigate) => {
             }
 
             const nameDevice = navigator.userAgent;
-            const ipAddress = '192.0.2.0'; // Placeholder
+            const ipAddress = '192.0.2.0';
 
             const scanData = {
                 qrCodeUuid,
@@ -36,20 +61,12 @@ const resolveScannedUrl = async (url, navigate) => {
                 ipAddress
             };
 
-            // Check if user wants to add photo (optional)
-            const addPhoto = confirm("¿Deseas agregar una foto del contexto? (Opcional)");
-            let file = null;
-            if (addPhoto) {
-                // In a full impl, we'd show a camera capture UI
-                // For now, we proceed without photo
-                console.log('Photo capture not implemented in this flow');
-            }
-
+            // Try to capture photo from the scanner's video element
+            let file = await capturePhotoFromHtml5Reader(readerElementId);
+            
             const formData = new FormData();
             formData.append('data', new Blob([JSON.stringify(scanData)], { type: 'application/json' }));
-            if (file) {
-                formData.append('file', file);
-            }
+            formData.append('file', file);
 
             const res = await api.post('/api/v1/badge/scan/qr', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
@@ -61,10 +78,10 @@ const resolveScannedUrl = async (url, navigate) => {
             // Navigate home to show reporter modal
             navigate('/?action=scanner');
         } else {
-            window.location.href = url;
+            window.location.href = decodedText;
         }
     } catch {
-        alert("Código QR inválido o URL no reconocida: " + url);
+        alert("Código QR inválido o URL no reconocida: " + decodedText);
     }
 };
 
@@ -113,7 +130,7 @@ const ScannerQR = () => {
             scanner.render(
                 (decodedText) => {
                     if (scanner) scanner.clear();
-                    resolveScannedUrl(decodedText, navigate);
+                    resolveScannedUrl(decodedText, navigate, 'reader');
                 },
                 () => {
                     // ignore frequent read errors
