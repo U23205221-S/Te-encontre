@@ -77,19 +77,19 @@ const openRegistro = () => setActionInUrl('registro');
 
     return (
         <div className="relative bg-surface-base text-text-body">
-            <section data-home-section className="ui-home-scroll-section ui-viewport-section ui-hero-section relative flex items-center overflow-hidden bg-surface-base">
-                <div className="relative mx-auto grid w-full max-w-[90rem] items-start gap-6 px-6 md:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8 lg:px-10 xl:px-12">
+            <section data-home-section className="ui-home-scroll-section relative overflow-hidden bg-surface-base px-6 pb-20 pt-24 md:px-8 md:pb-24 md:pt-28 lg:px-10 lg:pt-32 xl:px-12">
+                <div className="relative mx-auto grid w-full max-w-[1376px] items-start gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8">
                     <div className="rounded-card border border-surface-border bg-surface-card p-8 shadow-card lg:p-12">
                         <div className="mb-6 inline-flex items-center gap-2 rounded-pill bg-brand-50/30 px-3 py-1.5">
                             <img src={shieldIcon} alt="Escudo" className="h-3.5 w-3.5" />
-                            <span className="text-sm font-bold tracking-[0.05em] text-brand-500">Seguridad de Nueva Generación</span>
+                            <span className="text-[14px] font-bold leading-5 tracking-[0.05em] text-brand-500">Seguridad de Nueva Generación</span>
                         </div>
 
-                        <h1 className="mb-6 text-4xl font-extrabold leading-[1.05] text-text-primary md:text-5xl lg:text-[56px] lg:leading-[1.05]">
+                        <h1 className="mb-6 text-[34px] font-extrabold leading-[1.12] text-text-primary md:text-[40px] md:leading-[48px]">
                             Protege a tu hijo/a de la manera más segura.
                         </h1>
 
-                        <p className="mb-10 max-w-[576px] text-base leading-7 text-text-body md:text-lg md:leading-8">
+                        <p className="mb-10 max-w-[576px] text-base leading-6 text-text-body md:text-[18px] md:leading-[28px]">
                             Tecnología biométrica y códigos de identificación rápida diseñados para la tranquilidad de tu familia. Un sistema intuitivo que actúa en segundos cuando más lo necesitas.
                         </p>
 
@@ -138,11 +138,11 @@ const openRegistro = () => setActionInUrl('registro');
                 </div>
             </section>
 
-            <section data-home-section className="ui-home-scroll-section ui-viewport-section flex items-center bg-surface-base py-16 md:py-20">
-                <div className="mx-auto w-full max-w-[90rem] px-6 md:px-8 lg:px-10 xl:px-12">
+            <section data-home-section className="ui-home-scroll-section bg-surface-base px-6 py-10 md:px-8 md:py-12 lg:px-10 xl:px-12">
+                <div className="mx-auto w-full max-w-[1376px]">
                     <div className="mx-auto mb-10 max-w-[672px] space-y-4 text-center">
-                        <h2 className="text-[2rem] font-bold leading-10 text-text-primary">¿Has encontrado a un niño perdido?</h2>
-                        <p className="text-base leading-6 text-text-body">
+                        <h2 className="text-[32px] font-bold leading-10 text-text-primary">¿Has encontrado a un niño perdido?</h2>
+                        <p className="text-[16px] leading-6 text-text-body">
                             Nuestro sistema te permite actuar rápidamente protegiendo la identidad de manera segura.
                         </p>
                     </div>
@@ -150,8 +150,8 @@ const openRegistro = () => setActionInUrl('registro');
                     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                         <article className="rounded-card border border-surface-border bg-surface-card p-8 shadow-card">
                             <img src={qrIcon} alt="Código QR" className="mb-6 h-20 w-14" />
-                            <h3 className="mb-3 text-3xl font-semibold leading-8 text-text-primary">Escanear Código QR</h3>
-                            <p className="mb-8 text-base leading-6 text-text-body">
+                            <h3 className="mb-3 text-[24px] font-semibold leading-8 text-text-primary">Escanear Código QR</h3>
+                            <p className="mb-8 text-[16px] leading-6 text-text-body">
                                 Escanea la pulsera, mochila o credencial del menor para acceder a un canal de comunicación seguro y anónimo con sus tutores.
                             </p>
                             <button onClick={openScanner} className="ui-btn-teal w-full">
@@ -162,8 +162,8 @@ const openRegistro = () => setActionInUrl('registro');
 
                         <article className="rounded-card border border-surface-border bg-surface-card p-8 shadow-card">
                             <img src={stepIcon} alt="Reconocimiento" className="mb-6 h-20 w-14" />
-                            <h3 className="mb-3 text-3xl font-semibold leading-8 text-text-primary">Reconocimiento Facial</h3>
-                            <p className="mb-8 text-base leading-6 text-text-body">
+                            <h3 className="mb-3 text-[24px] font-semibold leading-8 text-text-primary">Reconocimiento Facial</h3>
+                            <p className="mb-8 text-[16px] leading-6 text-text-body">
                                 Utiliza nuestra IA avanzada para identificar al menor mediante una fotografía, cruzando datos de manera instantánea y privada.
                             </p>
                             <button onClick={openReconocimiento} className="inline-flex w-full items-center justify-between rounded-module bg-accent-500 px-4 py-3 text-sm font-bold text-accent-800 hover:bg-accent-600">
@@ -174,8 +174,8 @@ const openRegistro = () => setActionInUrl('registro');
 
                         <article className="rounded-card border border-surface-border bg-surface-card p-8 shadow-card md:col-span-2 xl:col-span-1">
                             <img src={privacyIcon} alt="Privacidad" className="mb-6 h-20 w-14" />
-                            <h3 className="mb-3 text-3xl font-semibold leading-8 text-text-primary">Seguridad y Privacidad</h3>
-                            <p className="mb-8 text-base leading-6 text-text-body">
+                            <h3 className="mb-3 text-[24px] font-semibold leading-8 text-text-primary">Seguridad y Privacidad</h3>
+                            <p className="mb-8 text-[16px] leading-6 text-text-body">
                                 Tu información biométrica está protegida con cifrado. Operamos bajo un enfoque estricto de Privacy-First.
                             </p>
 
@@ -188,13 +188,14 @@ const openRegistro = () => setActionInUrl('registro');
                 </div>
             </section>
 
-            <section id="como-funciona" data-home-section className="ui-home-scroll-section ui-viewport-section flex flex-col bg-[#EDEEEF]">
-                <div className="mx-auto w-full max-w-[90rem] flex-1 px-6 py-14 md:px-8 lg:px-10 xl:px-12">
+            <section id="como-funciona" data-home-section className="ui-home-scroll-section bg-surface-base px-6 pb-20 md:px-8 lg:px-10 xl:px-12">
+                <div className="mx-auto w-full max-w-[1376px] rounded-card border border-surface-border-medium bg-[#EDEEEF] px-8 py-12 md:px-10 md:py-12">
                     <div className="mb-10 text-center">
-                        <h2 className="text-[2rem] font-semibold leading-8 text-text-primary">Tu tranquilidad en 3 simples pasos</h2>
+                        <h2 className="text-[32px] font-semibold leading-8 text-text-primary">Tu tranquilidad en 3 simples pasos</h2>
                     </div>
 
-                    <div className="grid gap-8 md:grid-cols-3">
+                    <div className="relative grid gap-8 md:grid-cols-3">
+                        <div className="pointer-events-none absolute left-[16.5%] right-[16.5%] top-6 hidden h-[2px] bg-[linear-gradient(90deg,rgba(195,198,213,0)_0%,rgba(195,198,213,1)_50%,rgba(195,198,213,0)_100%)] md:block" />
                         {[{
                             step: '1',
                             title: 'Registra el perfil',
@@ -208,15 +209,15 @@ const openRegistro = () => setActionInUrl('registro');
                             title: 'Monitorea y conecta',
                             text: 'Si alguien escanea el código, recibirás una alerta inmediata y segura.',
                         }].map((item) => (
-                            <article key={item.step} className="relative text-center">
+                            <article key={item.step} className="relative z-10 text-center">
                                 <div className="mb-4 flex justify-center">
                                     <div className="relative flex h-12 w-12 items-center justify-center rounded-pill bg-white shadow-step">
                                         <span className="text-2xl font-semibold leading-8 text-text-heading">{item.step}</span>
                                     </div>
                                 </div>
 
-                                <h3 className="mb-2 text-sm font-bold tracking-[0.05em] text-text-heading">{item.title}</h3>
-                                <p className="mx-auto max-w-[360px] text-sm leading-5 text-text-body">{item.text}</p>
+                                <h3 className="mb-2 text-[14px] font-bold leading-5 tracking-[0.05em] text-text-heading">{item.title}</h3>
+                                <p className="mx-auto max-w-[360px] text-[14px] leading-5 text-text-body">{item.text}</p>
                             </article>
                         ))}
                     </div>

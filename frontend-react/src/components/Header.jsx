@@ -111,7 +111,7 @@ const Header = ({ sessionUser, onLogout }) => {
                 </Link>
                 <Link
                   to="/registro"
-                  className="inline-flex items-center rounded-module bg-accent-500 px-4 py-2 text-sm font-bold text-accent-800 hover:bg-accent-600"
+                  className="inline-flex items-center rounded-pill bg-accent-500 px-4 py-2 text-sm font-bold text-accent-800 hover:bg-accent-600"
                   aria-label="Registrar una cuenta"
                 >
                   Registrar ahora
@@ -195,7 +195,7 @@ const Header = ({ sessionUser, onLogout }) => {
                 <Link
                   to="/registro"
                   onClick={() => setIsMenuOpen(false)}
-                  className="inline-flex w-full items-center justify-center rounded-module bg-accent-500 px-4 py-3 text-sm font-bold text-accent-800 hover:bg-accent-600"
+                  className="inline-flex w-full items-center justify-center rounded-pill bg-accent-500 px-4 py-3 text-sm font-bold text-accent-800 hover:bg-accent-600"
                   aria-label="Registrar una cuenta"
                 >
                   Registrar ahora
