@@ -98,7 +98,7 @@ Para los siguientes 3 endpoints, no se envía un JSON plano. Se debe usar un obj
 
 ### 2.1. Escaneo por Reconocimiento Facial
 
-Dispara una alerta basada en el vector biométrico del rostro detectado.
+Recibe un vector biométrico facial y una fotografía para intentar identificar a la persona encontrada. Si la similitud supera el umbral establecido, se registra la alerta de ubicación y se notifica a los guardianes asignados.
 
 - **Método:** `POST`
 - **Ruta:** `/api/v1/badge/scan/face`
@@ -109,35 +109,49 @@ Dispara una alerta basada en el vector biométrico del rostro detectado.
 
 | Clave | Tipo | Descripción |
 |-------|------|-------------|
-| `data` | `application/json` | Objeto JSON con los datos del vector y el reporte. |
-| `file` | File (Imagen) | Fotografía tomada en el momento del reporte. |
+| `data` | `application/json` | Objeto ScanAlertRequestDTO con los datos del vector biométrico y ubicación. |
+| `file` | File (Imagen) | Fotografía tomada en el lugar del hallazgo (JPEG, PNG, etc). |
 
-**Estructura del campo `data` (JSON):**
+**Estructura del campo `data` (ScanAlertRequestDTO):**
 
 ```json
 {
   "faceVector": [
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0
+    0.1543, -0.8765, 0.4321, 0.9876, -0.1234, ...
   ],
-  "dniReporter": "76543210",
-  "fullNameReporter": "Luis Angel Anampa",
-  "phoneReporter": "+51987654321",
+  "latitude": -6.77137,
+  "longitude": -79.84088,
   "nameDevice": "iPhone 14 Pro",
   "ipAddress": "190.235.12.34"
 }
 ```
 
+**Notas Importantes:**
+
+- El `faceVector` es un array numérico que representa la extracción biométrica facial (típicamente 128 o 512 dimensiones).
+- `latitude` y `longitude` son opcionales pero recomendados para establecer el punto de geolocalización del reporte.
+- `nameDevice` e `ipAddress` ayudan a rastrear desde qué dispositivo se generó la alerta.
+
+**Respuestas:**
+
+| Código | Descripción | Body |
+|--------|-------------|------|
+| `200 OK` | El rostro coincidió con un Badge registrado. Alerta disparada. | `"3a2daae0-dd34-4857-b146-5c0405dda911"` (UUID de la alerta generada) |
+| `401 Unauthorized` | No se encontró ninguna coincidencia biométrica que supere el umbral mínimo establecido. | Mensaje de error |
+
+**⚠️ Flujo Importante:**
+
+1. Este endpoint **devuelve solo el UUID de la alerta generada** en la respuesta `200 OK`.
+2. Los datos completos del Badge (credencial escaneada) **no se devuelven en esta primera petición**.
+3. Para obtener los datos del Badge, el cliente debe:
+   - Llamar al endpoint `2.3` (Actualizar Datos del Reportante) con el UUID de la alerta
+   - En la respuesta del endpoint `2.3` recibirá el `BadgeResponseDTO` con los datos completos de la credencial
+
 ---
 
 ### 2.2. Escaneo por Código QR
 
-Dispara una alerta basada en el UUID contenido en el código QR escaneado.
+Se activa cuando alguien escanea físicamente el código QR de la credencial. Busca la credencial por su UUID, registra la ubicación y envía la alerta de emergencia a los guardianes.
 
 - **Método:** `POST`
 - **Ruta:** `/api/v1/badge/scan/qr`
@@ -148,23 +162,80 @@ Dispara una alerta basada en el UUID contenido en el código QR escaneado.
 
 | Clave | Tipo | Descripción |
 |-------|------|-------------|
-| `data` | `application/json` | Objeto JSON con el UUID y la ubicación. |
-| `file` | File (Imagen) | Fotografía tomada en el momento del reporte. |
+| `data` | `application/json` | Objeto ScanAlertRequestDTO con el UUID del QR y ubicación. |
+| `file` | File (Imagen) | Fotografía tomada en el lugar del hallazgo (JPEG, PNG, etc). |
 
-**Estructura del campo `data` (JSON):**
+**Estructura del campo `data` (ScanAlertRequestDTO):**
 
 ```json
 {
-  "qrCodeUuid": "6a593901-9386-402e-b1bf-d93a736ffb0f",
+  "qrCodeUuid": "3c2160f8-8c1a-4556-a901-1a3400a79125",
   "latitude": -6.77137,
   "longitude": -79.84088,
-  "dniReporter": "76543210",
-  "fullNameReporter": "Luis Angel Anampa",
-  "phoneReporter": "+51987654321",
   "nameDevice": "iPhone 14 Pro",
   "ipAddress": "190.235.12.34"
 }
 ```
+
+**Notas Importantes:**
+
+- El `qrCodeUuid` es el identificador único extraído del código QR que se escanea.
+- `latitude` y `longitude` registran la ubicación geográfica donde se encontró la credencial.
+- Este endpoint es directo: si el UUID existe en la base de datos, la alerta se dispara automáticamente.
+
+**Respuestas:**
+
+| Código | Descripción | Body |
+|--------|-------------|------|
+| `200 OK` | El QR es válido y la alerta se ha enviado a los guardianes. | `"3a2daae0-dd34-4857-b146-5c0405dda911"` (UUID de la alerta generada) |
+| `404 Not Found` | El UUID proporcionado no existe en la base de datos de credenciales. | Mensaje de error |
+
+**⚠️ Flujo Importante:**
+
+1. Este endpoint **devuelve solo el UUID de la alerta generada** en la respuesta `200 OK`.
+2. Los datos completos del Badge (credencial escaneada) **no se devuelven en esta primera petición**.
+3. Para obtener los datos del Badge, el cliente debe:
+   - Llamar al endpoint `2.3` (Actualizar Datos del Reportante) con el UUID de la alerta
+   - En la respuesta del endpoint `2.3` recibirá el `BadgeResponseDTO` con los datos completos de la credencial
+
+---
+
+### 2.3. Actualizar Datos del Reportante
+
+Permite a la persona que encontró al familiar (y que generó la alerta previa) proporcionar sus datos de contacto. Si se proporciona al menos uno de los dos datos (DNI o Teléfono), el sistema enviará un correo adicional a los guardianes con esta información de contacto.
+
+- **Método:** `POST`
+- **Ruta:** `/api/v1/badge/scan/{uuid_de_la_alerta}`
+- **Content-Type:** `application/json`
+- **Autenticación:** No requerida
+
+**Parámetros de la URL (Path Variable):**
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `uuid_de_la_alerta` | `UUID` | El identificador de la alerta generada en `/scan/face` o `/scan/qr`. |
+
+**Body de la Petición (ScanAlertPart2RequestDTO):**
+
+```json
+{
+  "dniReporter": "60751404",
+  "phoneReporter": "924781609"
+}
+```
+
+**Notas Importantes:**
+
+- Ambos campos (`dniReporter` y `phoneReporter`) son **opcionales**, pero al menos uno debe estar presente.
+- El correo de notificación solo se enviará si se proporciona información válida en al menos uno de los campos.
+- Este endpoint se utiliza como un segundo paso después de generar una alerta (ya sea por cara o QR).
+
+**Respuestas:**
+
+| Código | Descripción | Body |
+|--------|-------------|------|
+| `200 OK` | Los datos se actualizaron correctamente. | `BadgeResponseDTO` (Datos públicos de la credencial escaneada) |
+| `404 Not Found` | El UUID de la alerta no existe en la base de datos. | Mensaje de error |
 
 ---
 

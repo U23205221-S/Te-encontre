@@ -44,29 +44,24 @@ public class BadgeService {
 
     // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
     @Transactional
-    public Optional<BadgeResponseDTO> identifyByFace(ScanAlertRequestDTO requestDTO, MultipartFile file) {
-
+    public UUID identifyByFace(ScanAlertRequestDTO requestDTO, MultipartFile file) {
         return badgeRepository.findBestMatch(requestDTO.getFaceVector())
                 .filter(result -> result.getDistance() < MATCH_THRESHOLD)
                 .flatMap(result -> badgeRepository.findById(result.getId()))
-                .map(badge -> {
-                    // ¡Aquí disparamos la alerta!
-                    scanAlertService.processAndSendAlert(badge, file, requestDTO);
-                    return badgeMapper.toDTO(badge);
-                });
+                .map(badge -> scanAlertService.processAndSendAlert(badge, file, requestDTO))
+                .orElseThrow(() -> new EntityNotFoundException("No se encontró ninguna coincidencia biométrica que supere el umbral mínimo."));
     }
 
     // BÚSQUEDA POR QR (UUID)
     @Transactional
-    public BadgeResponseDTO getByUuid(ScanAlertRequestDTO requestDTO, MultipartFile file) {
+    public UUID getByUuid(ScanAlertRequestDTO requestDTO, MultipartFile file) {
 
+        // 1. Buscamos el Badge por el UUID del QR
         Badge badge = badgeRepository.findByUuid(requestDTO.getQrCodeUuid())
-                .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + requestDTO.getQrCodeUuid()));
+                .orElseThrow(() -> new EntityNotFoundException("Credencial no encontrada para el QR escaneado."));
 
-        // ¡Aquí disparamos la alerta!
-        scanAlertService.processAndSendAlert(badge, file, requestDTO);
-
-        return badgeMapper.toDTO(badge);
+        // 2. Disparamos la alerta y retornamos directamente el UUID de esa alerta generada
+        return scanAlertService.processAndSendAlert(badge, file, requestDTO);
     }
 
     // Consulta simple de badge por UUID (sin alerta, requiere auth)

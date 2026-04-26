@@ -2,11 +2,13 @@ package org.sync_astra.backendjava.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.sync_astra.backendjava.util.DataEncrypt;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "scan_alerts")
@@ -22,6 +24,10 @@ public class ScanAlert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_scan_alert")
     private Long id;
+
+    @UuidGenerator
+    @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+    private UUID uuid;
 
     @Convert(converter = DataEncrypt.class)
     @Column(name = "dni_reporter", nullable = false)
