@@ -24,13 +24,9 @@ public class ResendEmailService {
     private final NotificationAuditRepository notificationAuditRepository;
 
     @Async
-    public CompletableFuture<Boolean> sendEmail(UUID auditUuid, String to, String subject, String htmlContent) {
+    public CompletableFuture<Boolean> sendEmail(NotificationAudit audit, String to, String subject, String htmlContent) {
         log.info("Iniciando envío asíncrono de mail a: {}", to);
 
-        NotificationAudit audit = notificationAuditRepository.findByUuid(auditUuid).orElseThrow(() -> {
-            log.error("No se encontró NotificationAudit para UUID: {}", auditUuid);
-            return new RuntimeException("NotificationAudit no encontrado");
-        });
         audit.setProviderName("Resend");
 
         try {

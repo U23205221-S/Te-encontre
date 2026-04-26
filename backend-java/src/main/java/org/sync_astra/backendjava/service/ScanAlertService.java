@@ -18,6 +18,8 @@ import org.sync_astra.backendjava.model.Badge;
 import org.sync_astra.backendjava.model.Guardians;
 import org.sync_astra.backendjava.model.ScanAlert;
 import org.sync_astra.backendjava.repository.ScanAlertRepository;
+import org.sync_astra.backendjava.service.apiCloud.DniResponse;
+import org.sync_astra.backendjava.service.apiCloud.DniService;
 import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
 import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
 import org.sync_astra.backendjava.service.email.ResendEmailService;
@@ -35,6 +37,7 @@ public class ScanAlertService {
     private final ScanAlertMapper scanAlertMapper;
     private final ImageStorageService imageStorageService;
     private final BadgeMapper badgeMapper;
+    private final DniService dniService;
 
     @Value("${app.alert.group-email:admin@teencontre.com}")
     private String alertGroupEmail;
@@ -187,8 +190,17 @@ public class ScanAlertService {
         // Validamos y seteamos el DNI
         if (StringUtils.hasText(request.getDniReporter())) {
             alert.setDniReporter(request.getDniReporter());
-            alert.setFullNameReporter("Anónimo"); // Aquí se usará la extracción de datos RENIEC
-            hasReporterInfo = true;
+                // Verificamos si el DNI existe en RENIEC
+            DniResponse.DatosDni  data = dniService.obtenerDatosDni(request.getDniReporter());
+            if (data != null) {
+                String fullName = data.getNombres() + " " + data.getApellidoPaterno() + " " + data.getApellidoMaterno();
+                alert.setFullNameReporter(fullName);
+                hasReporterInfo = true;
+            } else {
+                RuntimeException ex = new RuntimeException("Ingrese un DNI Valido");
+                log.error("Error al validar DNI: {}", ex.getMessage());
+                 throw ex;
+            }
         }
 
         // Validamos y seteamos el teléfono

@@ -17,6 +17,7 @@ import org.sync_astra.backendjava.dtos.response.AuthResponseDTO;
 import org.sync_astra.backendjava.jwt.JwtUtil;
 import org.sync_astra.backendjava.mapper.mapperImpl.UserMapper;
 import org.sync_astra.backendjava.model.Users;
+import org.sync_astra.backendjava.service.apiCloud.DniService;
 import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
 import org.sync_astra.backendjava.service.email.ResendEmailService;
 
@@ -36,6 +37,7 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserDetailsService userDetailsService;
     private final EmailOrchestratorService emailOrchestratorService;
+    private final DniService dniService;
 
     /**
      * 1. REGISTRO + AUTO-LOGIN
@@ -51,6 +53,12 @@ public class AuthService {
         }
 
         // Usamos la abstracción de MapStruct (Convert) para crear el modelo desde el DTO
+        if(!dniService.existeDni(dto.getDni())){
+            throw new RuntimeException("El DNI proporcionado no es valido o no existe en la base de datos oficial.");
+        }
+
+
+
         Users model = userMapper.toModel(dto);
         model.setPasswordHash(passwordEncoder.encode(dto.getPasswordHash()));
 

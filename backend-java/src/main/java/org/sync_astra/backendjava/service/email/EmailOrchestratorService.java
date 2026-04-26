@@ -23,7 +23,7 @@ public class EmailOrchestratorService {
                 .build();
         audit = notificationAuditRepository.save(audit);
 
-        resendEmailService.sendEmail(audit.getUuid(), to, subject, htmlContent);
+        resendEmailService.sendEmail(audit, to, subject, htmlContent);
 
 
 
