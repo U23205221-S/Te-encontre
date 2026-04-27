@@ -107,7 +107,7 @@ const openRegistro = () => setActionInUrl('registro');
                         </div>
 
                         <h1 className="mb-6 text-[34px] font-extrabold leading-[1.12] text-text-primary md:text-[40px] md:leading-[48px]">
-                            Protege a tu hijo/a de la manera más segura.
+                            Protege a tu ser querido de la manera más segura.
                         </h1>
 
                         <p className="mb-10 max-w-[576px] text-base leading-6 text-text-body md:text-[18px] md:leading-[28px]">
@@ -116,7 +116,7 @@ const openRegistro = () => setActionInUrl('registro');
 
                         <div className="mb-8 flex flex-wrap gap-4">
                             <button className="ui-btn-primary" onClick={openRegistro}>
-                                Registrar a mi hijo/a
+                                Registrar a mi familiar
                                 <img src={arrowRightIcon} alt="" className="ml-2 h-4 w-4" aria-hidden="true" />
                             </button>
                             <button className="ui-btn-secondary" onClick={scrollToComoFunciona}>
@@ -162,7 +162,7 @@ const openRegistro = () => setActionInUrl('registro');
             <section data-home-section className="ui-home-scroll-section bg-surface-base px-6 py-12 md:px-8 md:py-16 lg:px-10 xl:px-12">
                 <div className="mx-auto w-full max-w-[1376px]">
                     <div className="mx-auto mb-10 max-w-[672px] space-y-4 text-center">
-                        <h2 className="text-[32px] font-bold leading-10 text-text-primary">¿Has encontrado a un niño perdido?</h2>
+                        <h2 className="text-[32px] font-bold leading-10 text-text-primary">¿Encontraste a alguien perdido?</h2>
                         <p className="text-[16px] leading-6 text-text-body">
                             Nuestro sistema te permite actuar rápidamente protegiendo la identidad de manera segura.
                         </p>
@@ -173,7 +173,7 @@ const openRegistro = () => setActionInUrl('registro');
                             <img src={qrIcon} alt="Código QR" className="mb-6 h-20 w-14" />
                             <h3 className="mb-3 text-[24px] font-semibold leading-8 text-text-primary">Escanear Código QR</h3>
                             <p className="mb-8 text-[16px] leading-6 text-text-body">
-                                Escanea la pulsera, mochila o credencial del menor para acceder a un canal de comunicación seguro y anónimo con sus tutores.
+                                Escanea la pulsera, mochila o credencial de la persona extraviada para acceder a un canal de comunicación seguro y anónimo con sus tutores.
                             </p>
                             <button onClick={openScanner} className="ui-btn-teal w-full">
                                 Escanear ahora
@@ -185,7 +185,7 @@ const openRegistro = () => setActionInUrl('registro');
                             <img src={stepIcon} alt="Reconocimiento" className="mb-6 h-20 w-14" />
                             <h3 className="mb-3 text-[24px] font-semibold leading-8 text-text-primary">Reconocimiento Facial</h3>
                             <p className="mb-8 text-[16px] leading-6 text-text-body">
-                                Utiliza nuestra IA avanzada para identificar al menor mediante una fotografía, cruzando datos de manera instantánea y privada.
+                                Utiliza nuestra IA avanzada para identificar a la persona extraviada mediante una fotografía, cruzando datos de manera instantánea y privada.
                             </p>
                             <button onClick={openReconocimiento} className="inline-flex w-full items-center justify-between rounded-module bg-accent-500 px-4 py-3 text-sm font-bold text-accent-800 hover:bg-accent-600">
                                 Usar reconocimiento facial
@@ -220,7 +220,7 @@ const openRegistro = () => setActionInUrl('registro');
                         {[{
                             step: '1',
                             title: 'Registra el perfil',
-                            text: 'Crea una cuenta segura y añade los datos e imágenes de tu hijo/a.',
+                            text: 'Crea una cuenta segura y añade los datos e imágenes de tu hijo/a. o familiar mayor.',
                         }, {
                             step: '2',
                             title: 'Obtén tu identificador',

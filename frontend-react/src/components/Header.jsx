@@ -5,7 +5,7 @@ import { Menu, ShieldAlert, X } from 'lucide-react';
 const navigationItems = [
   {
     to: '/?action=registro',
-    label: 'Registrar a mi hijo/a',
+    label: 'Registrar a mi familiar',
     isActive: (location) =>
       location.pathname === '/' && new URLSearchParams(location.search).get('action') === 'registro',
   },
