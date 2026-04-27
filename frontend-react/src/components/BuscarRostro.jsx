@@ -24,7 +24,7 @@ const BuscarRostro = () => {
   const [faceDetected, setFaceDetected] = useState(false);
   const [photoCaptured, setPhotoCaptured] = useState(false);
   const [capturedPhotoUrl, setCapturedPhotoUrl] = useState(null);
-  const [showCameraForPhoto, setShowCameraForPhoto] = useState(false);
+  const [faceVector, setFaceVector] = useState(null);
   const [sendingToBackend, setSendingToBackend] = useState(false);
 
   const showLightingMessage = () => {
@@ -203,6 +203,14 @@ const BuscarRostro = () => {
         return;
       }
 
+      let descriptor = Array.from(detection.descriptor);
+      if (descriptor.length > 128) {
+        descriptor = descriptor.slice(0, 128);
+      } else while (descriptor.length < 128) {
+        descriptor.push(0);
+      }
+      setFaceVector(descriptor);
+
       // Face detected - now require photo
       setFaceDetected(true);
       setResult({
@@ -241,19 +249,14 @@ const BuscarRostro = () => {
     setLoading(true);
 
     try {
-      // Get face descriptor again
-      const detection = await faceapi
-        .detectSingleFace(videoRef.current)
-        .withFaceDescriptor();
-
-      if (!detection) {
-        setResult({ found: false, message: 'No se detectó rostro.' });
+      if (!faceVector) {
+        setResult({ found: false, message: 'No se detectó rostro previamente.' });
         return;
       }
 
       // Get geolocation
-      let latitude = null;
-      let longitude = null;
+      let latitude = -6.77137;
+      let longitude = -79.84088;
       if (navigator.geolocation) {
         try {
           const position = await new Promise((resolve, reject) => {
@@ -266,12 +269,19 @@ const BuscarRostro = () => {
         }
       }
 
-      const descriptor = Array.from(detection.descriptor);
-      const nameDevice = navigator.userAgent;
-      const ipAddress = '192.0.2.0';
+      // Keep user agent short
+      const nameDevice = 'Dispositivo Web';
+      let ipAddress = '190.235.12.34';
+      try {
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        ipAddress = ipData.ip;
+      } catch (err) {
+        console.warn('Could not fetch IP', err);
+      }
 
       const scanData = {
-        faceVector: descriptor,
+        faceVector: faceVector,
         latitude,
         longitude,
         nameDevice,
@@ -283,10 +293,8 @@ const BuscarRostro = () => {
       formData.append('data', new Blob([JSON.stringify(scanData)], { type: 'application/json' }));
       
       if (capturedPhotoUrl) {
-        const file = await fetch(capturedPhotoUrl)
-          .then(r => r.blob())
-          .then(blob => new File([blob], `scan-face-${Date.now()}.jpg`, { type: 'image/jpeg' }));
-        formData.append('file', file);
+        const fileBlob = await fetch(capturedPhotoUrl).then(r => r.blob());
+        formData.append('file', fileBlob, 'imagen.jpg');
       } else {
         setResult({ found: false, message: 'La toma de foto es obligatoria por seguridad.' });
         setLoading(false);
@@ -294,9 +302,7 @@ const BuscarRostro = () => {
         return;
       }
 
-      const res = await api.post('/api/v1/badge/scan/face', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await api.post('/api/v1/badge/scan/face', formData);
 
       const alertUuid = res.data;
       window.sessionStorage.setItem('pendingAlertUuid', alertUuid);
