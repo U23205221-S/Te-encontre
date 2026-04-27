@@ -6,6 +6,7 @@ import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.sync_astra.backendjava.util.DataEncrypt;
 
 import java.time.Instant;
 import java.util.List;
@@ -23,17 +24,20 @@ public class Users {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_user")
     private Long id;
 
     @UuidGenerator
-    @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+    @Column(name = "uuid_user", nullable = false, unique = true, updatable = false)
     private UUID uuid;
 
-    @Column(name = "user_name", nullable = false, unique = true, length = 50)
-    private String userName;
-
+    @Convert(converter = DataEncrypt.class)
     @Column(name = "dni", nullable = false, unique = true)
     private String dni;
+
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
@@ -46,9 +50,7 @@ public class Users {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @OneToMany(mappedBy = "userParent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "userRegister", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Badge> badges;
 
-    @OneToMany(mappedBy = "scanByUser", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScanAlert> scanAlerts;
 }

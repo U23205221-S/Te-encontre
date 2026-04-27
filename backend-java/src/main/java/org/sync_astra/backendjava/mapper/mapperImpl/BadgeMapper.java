@@ -14,7 +14,7 @@ import org.sync_astra.backendjava.model.Badge;
  * - Extiende Convert para heredar los métodos toDTO y toModel.
  * - Extiende UpdatePatch para heredar el método de actualización parcial (updateFromDto).
  */
-@Mapper(config = GlobalMapperConfig.class)
+@Mapper(config = GlobalMapperConfig.class, uses = {GuardiansMapper.class})
 public interface BadgeMapper extends Convert<Badge, BadgeRequestDTO, BadgeResponseDTO>, UpdatePatch<BadgeRequestDTO, Badge> {
 
     @Override

@@ -4,13 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.sync_astra.backendjava.dtos.request.RefreshTokenRequestDTO;
 import org.sync_astra.backendjava.dtos.request.UserRequestDTO;
 import org.sync_astra.backendjava.dtos.response.AuthResponseDTO;
 import org.sync_astra.backendjava.service.auth.AuthService;
+import org.sync_astra.backendjava.util.ValidateGroup;
 
-@CrossOrigin(origins = "*") // Allow all origins for development
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -24,8 +25,9 @@ public class AuthController {
      * POST /api/auth/register
      */
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(@RequestBody UserRequestDTO request) {
-        log.info("Petición REST para registrar usuario: {}", request.getUserName());
+    public ResponseEntity<AuthResponseDTO> register(@Validated(ValidateGroup.OnCreate.class)
+            @RequestBody UserRequestDTO request) {
+        log.info("Petición REST para registrar usuario: {}", request.getDni());
         AuthResponseDTO response = authService.register(request);
         return ResponseEntity.ok(response);
     }
@@ -35,8 +37,9 @@ public class AuthController {
      * POST /api/auth/login
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody UserRequestDTO request) {
-        log.info("Petición REST para login de usuario: {}", request.getUserName());
+    public ResponseEntity<AuthResponseDTO> login(@Validated(ValidateGroup.OnLogin.class)
+                                                     @RequestBody UserRequestDTO request) {
+        log.info("Petición REST para login de usuario: {}", request.getDni());
         AuthResponseDTO response = authService.login(request);
         return ResponseEntity.ok(response);
     }
@@ -46,7 +49,7 @@ public class AuthController {
      * POST /api/auth/refresh
      */
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponseDTO> refreshToken(@RequestBody RefreshTokenRequestDTO request) {
+    public ResponseEntity<AuthResponseDTO> refreshToken(@Validated(ValidateGroup.OnCreate.class) @RequestBody RefreshTokenRequestDTO request) {
         log.info("Petición REST para refrescar token");
         AuthResponseDTO response = authService.refreshToken(request);
         return ResponseEntity.ok(response);

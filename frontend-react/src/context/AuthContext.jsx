@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
 const AUTH_STORAGE_KEY = 'qr-utp.simulated-session';
@@ -9,9 +9,13 @@ const readStoredSession = () => {
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.fullName || !parsed.email) return null;
+    if (!parsed || !parsed.accessToken) return null;
 
-    return { fullName: parsed.fullName, email: parsed.email };
+    // Decode JWT payload to get user identity (DNI in subject)
+    const tokenPayload = JSON.parse(atob(parsed.accessToken.split('.')[1]));
+    const dni = tokenPayload.sub;
+
+    return { fullName: parsed.fullName || dni || 'Usuario', email: parsed.email, accessToken: parsed.accessToken, refreshToken: parsed.refreshToken };
   } catch {
     return null;
   }
@@ -28,7 +32,25 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const startSession = (userData, accessToken, refreshToken) => {
-    const payload = { fullName: userData.fullName, email: userData.email };
+    let nameToSave = userData.fullName || userData.dni;
+
+    // Fallback to extract DNI from access token if neither fullName nor DNI was provided
+    if (!nameToSave && accessToken) {
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        if (payload && payload.sub) {
+          nameToSave = payload.sub;
+        }
+      } catch {
+        // Ignorar
+      }
+    }
+
+    const payload = {
+      fullName: nameToSave || 'Usuario',
+      email: userData.email || ''
+    };
+
     if (accessToken) {
       payload.accessToken = accessToken;
     }
@@ -39,12 +61,12 @@ export const AuthProvider = ({ children }) => {
     setSessionUser(payload);
   };
 
-  const login = async ({ email, password }) => {
+  const login = async ({ dni, passwordHash }) => {
     setIsLoading(true);
     try {
-      const response = await api.post('/api/auth/login', { userName: email, passwordHash: password });
-      const { fullName, accessToken, refreshToken } = response.data;
-      startSession({ fullName, email }, accessToken, refreshToken);
+      const response = await api.post('/api/auth/login', { dni, passwordHash });
+      const { accessToken, refreshToken, fullName } = response.data;
+      startSession({ fullName, email: response.data.email }, accessToken, refreshToken);
       return { ok: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Error al iniciar sesión';
@@ -54,17 +76,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async ({ fullName, email, password, dni }) => {
+  const register = async ({ dni, email, passwordHash, confirmPasswordHash }) => {
     setIsLoading(true);
     try {
       const response = await api.post('/api/auth/register', { 
-        userName: email, 
-        passwordHash: password,
-        confirmPasswordHash: password,
-        fullName,
-        dni
+        dni, 
+        email, 
+        passwordHash,
+        confirmPasswordHash
       });
-      const { accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, fullName } = response.data;
       startSession({ fullName, email }, accessToken, refreshToken);
       return { ok: true };
     } catch (error) {
@@ -91,8 +112,8 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await api.post('/api/auth/refresh', { refreshToken: stored.refreshToken });
-      const { fullName, accessToken, refreshToken: newRefreshToken } = response.data;
-      startSession({ fullName, email: stored.email }, accessToken, newRefreshToken);
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+      startSession({ fullName: stored.fullName, email: stored.email }, accessToken, newRefreshToken);
       return true;
     } catch {
       // Refresh failed, logout
@@ -100,6 +121,12 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
   };
+
+  useEffect(() => {
+    const handleRefresh = (e) => setSessionUser(e.detail);
+    window.addEventListener('auth:refresh', handleRefresh);
+    return () => window.removeEventListener('auth:refresh', handleRefresh);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ sessionUser, login, register, logout, refreshToken, isLoading }}>

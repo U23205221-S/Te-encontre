@@ -2,10 +2,13 @@ package org.sync_astra.backendjava.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.sync_astra.backendjava.util.DataEncrypt;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "scan_alerts")
@@ -19,30 +22,47 @@ public class ScanAlert {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_scan_alert")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "badge_id", nullable = false)
-    private Badge badge;
+    @UuidGenerator
+    @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+    private UUID uuid;
 
-    @Column(nullable = false)
-    private Double latitude;
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "dni_reporter", nullable = false)
+    private String dniReporter;
 
-    @Column(nullable = false)
-    private Double longitude;
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "full_name_reporter", nullable = false)
+    private String fullNameReporter;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "scan_by_user", nullable = false)
-    private Users scanByUser;
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "phone_reporter", nullable = false)
+    private String phoneReporter;
+
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "name_device", nullable = false)
+    private String nameDevice;
+
+    @Column(name = "photo_report", nullable = false)
+    private String photoReport;
+
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "ip_address", nullable = false)
+    private String ipAddress;
+
+    @Column(name = "latitude", nullable = false)
+    private double latitude;
+
+    @Column(name = "longitude", nullable = false)
+    private double longitude;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(name = "scanned_at", nullable = false, updatable = false)
     private LocalDateTime scannedAt;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean emailSent = false;
-
-    @Column(name = "email_error_log", columnDefinition = "TEXT")
-    private String emailErrorLog;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_badge", nullable = false)
+    private Badge badge;
 }

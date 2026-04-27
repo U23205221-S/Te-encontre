@@ -40,7 +40,6 @@ public class JwtUtil {
 
         // Inyectamos solo la información relevante de tu entidad actual
         extraClaims.put("uuid", mainUser.getUuid());
-        extraClaims.put("dni", mainUser.getDni());
 
         // Usamos getUsername() que ahora contiene el 'userName' real de tu BD
         return buildToken(extraClaims, mainUser.getUsername(), expiration);

@@ -6,8 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.sync_astra.backendjava.model.Categories.Gender;
 import org.sync_astra.backendjava.model.Categories.StatusBadge;
+import org.sync_astra.backendjava.model.Guardians;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -18,20 +20,20 @@ public class BadgeResponseDTO {
     // Exponemos el UUID público (seguro) en lugar del ID secuencial interno de la BD
     private UUID uuid;
 
+    private String dni;
     private String fullName;
-    private int age;
+    private Instant dateOfBirth;
     private Gender gender;
     private String bloodType;
     private String allergies;
-    private String emergencyContactName;
-    private String mainEmergencyPhone;
-    private String alternativeEmergencyPhone;
-    private String photo;
+    private String photoUrl;
     private StatusBadge statusBadge;
 
     // Fechas de auditoría útiles para mostrar en el Frontend (Ej: "Registrado el...")
     private Instant createdAt;
     private Instant updatedAt;
+
+    private List<GuardiansResponseDTO> guardians;
 
     // ELIMINADO: faceVector.
     // Nunca devuelvas el vector de IA al cliente en un CRUD normal,

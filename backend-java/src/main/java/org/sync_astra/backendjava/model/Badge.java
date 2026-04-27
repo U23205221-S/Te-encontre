@@ -10,6 +10,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.sync_astra.backendjava.model.Categories.Gender;
 import org.sync_astra.backendjava.model.Categories.StatusBadge;
+import org.sync_astra.backendjava.util.DataEncrypt;
 
 import java.time.Instant;
 import java.util.List;
@@ -27,64 +28,62 @@ public class Badge {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_badge")
     private Long id;
 
-    @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+    @Column(name = "uuid_badge", nullable = false, unique = true, updatable = false)
     @UuidGenerator
     private UUID uuid;
 
-    @Column(name = "full_name", nullable = false)
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "dni_badge", nullable = false, unique = true)
+    private String dni;
+
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "full_name_badge", nullable = false)
     private String fullName;
 
-    @Column(name = "age")
-    private int age;
+    @Column(name = "date_of_birth_badge", nullable = false)
+    private Instant dateOfBirth;
 
-    @Column(name = "gender", length = 10, nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(name = "gender_badge", nullable = false)
     private Gender gender;
 
-    @Column(name = "blood_type", length = 5)
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "blood_type_badge", nullable = false)
     private String bloodType;
 
-    @Column(name = "allergies", length = 255)
-    //Se asume que las alergias se almacenarán como una cadena de texto, posiblemente separada por comas si hay
-    //múltiples alergias.
-    //Si se requiere una estructura más compleja, se podría considerar una entidad separada para las alergias.
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "allergies_badge", nullable = false)
     private String allergies;
 
-    @Column(name = "emergency_contact_name", length = 100)
-    private String emergencyContactName;
+    @Column(name = "medical_conditions_badge", nullable = false)
+    private String photoUrl;
 
-    @Column(name = "main_emergency_phone", length = 50)
-    private String mainEmergencyPhone;
-
-    @Column(name = "alternative_emergency_phone", length = 50)
-    private String alternativeEmergencyPhone;
-
-    @Column(name = "photo", length = 255)
-    private String photo;
+    @Column(name = "face_vector_badge", nullable = false, columnDefinition = "vector(128)")
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    private float[] faceVector;
 
     @Column(name = "status_badge", length = 50)
     @Enumerated(EnumType.STRING)
     private StatusBadge statusBadge;
-
-    // Aquí está la magia:
-    @Column(name = "face_vector", columnDefinition = "vector(128)")
-    @JdbcTypeCode(SqlTypes.VECTOR)
-    private float[] faceVector;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY) // O @OneToOne, dependiendo de la relación que quieras establecer
-    @JoinColumn(name = "user_id") // Clave foránea que apunta a la
-    private Users userParent; // Relación con la entidad Users, si es necesario. Se puede mapear con @ManyToOne o @OneToOne según el caso.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_user_register", nullable = false)
+    private Users userRegister;
 
     @OneToMany(mappedBy = "badge", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScanAlert> scanAlerts; // Relación con ScanAlert, un badge puede tener múltiples alertas de escaneo asociadas.
+    private List<Guardians> guardians;
+
+    @OneToMany(mappedBy = "badge", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ScanAlert> scanAlerts;
 }

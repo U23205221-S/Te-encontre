@@ -6,16 +6,37 @@ import { Loader2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
 const passwordRequirements = [
-  { key: 'minLength', label: 'Mínimo 6 caracteres', test: (p) => p.length >= 6 },
-  { key: 'hasLetter', label: 'Al menos una letra', test: (p) => /[a-zA-Z]/.test(p) },
-  { key: 'hasNumber', label: 'Al menos un número', test: (p) => /[0-9]/.test(p) },
+  {
+    key: 'minLength',
+    label: 'Mínimo 8 caracteres',
+    test: (p) => p.length >= 8
+  },
+  {
+    key: 'hasUppercase',
+    label: 'Al menos una letra mayúscula',
+    test: (p) => /[A-Z]/.test(p)
+  },
+  {
+    key: 'hasLowercase',
+    label: 'Al menos una letra minúscula',
+    test: (p) => /[a-z]/.test(p)
+  },
+  {
+    key: 'hasNumber',
+    label: 'Al menos un número',
+    test: (p) => /[0-9]/.test(p)
+  },
+  {
+    key: 'hasSpecialCharacter',
+    label: 'Al menos un carácter especial (@#$%^&+=!.)',
+    test: (p) => /[@#$%^&+=!.]/.test(p)
+  }
 ];
 
 const RegistroPage = () => {
   const navigate = useNavigate();
   const { register: handleRegister, isLoading } = useAuth();
   const [form, setForm] = useState({
-    fullName: '',
     dni: '',
     email: '',
     password: '',
@@ -29,7 +50,7 @@ const RegistroPage = () => {
     event.preventDefault();
     setError('');
 
-    if (!form.fullName || !form.dni || !form.email || !form.password || !form.confirmPassword) {
+    if (!form.dni || !form.email || !form.password || !form.confirmPassword) {
       setError('Completa todos los campos para crear tu cuenta.');
       return;
     }
@@ -55,10 +76,10 @@ const RegistroPage = () => {
     }
 
     const result = await handleRegister({
-      fullName: form.fullName,
       dni: form.dni,
       email: form.email,
-      password: form.password,
+      passwordHash: form.password,
+      confirmPasswordHash: form.confirmPassword,
     });
 
     if (!result.ok) {
@@ -75,30 +96,14 @@ const RegistroPage = () => {
     <div className="flex min-h-[calc(100vh-var(--header-height))] items-center justify-center bg-surface-base px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="mb-2 text-3xl font-extrabold text-slate-100">Crear cuenta</h1>
-          <p className="text-slate-300">Regístrate para gestionar los registros de tu familia.</p>
+          <h1 className="mb-2 text-3xl font-extrabold text-text-primary">Crear cuenta</h1>
+          <p className="text-text-body">Regístrate para gestionar los registros de tu familia.</p>
         </div>
 
-        <div className="rounded-3xl border border-brand-200/15 bg-surface-soft p-6 shadow-[0_24px_48px_rgba(0,0,0,0.35)]">
+        <div className="rounded-card border border-surface-border bg-surface-card p-6 shadow-card">
           <form className="space-y-4" autoComplete="off" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="fullName" className="mb-1 block text-sm font-semibold text-slate-200">
-                Nombre completo
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                autoComplete="name"
-                className="ui-input"
-                value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                placeholder="Ej. María López"
-                disabled={isLoading}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="dni" className="mb-1 block text-sm font-semibold text-slate-200">
+              <label htmlFor="dni" className="mb-1 block text-sm font-semibold text-text-heading">
                 DNI
               </label>
               <input
@@ -115,7 +120,7 @@ const RegistroPage = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-semibold text-slate-200">
+              <label htmlFor="email" className="mb-1 block text-sm font-semibold text-text-heading">
                 Correo electrónico
               </label>
               <input
@@ -133,7 +138,7 @@ const RegistroPage = () => {
             </div>
 
             <div className="relative">
-              <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-200">
+              <label htmlFor="password" className="mb-1 block text-sm font-semibold text-text-heading">
                 Contraseña
               </label>
               <input
@@ -150,7 +155,7 @@ const RegistroPage = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[34px] text-slate-400 hover:text-slate-200"
+                className="absolute right-3 top-[34px] text-text-body hover:text-brand-500"
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -164,9 +169,9 @@ const RegistroPage = () => {
                     {checkRequirement(req) ? (
                       <CheckCircle size={14} className="text-emerald-400" />
                     ) : (
-                      <XCircle size={14} className="text-slate-500" />
+                      <XCircle size={14} className="text-emergency-dark" />
                     )}
-                    <span className={checkRequirement(req) ? 'text-emerald-400' : 'text-slate-500'}>
+                    <span className={checkRequirement(req) ? 'text-emerald-400' : 'text-emergency-dark'}>
                       {req.label}
                     </span>
                   </div>
@@ -175,7 +180,7 @@ const RegistroPage = () => {
             )}
 
             <div className="relative">
-              <label htmlFor="confirmPassword" className="mb-1 block text-sm font-semibold text-slate-200">
+              <label htmlFor="confirmPassword" className="mb-1 block text-sm font-semibold text-text-heading">
                 Confirmar contraseña
               </label>
               <input
@@ -192,7 +197,7 @@ const RegistroPage = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-[34px] text-slate-400 hover:text-slate-200"
+                className="absolute right-3 top-[34px] text-text-body hover:text-brand-500"
                 tabIndex={-1}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -212,7 +217,7 @@ const RegistroPage = () => {
             )}
 
             {error && (
-              <p className="rounded-lg border border-emergency-dark/40 bg-emergency-dark/20 px-3 py-2 text-sm text-slate-100" role="alert">
+              <p className="rounded-module border border-emergency-light bg-red-50 px-3 py-2 text-sm text-emergency" role="alert">
                 {error}
               </p>
             )}
@@ -228,9 +233,9 @@ const RegistroPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-text-body">
               ¿Ya tienes cuenta?{' '}
-              <Link to="/login" className="font-semibold text-accent-400 hover:text-accent-300">
+              <Link to="/login" className="font-semibold text-brand-500 hover:text-brand-600">
                 Inicia sesión
               </Link>
             </p>

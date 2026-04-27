@@ -1,88 +1,74 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
+
 spring:
   application:
     name: backend-java
     security:
       jwt:
-        secret-key: d6c0ff14675130d6259dced991adf4ca4f29bce75958d290fa9feebbdef6595d # �C�mbialo! (Debe ser 256-bit min)
-        expiration: 86400000 # 1 d�a (milisegundos)
+        # NUNCA hardcodear esto. En local tomará 'secret-local', en prod tomará el valor del servidor
+        secret-key: ${JWT_SECRET_KEY:hX5vzZfwCq2wy4D6n9qPIy6Zu6C9Q8JbVfubhvEkYDX}
+        expiration: ${JWT_EXPIRATION:86400000}
         refresh-token:
-          expiration: 604800000 # 7 d�as (milisegundos)
+          expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+
 
   servlet:
     multipart:
       enabled: true
       max-file-size: 20MB
       max-request-size: 20MB
-  # ---------------------------------------------------------
-  # CONFIGURACI�N DE BASE DE DATOS (Ajustado a tu log: qr_utp_db)
-  # ---------------------------------------------------------
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/qr_utp_db
-    username: admin
-    password: password123
+    # Usamos variables con valores por defecto apuntando a la BD local de Docker Compose
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:qr_utp_db}
+    username: ${DB_USER:admin}
+    password: ${DB_PASSWORD:password123} # Esta default es solo para la BD local de prueba
     driver-class-name: org.postgresql.Driver
 
-  # ---------------------------------------------------------
-  # CONFIGURACI�N DE JPA E HIBERNATE
-  # ---------------------------------------------------------
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
-    # 1. ELIMINA EL WARNING DE "open-in-view"
-    # Se desactiva por rendimiento para evitar mantener la conexi�n abierta m�s tiempo de lo necesario.
+      ddl-auto: ${JPA_DDL_AUTO:update} # En producción esto DEBE ser 'validate' o 'none'
+    show-sql: ${JPA_SHOW_SQL:true}
     open-in-view: false
-
     properties:
       hibernate:
         format_sql: true
 
-  jackson:
-    default-property-inclusion: non_null
-    mapper:
-      default-view-inclusion: false
 
-  # Configuración de Correo
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: sync.astra0@gmail.com
-    #Cambia esto por una contraseña de aplicación específica de Gmail, no uses tu contraseña real por seguridad
-    password: pvpxzpqsvtcufzut
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true # Recomendado para mayor seguridad
-
-  # Configuración de Hilos para mejorar el rendimiento en operaciones concurrentes
   threads:
     virtual:
       enabled: true
-  # Redis Configuration
+
   data:
     redis:
-      host: localhost
-      port: 6379
-# ---------------------------------------------------------
-# CONFIGURACI�N DE SPRINGDOC (SWAGGER)
-# ---------------------------------------------------------
-# 2 y 3. ELIMINAN LOS WARNINGS DE SPRINGDOC
-# Define expl�citamente que quieres habilitar la documentaci�n y la UI.
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
 springdoc:
   api-docs:
-    enabled: false
+    enabled: ${SWAGGER_ENABLED:false}
   swagger-ui:
-    enabled: false
+    enabled: ${SWAGGER_ENABLED:false}
 
-# ---------------------------------------------------------
-# CONFIGURACI�N DE LOGS
-# ---------------------------------------------------------
 logging:
   level:
     root: INFO
-    org.sync_astra.backendjava: DEBUG
+    org.sync_astra.backendjava: ${LOG_LEVEL:DEBUG}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:tu-cloud-name}
+  api-key: ${CLOUDINARY_API_KEY:tu-api-key}
+  api-secret: ${CLOUDINARY_API_SECRET:tu-api-secret}
+
+app:
+  encryption:
+    secret-key: ${ENCRYPTION_SECRET:tu-encryption-secret}
+    algorithm: ${ENCRYPTION_ALGORITHM:AES}
+
+resend:
+    api-key: ${RESEND_API_KEY:tu-resend-api-key}
+mi-api-cloud:
+  token: ${MI_API_CLOUD_TOKEN:token-de-prueba}
+  url: ${MI_API_CLOUD_URL:https://url/v1}

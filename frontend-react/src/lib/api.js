@@ -1,13 +1,10 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const AUTH_STORAGE_KEY = 'qr-utp.simulated-session';
 
 export const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Interceptor para agregar el token JWT a todas las requests
@@ -62,17 +59,20 @@ api.interceptors.response.use(
           refreshToken: parsed.refreshToken,
         });
 
-        const { fullName, accessToken, refreshToken: newRefreshToken } = response.data;
+        const { accessToken, refreshToken: newRefreshToken, fullName } = response.data;
 
-        // Guardar nuevos tokens
-        const newSession = { fullName: parsed.fullName, email: parsed.email, accessToken, refreshToken: newRefreshToken };
-        window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
+  // Guardar nuevos tokens y posible actualización de nombre
+  const newSession = { fullName: fullName || parsed.fullName, email: parsed.email, accessToken, refreshToken: newRefreshToken };
+  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
+
+  // Emitir evento para actualizar el AuthContext
+  window.dispatchEvent(new CustomEvent('auth:refresh', { detail: newSession }));
 
         // Reintentar request original
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         isRefreshing = false;
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch {
         isRefreshing = false;
         // Refresh falló - logout
         window.localStorage.removeItem(AUTH_STORAGE_KEY);
