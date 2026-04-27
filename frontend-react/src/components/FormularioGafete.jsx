@@ -239,29 +239,29 @@ const FormularioGafete = ({ formRef }) => {
 
         // Validate Guardian 1
         if (!formData.nombreGuardian1 || !formData.dniGuardian1 || !formData.correoGuardian1 || !formData.telefonoGuardian1 || !formData.parentescoGuardian1) {
-            alert("Por favor, completa todos los campos del Primer Tutor de contacto.");
+            alert("Por favor, completa todos los campos del Apoderado.");
             return false;
         }
         if (formData.dniGuardian1.length !== 8) {
-            alert("El DNI del Primer Tutor debe tener exactamente 8 dígitos.");
+            alert("El DNI del Apoderado debe tener exactamente 8 dígitos.");
             return false;
         }
         if (formData.telefonoGuardian1.length !== 9) {
-            alert("El teléfono del Primer Tutor debe tener exactamente 9 dígitos.");
+            alert("El teléfono del Apoderado debe tener exactamente 9 dígitos.");
             return false;
         }
 
         // Validate Guardian 2
         if (!formData.nombreGuardian2 || !formData.dniGuardian2 || !formData.correoGuardian2 || !formData.telefonoGuardian2 || !formData.parentescoGuardian2) {
-            alert("Por favor, completa todos los campos del Segundo Tutor de contacto.");
+            alert("Por favor, completa todos los campos del Apoderado Auxiliar 1 de contacto.");
             return false;
         }
         if (formData.dniGuardian2.length !== 8) {
-            alert("El DNI del Segundo Tutor debe tener exactamente 8 dígitos.");
+            alert("El DNI del Apoderado Auxiliar 1 debe tener exactamente 8 dígitos.");
             return false;
         }
         if (formData.telefonoGuardian2.length !== 9) {
-            alert("El teléfono del Segundo Tutor debe tener exactamente 9 dígitos.");
+            alert("El teléfono del Apoderado Auxiliar 1 debe tener exactamente 9 dígitos.");
             return false;
         }
 
@@ -274,19 +274,19 @@ const FormularioGafete = ({ formRef }) => {
         // Validate Guardian 3 if partially filled
         if (formData.dniGuardian3 || formData.nombreGuardian3 || formData.correoGuardian3 || formData.telefonoGuardian3) {
              if (!formData.nombreGuardian3 || !formData.dniGuardian3 || !formData.correoGuardian3 || !formData.telefonoGuardian3) {
-                 alert("Por favor, completa todos los campos del Tercer Tutor o déjalos todos en blanco.");
+                 alert("Por favor, completa todos los campos del Apoderado Auxiliar 2 o déjalos todos en blanco.");
                  return false;
              }
              if (formData.dniGuardian3.length !== 8) {
-                 alert("El DNI del Tercer Tutor debe tener exactamente 8 dígitos.");
+                 alert("El DNI del Apoderado Auxiliar 2 debe tener exactamente 8 dígitos.");
                  return false;
              }
              if (formData.telefonoGuardian3.length !== 9) {
-                 alert("El teléfono del Tercer Tutor debe tener exactamente 9 dígitos.");
+                 alert("El teléfono del Apoderado Auxiliar 2 debe tener exactamente 9 dígitos.");
                  return false;
              }
              if (!emailRegex.test(formData.correoGuardian3)) {
-                 alert("Por favor, ingresa un correo electrónico válido para el Tercer Tutor.");
+                 alert("Por favor, ingresa un correo electrónico válido para el Apoderado Auxiliar 2.");
                  return false;
              }
         }
@@ -563,7 +563,7 @@ const FormularioGafete = ({ formRef }) => {
 
                         {/* TUTOR 1 */}
                         <div className="form-group col-span-1 md:col-span-2 mt-4">
-                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">Contacto de emergencia - Tutor 1 (Obligatorio)</h3>
+                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">Contacto de emergencia - Apoderado (Obligatorio)</h3>
                         </div>
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-text-heading">DNI *</label>
@@ -595,7 +595,7 @@ const FormularioGafete = ({ formRef }) => {
 
                         {/* TUTOR 2 */}
                         <div className="form-group col-span-1 md:col-span-2 mt-4">
-                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">Contacto de emergencia - Tutor 2 (Obligatorio)</h3>
+                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">Contacto de emergencia - Apoderado Auxiliar 1 (Obligatorio)</h3>
                         </div>
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-text-heading">DNI *</label>
@@ -627,7 +627,7 @@ const FormularioGafete = ({ formRef }) => {
 
                         {/* TUTOR 3 */}
                         <div className="form-group col-span-1 md:col-span-2 mt-4">
-                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">Contacto de emergencia - Tutor 3 (Opcional)</h3>
+                            <h3 className="mb-2 border-b border-surface-border pb-2 font-bold text-text-primary">Contacto de emergencia - Apoderado Auxiliar 2 (Opcional)</h3>
                         </div>
                         <div className="form-group">
                             <label className="mb-1 block text-sm font-bold text-text-heading">DNI</label>
