@@ -5,9 +5,6 @@ const AUTH_STORAGE_KEY = 'qr-utp.simulated-session';
 
 export const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Interceptor para agregar el token JWT a todas las requests
