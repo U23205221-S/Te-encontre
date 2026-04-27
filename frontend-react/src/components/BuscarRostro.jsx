@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import * as faceapi from 'vladmandic/face-api';
+import * as faceapi from '@vladmandic/face-api';
 import { api } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { Camera, Search, AlertTriangle, CheckCircle, Loader2, User, ExternalLink } from 'lucide-react';

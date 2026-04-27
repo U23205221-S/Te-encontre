@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { api } from '../lib/api';
-import * as faceapi from 'vladmandic/face-api';
+import * as faceapi from '@vladmandic/face-api';
 import html2canvas from 'html2canvas';
 import { Camera, Send, Loader2, Link as LinkIcon, Download, CheckCircle, XCircle, Printer } from 'lucide-react';
 import QRGenerado from './QRGenerado';
