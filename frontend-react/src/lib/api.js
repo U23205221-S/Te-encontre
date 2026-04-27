@@ -62,10 +62,10 @@ api.interceptors.response.use(
           refreshToken: parsed.refreshToken,
         });
 
-        const { fullName, accessToken, refreshToken: newRefreshToken } = response.data;
+        const { accessToken, refreshToken: newRefreshToken, fullName } = response.data;
 
-  // Guardar nuevos tokens
-  const newSession = { fullName: parsed.fullName, email: parsed.email, accessToken, refreshToken: newRefreshToken };
+  // Guardar nuevos tokens y posible actualización de nombre
+  const newSession = { fullName: fullName || parsed.fullName, email: parsed.email, accessToken, refreshToken: newRefreshToken };
   window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
 
   // Emitir evento para actualizar el AuthContext
@@ -75,7 +75,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         isRefreshing = false;
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch {
         isRefreshing = false;
         // Refresh falló - logout
         window.localStorage.removeItem(AUTH_STORAGE_KEY);

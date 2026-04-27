@@ -17,6 +17,7 @@ import org.sync_astra.backendjava.dtos.response.AuthResponseDTO;
 import org.sync_astra.backendjava.jwt.JwtUtil;
 import org.sync_astra.backendjava.mapper.mapperImpl.UserMapper;
 import org.sync_astra.backendjava.model.Users;
+import org.sync_astra.backendjava.service.apiCloud.DniResponse;
 import org.sync_astra.backendjava.service.apiCloud.DniService;
 import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
 import org.sync_astra.backendjava.service.email.ResendEmailService;
@@ -268,12 +269,18 @@ public class AuthService {
                 false
         );
 
+        String fullName = userName;
+        DniResponse.DatosDni datos = dniService.obtenerDatosDni(userName);
+        if (datos != null) {
+            fullName = datos.getNombres() + " " + datos.getApellidoPaterno() + " " + datos.getApellidoMaterno();
+        }
+
         // Devolvemos el nuevo par de tokens
-        return new AuthResponseDTO(newAccessToken, refreshToken);
+        return new AuthResponseDTO(newAccessToken, refreshToken, fullName);
     }
 
     /**
-     * Método auxiliar privado para no repetir la lógica de generación y guardado en Redis
+     * Mtodo auxiliar privado para no repetir la lgica de generacin y guardado en Redis
      */
     private AuthResponseDTO generateAndSaveTokens(Authentication auth, String userName) {
         String accessToken = jwtUtil.generateToken(auth);
@@ -295,6 +302,13 @@ public class AuthService {
                 true
         );
 
-        return new AuthResponseDTO(accessToken, refreshToken);
+        String fullName = userName;
+        DniResponse.DatosDni datos = dniService.obtenerDatosDni(userName);
+        if (datos != null) {
+            fullName = datos.getNombres() + " " + datos.getApellidoPaterno() + " " + datos.getApellidoMaterno();
+        }
+
+        return new AuthResponseDTO(accessToken, refreshToken, fullName);
     }
 }
+

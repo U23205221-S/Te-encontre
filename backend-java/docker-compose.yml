@@ -6,6 +6,10 @@ services:
       - "5432:5432"
     env_file:
       - .env # <-- ¡La BD ahora también lee de tu archivo seguro!
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       # Volumen para que los datos no se borren si apagas el contenedor
       - postgres_qr_data_volume:/var/lib/postgresql/data

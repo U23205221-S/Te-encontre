@@ -9,9 +9,13 @@ const readStoredSession = () => {
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.fullName || !parsed.email) return null;
+    if (!parsed || !parsed.accessToken) return null;
 
-    return { fullName: parsed.fullName, email: parsed.email };
+    // Decode JWT payload to get user identity (DNI in subject)
+    const tokenPayload = JSON.parse(atob(parsed.accessToken.split('.')[1]));
+    const dni = tokenPayload.sub;
+
+    return { fullName: parsed.fullName || dni || 'Usuario', email: parsed.email, accessToken: parsed.accessToken, refreshToken: parsed.refreshToken };
   } catch {
     return null;
   }
@@ -28,7 +32,25 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const startSession = (userData, accessToken, refreshToken) => {
-    const payload = { fullName: userData.fullName, email: userData.email };
+    let nameToSave = userData.fullName || userData.dni;
+
+    // Fallback to extract DNI from access token if neither fullName nor DNI was provided
+    if (!nameToSave && accessToken) {
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        if (payload && payload.sub) {
+          nameToSave = payload.sub;
+        }
+      } catch {
+        // Ignorar
+      }
+    }
+
+    const payload = {
+      fullName: nameToSave || 'Usuario',
+      email: userData.email || ''
+    };
+
     if (accessToken) {
       payload.accessToken = accessToken;
     }
@@ -43,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await api.post('/api/auth/login', { dni, passwordHash });
-      const { fullName, accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, fullName } = response.data;
       startSession({ fullName, email: response.data.email }, accessToken, refreshToken);
       return { ok: true };
     } catch (error) {
@@ -63,7 +85,7 @@ export const AuthProvider = ({ children }) => {
         passwordHash,
         confirmPasswordHash
       });
-      const { fullName, accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, fullName } = response.data;
       startSession({ fullName, email }, accessToken, refreshToken);
       return { ok: true };
     } catch (error) {
@@ -90,8 +112,8 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await api.post('/api/auth/refresh', { refreshToken: stored.refreshToken });
-      const { fullName, accessToken, refreshToken: newRefreshToken } = response.data;
-      startSession({ fullName, email: stored.email }, accessToken, newRefreshToken);
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+      startSession({ fullName: stored.fullName, email: stored.email }, accessToken, newRefreshToken);
       return true;
     } catch {
       // Refresh failed, logout
