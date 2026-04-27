@@ -14,11 +14,7 @@ const ReporterStepModal = ({ alertUuid, onClose, onSuccess }) => {
     try {
       let payload = {};
 
-      if (isOmitted) {
-        // Si el usuario decide omitir, enviamos un teléfono de ceros para cumplir con el requisito del backend
-        // y permitir que nos devuelva la información del apoderado.
-        payload = { phoneReporter: '000000000' };
-      } else {
+      if (!isOmitted) {
         if (!form.dniReporter && !form.phoneReporter) {
           setError('Completa al menos un dato de contacto (DNI o teléfono).');
           setLoading(false);

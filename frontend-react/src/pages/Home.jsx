@@ -43,6 +43,8 @@ const Home = () => {
     const handleReporterSuccess = (badgeData) => {
         setReporterBadgeData(badgeData);
         setPendingReporterAlert(null);
+        // Clear scanner modal completely if it's still open behind
+        clearActionFromUrl();
     };
 
     const closeReporterModal = () => {
@@ -381,19 +383,23 @@ const openRegistro = () => setActionInUrl('registro');
 
             {/* Reporter Step Modal - 2nd step after scan */}
             {pendingReporterAlert && (
-                <ReporterStepModal
-                    alertUuid={pendingReporterAlert}
-                    onClose={closeReporterModal}
-                    onSuccess={handleReporterSuccess}
-                />
+                <div style={{ zIndex: 9999 }}>
+                    <ReporterStepModal
+                        alertUuid={pendingReporterAlert}
+                        onClose={closeReporterModal}
+                        onSuccess={handleReporterSuccess}
+                    />
+                </div>
             )}
 
             {/* Badge Data Display after reporter step */}
             {reporterBadgeData && (
-                <Phase5EmergencyContact
-                    badgeData={reporterBadgeData}
-                    onClose={() => setReporterBadgeData(null)}
-                />
+                <div style={{ zIndex: 9999 }}>
+                    <Phase5EmergencyContact
+                        badgeData={reporterBadgeData}
+                        onClose={() => setReporterBadgeData(null)}
+                    />
+                </div>
             )}
         </div>
     );
