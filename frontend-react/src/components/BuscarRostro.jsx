@@ -287,6 +287,11 @@ const BuscarRostro = () => {
           .then(r => r.blob())
           .then(blob => new File([blob], `scan-face-${Date.now()}.jpg`, { type: 'image/jpeg' }));
         formData.append('file', file);
+      } else {
+        setResult({ found: false, message: 'La toma de foto es obligatoria por seguridad.' });
+        setLoading(false);
+        setSendingToBackend(false);
+        return;
       }
 
       const res = await api.post('/api/v1/badge/scan/face', formData, {
@@ -428,15 +433,7 @@ const BuscarRostro = () => {
               className="flex-1 flex items-center justify-center gap-2 rounded-module bg-accent-500 py-3 font-bold text-accent-800 hover:bg-accent-600 disabled:opacity-50"
             >
               <Camera size={20} />
-              Tomar Foto
-            </button>
-            <button
-              onClick={handleSubmitScan}
-              disabled={loading || sendingToBackend || !faceDetected}
-              className="flex-1 flex items-center justify-center gap-2 rounded-module bg-brand-500 py-3 font-bold text-white hover:bg-brand-600 disabled:opacity-50"
-            >
-              {sendingToBackend ? <Loader2 className="animate-spin" size={20} /> : null}
-              {sendingToBackend ? 'Enviando...' : 'Siguiente (sin foto)'}
+              Tomar Foto (Obligatorio)
             </button>
           </div>
         ) : (
@@ -445,7 +442,7 @@ const BuscarRostro = () => {
               onClick={() => { setPhotoCaptured(false); setCapturedPhotoUrl(null); setFaceDetected(false); }}
               className="rounded-module border border-surface-border bg-surface-base px-4 py-3 font-medium text-text-body hover:bg-surface-muted"
             >
-              Repetir
+              Repetir Foto
             </button>
             <button
               onClick={handleSubmitScan}
@@ -472,3 +469,4 @@ const BuscarRostro = () => {
 };
 
 export default BuscarRostro;
+

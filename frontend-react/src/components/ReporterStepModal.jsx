@@ -7,102 +7,126 @@ const ReporterStepModal = ({ alertUuid, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const submitData = async (isOmitted) => {
     setError('');
-
-    if (!form.dniReporter && !form.phoneReporter) {
-      setError('Completa al menos un dato de contacto (DNI o teléfono).');
-      return;
-    }
-
     setLoading(true);
+
     try {
-      const payload = {
-        ...(form.dniReporter && { dniReporter: form.dniReporter }),
-        ...(form.phoneReporter && { phoneReporter: form.phoneReporter }),
-      };
+      let payload = {};
+
+      if (isOmitted) {
+        // Si el usuario decide omitir, enviamos un teléfono de ceros para cumplir con el requisito del backend
+        // y permitir que nos devuelva la información del apoderado.
+        payload = { phoneReporter: '000000000' };
+      } else {
+        if (!form.dniReporter && !form.phoneReporter) {
+          setError('Completa al menos un dato de contacto (DNI o teléfono).');
+          setLoading(false);
+          return;
+        }
+        payload = {
+          ...(form.dniReporter && { dniReporter: form.dniReporter }),
+          ...(form.phoneReporter && { phoneReporter: form.phoneReporter }),
+        };
+      }
 
       const res = await api.post(`/api/v1/badge/scan/${alertUuid}`, payload);
 
-      // Clear pending alert
+      // Limpiar el alertUuid pendiente
       window.sessionStorage.removeItem('pendingAlertUuid');
 
+      // Pasar la información del gafete (BadgeResponseDTO) para la Fase 5
       onSuccess(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al completar los datos del reportante.');
+      setError(err.response?.data?.message || 'Error al procesar la solicitud.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    submitData(false);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/35 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-md overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-card">
-        <div className="flex items-center justify-between border-b border-surface-border bg-surface-muted px-6 py-4">
-          <h3 className="text-xl font-bold text-text-primary">Datos del reportante</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="ui-modal-close"
-            aria-label="Cerrar"
-          >
-            ✕
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/40 p-4 backdrop-blur-md">
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-surface-border bg-surface-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-surface-border bg-brand-50 px-6 py-4">
+          <div className="flex items-center gap-2">
+             <span className="relative flex h-3 w-3">
+                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-500 opacity-75"></span>
+                 <span className="relative inline-flex h-3 w-3 rounded-full bg-brand-500"></span>
+             </span>
+             <h3 className="text-xl font-extrabold text-brand-800">¡Tu ayuda salva vidas!</h3>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 bg-surface-base p-6">
-          <p className="text-sm text-text-body">
-            Para completar la alerta, proporciona al menos un dato de contacto.
+        <div className="bg-surface-base p-6">
+          <p className="mb-6 text-sm text-text-body font-medium leading-relaxed bg-surface-muted p-4 rounded-xl shadow-inner border border-surface-border">
+            Para proteger tu seguridad y establecer una conexión directa con los familiares, te invitamos a compartir un dato de contacto. Esto activará una doble alerta y facilitará el reencuentro.
           </p>
 
-          <div>
-            <label htmlFor="dniReporter" className="mb-1 block text-sm font-semibold text-text-heading">
-              DNI del reportante (opcional)
-            </label>
-            <input
-              id="dniReporter"
-              type="text"
-              inputMode="numeric"
-              className="ui-input"
-              value={form.dniReporter}
-              onChange={(e) => setForm({ ...form, dniReporter: e.target.value.replace(/\D/g, '').slice(0, 8) })}
-              placeholder="8 dígitos"
-              maxLength={8}
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="dniReporter" className="mb-1 block text-sm font-bold text-text-primary">
+                Tu DNI (Para validar tu identidad)
+              </label>
+              <input
+                id="dniReporter"
+                type="text"
+                inputMode="numeric"
+                className="w-full rounded-xl border-2 border-surface-border bg-surface-base py-3 px-4 text-text-body placeholder:text-text-muted focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all font-medium"
+                value={form.dniReporter}
+                onChange={(e) => setForm({ ...form, dniReporter: e.target.value.replace(/\D/g, '').slice(0, 8) })}
+                placeholder="Ej. 12345678"
+                maxLength={8}
+              />
+            </div>
 
-          <div>
-            <label htmlFor="phoneReporter" className="mb-1 block text-sm font-semibold text-text-heading">
-              Teléfono del reportante (opcional)
-            </label>
-            <input
-              id="phoneReporter"
-              type="tel"
-              inputMode="tel"
-              className="ui-input"
-              value={form.phoneReporter}
-              onChange={(e) => setForm({ ...form, phoneReporter: e.target.value.replace(/\D/g, '').slice(0, 9) })}
-              placeholder="9 dígitos"
-              maxLength={9}
-            />
-          </div>
+            <div>
+              <label htmlFor="phoneReporter" className="mb-1 block text-sm font-bold text-text-primary">
+                Número de Celular
+              </label>
+              <input
+                id="phoneReporter"
+                type="tel"
+                inputMode="tel"
+                className="w-full rounded-xl border-2 border-surface-border bg-surface-base py-3 px-4 text-text-body placeholder:text-text-muted focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/20 transition-all font-medium"
+                value={form.phoneReporter}
+                onChange={(e) => setForm({ ...form, phoneReporter: e.target.value.replace(/\D/g, '').slice(0, 9) })}
+                placeholder="Ej. 987654321"
+                maxLength={9}
+              />
+            </div>
 
-          {error && (
-            <p className="rounded-module border border-emergency-light bg-red-50 px-3 py-2 text-sm text-emergency" role="alert">
-              {error}
-            </p>
-          )}
+            {error && (
+              <p className="rounded-lg border border-emergency-light bg-red-50 px-3 py-2 text-sm font-bold text-emergency" role="alert">
+                {error}
+              </p>
+            )}
 
-          <button
-            type="submit"
-            className="ui-btn-primary w-full flex items-center justify-center gap-2"
-            disabled={loading}
-          >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? 'Enviando...' : 'Completar alerta'}
-          </button>
-        </form>
+            <div className="pt-2 flex flex-col gap-3">
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-500 py-3.5 font-bold text-white shadow-md hover:bg-brand-600 hover:shadow-lg transition-all"
+                disabled={loading}
+              >
+                {loading && <Loader2 className="h-5 w-5 animate-spin" />}
+                {loading ? 'Procesando...' : 'Confirmar mis datos'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => submitData(true)}
+                disabled={loading}
+                className="w-full rounded-xl py-3 font-bold text-text-body hover:bg-surface-muted transition-colors border-2 border-transparent hover:border-surface-border"
+              >
+                Prefiero omitir y ver sus teléfonos
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import PaginaReconocimiento from './PaginaReconocimiento';
 import ScannerQR from '../components/ScannerQR';
 import Footer from '../components/Footer';
 import ReporterStepModal from '../components/ReporterStepModal';
+import Phase5EmergencyContact from '../components/Phase5EmergencyContact';
 import heroImage from '../assets/figma-redesign/hero-image.png';
 import shieldIcon from '../assets/figma-redesign/shield-icon.svg';
 import shieldCheckIcon from '../assets/figma-redesign/shield-check-icon.svg';
@@ -389,21 +390,10 @@ const openRegistro = () => setActionInUrl('registro');
 
             {/* Badge Data Display after reporter step */}
             {reporterBadgeData && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/35 p-4 backdrop-blur-sm">
-                    <div className="relative w-full max-w-lg overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-card p-6">
-                        <h3 className="mb-4 text-xl font-bold text-text-primary">Datos del niño/a</h3>
-                        <pre className="text-sm text-text-body overflow-auto max-h-[60vh]">
-                            {JSON.stringify(reporterBadgeData, null, 2)}
-                        </pre>
-                        <button
-                            type="button"
-                            onClick={() => setReporterBadgeData(null)}
-                            className="ui-btn-primary w-full mt-4"
-                        >
-                            Cerrar
-                        </button>
-                    </div>
-                </div>
+                <Phase5EmergencyContact
+                    badgeData={reporterBadgeData}
+                    onClose={() => setReporterBadgeData(null)}
+                />
             )}
         </div>
     );

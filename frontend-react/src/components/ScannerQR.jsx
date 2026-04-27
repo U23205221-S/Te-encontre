@@ -16,6 +16,7 @@ const ScannerQR = () => {
     const [qrCodeUuid, setQrCodeUuid] = useState(null);
     const [photoCaptured, setPhotoCaptured] = useState(false);
     const [capturedPhotoUrl, setCapturedPhotoUrl] = useState(null);
+    const [capturedPhotoFile, setCapturedPhotoFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     
@@ -143,28 +144,20 @@ const ScannerQR = () => {
     };
 
     // Capture photo from video element
-    const capturePhoto = () => {
-        const readerDiv = document.getElementById(readerElementId);
-        if (!readerDiv) return;
-        
-        const video = readerDiv.querySelector('video');
-        if (!video || !video.videoWidth) return;
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        const photoUrl = canvas.toDataURL('image/jpeg', 0.9);
+    const handlePhotoCapture = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const photoUrl = URL.createObjectURL(file);
         setCapturedPhotoUrl(photoUrl);
+        setCapturedPhotoFile(file);
         setPhotoCaptured(true);
     };
 
     // Submit to backend - optional photo
     const handleSubmit = async () => {
-        if (!qrCodeUuid) return;
-        
+        if (!qrCodeUuid || !capturedPhotoFile) return;
+
         setLoading(true);
         setError(null);
 
@@ -196,14 +189,7 @@ const ScannerQR = () => {
 
             const formData = new FormData();
             formData.append('data', new Blob([JSON.stringify(scanData)], { type: 'application/json' }));
-            
-            // Add photo if captured
-            if (capturedPhotoUrl) {
-                const file = await fetch(capturedPhotoUrl)
-                    .then(r => r.blob())
-                    .then(blob => new File([blob], `scan-qr-${Date.now()}.jpg`, { type: 'image/jpeg' }));
-                formData.append('file', file);
-            }
+            formData.append('file', capturedPhotoFile);
 
             const res = await api.post('/api/v1/badge/scan/qr', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
@@ -235,7 +221,9 @@ const ScannerQR = () => {
         setQrScanned(false);
         setQrCodeUuid(null);
         setPhotoCaptured(false);
+        if (capturedPhotoUrl) URL.revokeObjectURL(capturedPhotoUrl);
         setCapturedPhotoUrl(null);
+        setCapturedPhotoFile(null);
         setError(null);
     };
 
@@ -362,7 +350,8 @@ const ScannerQR = () => {
                 <div className="space-y-4">
                     <div className="rounded-card border border-brand-200 bg-brand-50 p-4 text-center">
                         <p className="text-sm font-bold text-brand-800">Código QR detectado</p>
-                        <p className="text-xs text-brand-600">ID: {qrCodeUuid}</p>
+                        <p className="text-xs text-brand-600 mb-2">ID: {qrCodeUuid}</p>
+                        <p className="text-sm text-brand-700 font-medium">Por precaución, es obligatorio tomar una foto de la persona para registrar el reporte.</p>
                     </div>
 
                     {/* Photo area */}
@@ -386,20 +375,29 @@ const ScannerQR = () => {
 
                     {/* Action buttons */}
                     <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={capturePhoto}
-                            disabled={loading}
-                            className="flex-1 flex items-center justify-center gap-2 rounded-module bg-accent-500 py-3 font-bold text-accent-800 hover:bg-accent-600 disabled:opacity-50"
-                        >
-                            <Camera size={20} />
-                            {photoCaptured ? 'Otra foto' : 'Tomar Foto'}
-                        </button>
-                        
+                        <div className="relative flex-1">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={handlePhotoCapture}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                disabled={loading}
+                            />
+                            <button
+                                type="button"
+                                disabled={loading}
+                                className="w-full flex items-center justify-center gap-2 rounded-module bg-accent-500 py-3 font-bold text-accent-800 hover:bg-accent-600 disabled:opacity-50"
+                            >
+                                <Camera size={20} />
+                                {photoCaptured ? 'Cambiar Foto' : 'Tomar Foto'}
+                            </button>
+                        </div>
+
                         <button
                             type="button"
                             onClick={handleSubmit}
-                            disabled={loading || !qrCodeUuid}
+                            disabled={loading || !qrCodeUuid || !photoCaptured}
                             className="flex-1 flex items-center justify-center gap-2 rounded-module bg-brand-500 py-3 font-bold text-white hover:bg-brand-600 disabled:opacity-50"
                         >
                             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
