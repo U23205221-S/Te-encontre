@@ -47,8 +47,7 @@ const Phase5EmergencyContact = ({ badgeData, onClose }) => {
 
                 <div className="bg-surface-base p-6 space-y-6">
                     <div className="rounded-xl border border-brand-200 bg-brand-50 p-5 text-center">
-                        <p className="text-brand-800 font-medium mb-1">Apoderado Principal</p>
-                        <h4 className="text-2xl font-black text-brand-900 mb-4">{primaryGuardian?.name || 'Familiar'}</h4>
+                        <h4 className="text-2xl font-black text-brand-900 mb-4">Apoderado Titular</h4>
                         {primaryGuardian?.phone ? (
                             <a
                                 href={`tel:${primaryGuardian.phone}`}
@@ -84,8 +83,8 @@ const Phase5EmergencyContact = ({ badgeData, onClose }) => {
                                     {auxiliaryGuardians.map((guardian, index) => (
                                         <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-surface-border bg-surface-base p-4">
                                             <div>
-                                                <p className="font-bold text-text-primary">{guardian.name}</p>
-                                                <p className="text-xs text-text-muted">{guardian.relationship}</p>
+                                                <p className="font-bold text-text-primary">Apoderado Auxiliar {index + 1}</p>
+                                                <p className="text-xs text-text-muted">Línea de respaldo</p>
                                             </div>
                                             {guardian.phone && (
                                                 <a
