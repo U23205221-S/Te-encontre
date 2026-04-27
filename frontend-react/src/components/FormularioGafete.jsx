@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { api } from '../lib/api';
 import * as faceapi from 'face-api.js';
+import html2canvas from 'html2canvas';
 import { Camera, Send, Loader2, Link as LinkIcon, Download, CheckCircle, XCircle, Printer } from 'lucide-react';
 import QRGenerado from './QRGenerado';
 const MODELS_URL = '/models';
@@ -27,6 +28,7 @@ const FormularioGafete = ({ formRef }) => {
     const streamRef = useRef(null);
     const animFrameRef = useRef(null);
     const lightingHintTimeoutRef = useRef(null);
+    const templateRef = useRef(null);
     const [cameraOn, setCameraOn] = useState(false);
     const [loading, setLoading] = useState(false);
     const [gafete, setGafete] = useState(null);
@@ -376,24 +378,52 @@ const FormularioGafete = ({ formRef }) => {
             setLoading(false);
         }
     };
+
+    const handleDownloadTemplate = async () => {
+        if (!templateRef.current) return;
+        try {
+            setLoading(true);
+            const canvas = await html2canvas(templateRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            const link = document.createElement('a');
+            link.download = `Plantilla_Emergencia_Gafete.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (err) {
+            console.error('Error al descargar la plantilla:', err);
+            alert("No se pudo generar la imagen para descargar. Intente imprimir como PDF.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (gafete) {
         const urlGafete = `${window.location.origin}/gafete/${gafete.uuid}`;
         return (
-            <div className="mx-auto mb-10 max-w-3xl text-text-body">
+            <div className="mx-auto mb-10 max-w-4xl text-text-body">
                 {/* Contenedor visible solo en pantalla (No en impresión) */}
                 <div className="print:hidden rounded-card border border-surface-border bg-surface-base p-8 text-center shadow-card mb-8 relative">
                     <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
                     <h2 className="mb-4 text-2xl font-bold text-text-primary">¡Registro completado con éxito!</h2>
                     <div className="mb-6 rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-brand-800">
-                        Los datos del familiar se han guardado correctamente. Abajo encontrarás la plantilla lista para imprimir con todos los pasos para casos de emergencia.
+                        Los datos del familiar se han guardado correctamente. Abajo encontrarás la plantilla lista para imprimir o descargar como imagen con todos los pasos para casos de emergencia.
                     </div>
-                    <button onClick={() => window.print()} className="ui-btn-primary flex justify-center items-center gap-2 mx-auto py-3 px-6 text-lg font-semibold shadow-md hover:shadow-lg transition-all">
-                        <Printer size={22} /> Imprimir Plantilla de Emergencia
-                    </button>
+                    {loading && <div className="mb-4 text-brand-600 font-medium">Generando archivo, por favor espera...</div>}
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <button onClick={handleDownloadTemplate} disabled={loading} className="ui-btn-primary flex justify-center items-center gap-2 py-3 px-6 text-lg font-semibold shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
+                            <Download size={22} /> Descargar Plantilla (Recomendado)
+                        </button>
+                        <button onClick={() => window.print()} disabled={loading} className="flex justify-center items-center gap-2 rounded-module border-2 border-brand-500 bg-white text-brand-600 px-6 py-3 text-lg font-semibold hover:bg-brand-50 transition-all w-full sm:w-auto">
+                            <Printer size={22} /> Imprimir
+                        </button>
+                    </div>
                 </div>
 
                 {/* Plantilla diseñada para impresión y visualización de pasos */}
-                <div className="rounded-2xl border-2 border-brand-400 bg-white p-8 shadow-xl print:shadow-none print:border-2 print:border-black print:p-8 print:m-0 w-full relative overflow-hidden">
+                <div ref={templateRef} className="rounded-2xl border-2 border-brand-400 bg-white p-6 md:p-10 shadow-xl print:shadow-none print:border-0 print:p-0 w-full max-w-[800px] mx-auto relative overflow-hidden bg-cover bg-center">
                     <div className="text-center mb-8 border-b-2 border-gray-100 pb-6 print:border-gray-800">
                         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 uppercase tracking-wide">Plantilla de Emergencia</h2>
                         <p className="text-lg text-gray-700 mt-2 font-medium">Si me encuentras extraviado, por favor sigue estos pasos para contactar a mis familiares:</p>
@@ -410,25 +440,25 @@ const FormularioGafete = ({ formRef }) => {
                         </div>
 
                         {/* Paso 2 */}
-                        <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 md:gap-5">
+                        <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 md:gap-5 break-inside-avoid">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white font-bold text-2xl print:border-2 print:border-black print:bg-white print:text-black">2</div>
                             <div className="w-full pt-1">
                                 <h3 className="text-xl font-bold text-gray-800">Escanea este código QR</h3>
                                 <p className="text-base text-gray-600 mt-1 mb-4">Utiliza la cámara de tu teléfono inteligente para leer de forma directa este código QR o ingresa al enlace listado a continuación:</p>
 
-                                <div className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl p-6 border-2 border-dashed border-gray-300 w-full max-w-sm mx-auto md:mx-0 print:border-black">
+                                <div className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl p-6 border-2 border-dashed border-gray-300 w-full max-w-sm mx-auto md:mx-0 print:border-black print:bg-transparent">
                                     <div className="bg-white p-3 rounded-xl shadow-sm print:shadow-none print:border print:border-gray-200">
                                         <QRGenerado url={urlGafete} id={`qr-gafete-${gafete.uuid}`} />
                                     </div>
                                     <div className="mt-5 w-full rounded-lg bg-gray-200 px-4 py-3 text-center text-sm font-mono font-bold text-gray-800 break-all print:border print:border-black print:bg-white">
-                                        <a href={urlGafete} target="_blank" rel="noopener noreferrer" className="hover:text-brand-600">{urlGafete}</a>
+                                        <span className="hover:text-brand-600 text-gray-800">{urlGafete}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Paso 3 */}
-                        <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 md:gap-5">
+                        <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 md:gap-5 break-inside-avoid">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white font-bold text-2xl print:border-2 print:border-black print:bg-white print:text-black">3</div>
                             <div className="pt-1">
                                 <h3 className="text-xl font-bold text-gray-800">¿El código no funciona?</h3>
@@ -437,7 +467,7 @@ const FormularioGafete = ({ formRef }) => {
                         </div>
 
                         {/* Paso 4 */}
-                        <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 md:gap-5">
+                        <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 md:gap-5 break-inside-avoid">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white font-bold text-2xl print:border-2 print:border-black print:bg-white print:text-black">4</div>
                             <div className="pt-1">
                                 <h3 className="text-xl font-bold text-gray-800">Ayúdame a comunicarnos</h3>
@@ -449,9 +479,12 @@ const FormularioGafete = ({ formRef }) => {
                         </div>
                     </div>
 
-                    <div className="mt-12 border-t-2 border-gray-100 pt-6 text-center print:border-gray-800">
-                        <p className="text-sm text-gray-500 font-medium">Esta credencial pertenece responsablemente a <strong className="text-gray-800 uppercase">{formData.nombreFamiliar}</strong></p>
-                        <p className="text-xs text-gray-400 mt-1">Gafete de seguridad generado el {new Date().toLocaleDateString('es-ES')}</p>
+                    <div className="mt-12 border-t-2 border-gray-100 pt-6 text-center print:border-gray-800 flex justify-between items-center px-4">
+                        <p className="text-sm text-gray-500 font-medium print:text-gray-800" data-html2canvas-ignore="true">
+                            {/* Oculto en la imagen/documento exportado */}
+                            Esta credencial est asignada a un perfil de emergencia validado.
+                        </p>
+                        <p className="text-xs text-gray-400 font-medium whitespace-nowrap">Doc: {new Date().toLocaleDateString('es-ES')}</p>
                     </div>
                 </div>
 
