@@ -29,6 +29,7 @@ const Home = () => {
     const showModal = action === 'registro';
     const showReconocimientoModal = action === 'reconocimiento';
     const showScannerModal = action === 'scanner';
+    const showOpcionesModal = action === 'opciones';
 
     // Check for pending reporter step on mount
     useEffect(() => {
@@ -49,13 +50,13 @@ const Home = () => {
     };
 
     useEffect(() => {
-        if ((showModal || showReconocimientoModal || showScannerModal) && !sessionUser) {
+        if (showModal && !sessionUser) {
             navigate('/login');
         }
-    }, [action, showModal, showReconocimientoModal, showScannerModal, sessionUser, navigate]);
+    }, [showModal, sessionUser, navigate]);
 
     const setActionInUrl = (nextAction) => {
-        if (!sessionUser) {
+        if (nextAction === 'registro' && !sessionUser) {
             navigate('/login');
             return;
         }
@@ -74,15 +75,17 @@ const openRegistro = () => setActionInUrl('registro');
   const closeReconocimiento = () => clearActionFromUrl();
   const openScanner = () => setActionInUrl('scanner');
   const closeScanner = () => clearActionFromUrl();
+  const openOpciones = () => setActionInUrl('opciones');
+  const closeOpciones = () => clearActionFromUrl();
 
   // Scroll lock para modales
   useEffect(() => {
-    const anyModalOpen = showModal || showReconocimientoModal || showScannerModal;
+    const anyModalOpen = showModal || showReconocimientoModal || showScannerModal || showOpcionesModal;
     document.body.style.overflow = anyModalOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showModal, showReconocimientoModal, showScannerModal]);
+  }, [showModal, showReconocimientoModal, showScannerModal, showOpcionesModal]);
 
     const scrollToComoFunciona = () => {
         const section = document.getElementById('como-funciona');
@@ -125,15 +128,21 @@ const openRegistro = () => setActionInUrl('registro');
                         </div>
 
                         <div className="border-t border-surface-border-light pt-6">
-                            <div className="flex flex-col items-start gap-3">
+                            <div className="flex flex-col items-start gap-4">
                                 <div className="inline-flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-emergency" />
-                                <span className="text-sm text-emergency">¿Situación de emergencia?</span>
+                                    <span className="relative flex h-3 w-3">
+                                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emergency opacity-75"></span>
+                                      <span className="relative inline-flex h-3 w-3 rounded-full bg-emergency"></span>
+                                    </span>
+                                    <span className="font-bold uppercase tracking-widest text-emergency text-sm">Acción Inmediata</span>
                                 </div>
 
-                                <button onClick={openScanner} className="ui-btn-emergency">
-                                    <img src={personSearchIcon} alt="" className="h-5 w-5" aria-hidden="true" />
-                                    Encontré a alguien
+                                <button
+                                    onClick={openOpciones}
+                                    className="flex w-full items-center justify-center gap-3 rounded-xl bg-emergency px-6 py-4 font-extrabold text-white shadow-lg shadow-emergency/30 transition-transform hover:-translate-y-1 hover:shadow-xl hover:shadow-emergency/40 active:translate-y-0"
+                                >
+                                    <img src={personSearchIcon} alt="" className="h-6 w-6 invert" aria-hidden="true" />
+                                    <span className="text-lg">¡ENCONTRÉ A ALGUIEN!</span>
                                 </button>
                             </div>
                         </div>
@@ -197,7 +206,7 @@ const openRegistro = () => setActionInUrl('registro');
                             <img src={privacyIcon} alt="Privacidad" className="mb-6 h-20 w-14" />
                             <h3 className="mb-3 text-[24px] font-semibold leading-8 text-text-primary">Seguridad y Privacidad</h3>
                             <p className="mb-8 text-[16px] leading-6 text-text-body">
-                                Tu información biométrica está protegida con cifrado. Operamos bajo un enfoque estricto de Privacy-First.
+                                Tu información biométrica está protegida with cifrado. Operamos bajo un enfoque estricto de Privacy-First.
                             </p>
 
                             <div className="flex items-center gap-2 border-t border-surface-border-light pt-4">
@@ -247,6 +256,65 @@ const openRegistro = () => setActionInUrl('registro');
 
             <Footer className="mt-auto" />
 
+            {showOpcionesModal && (
+                <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/40 p-4 backdrop-blur-md">
+                    <div className="relative w-full max-w-2xl overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-surface-border bg-surface-muted px-6 py-4">
+                            <div className="flex items-center gap-2">
+                                <span className="h-2.5 w-2.5 rounded-full bg-emergency"></span>
+                                <h3 className="text-xl font-bold text-text-primary">¿Cómo deseas buscar a esta persona?</h3>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeOpciones}
+                                className="ui-modal-close"
+                                aria-label="Cerrar modal"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="bg-surface-base p-6 md:p-8">
+                            <p className="mb-6 text-center text-text-body text-lg">
+                                Selecciona el método más rápido que tengas a disposición:
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => {
+                                        closeOpciones();
+                                        openScanner();
+                                    }}
+                                    className="group flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-brand-200 bg-white p-8 text-brand-700 shadow-sm transition-all hover:border-brand-500 hover:bg-brand-50 hover:shadow-md"
+                                >
+                                    <div className="rounded-full bg-brand-100 p-4 transition-transform group-hover:scale-110">
+                                        <img src={qrIcon} alt="" className="h-10 w-10" />
+                                    </div>
+                                    <div className="text-center">
+                                        <h4 className="font-bold text-xl mb-1">Escanear QR</h4>
+                                        <p className="text-sm text-text-body">Tengo la pulsera o gafete con código QR a la mano.</p>
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        closeOpciones();
+                                        openReconocimiento();
+                                    }}
+                                    className="group flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-accent-200 bg-white p-8 text-accent-800 shadow-sm transition-all hover:border-accent-500 hover:bg-accent-50 hover:shadow-md"
+                                >
+                                    <div className="rounded-full bg-accent-100 p-4 transition-transform group-hover:scale-110">
+                                        <img src={faceArrowIcon} alt="" className="h-10 w-10" />
+                                    </div>
+                                    <div className="text-center">
+                                        <h4 className="font-bold text-xl mb-1">Reconocimiento Facial</h4>
+                                        <p className="text-sm text-text-body">Usar la cámara para buscar mediante fotografías.</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showModal && (
                 <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-brand-900/35 p-4 backdrop-blur-sm">
                     <div className="relative my-auto w-full max-w-4xl overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-card">
@@ -270,8 +338,8 @@ const openRegistro = () => setActionInUrl('registro');
 
             {showScannerModal && (
                 <div data-home-ignore-snap className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/35 p-4 backdrop-blur-sm">
-                    <div className="relative w-full max-w-xl overflow-hidden rounded-card border border-surface-border bg-surface-card shadow-card">
-                        <div className="flex items-center justify-between border-b border-surface-border bg-surface-muted px-6 py-4">
+                    <div className="relative w-full max-w-xl overflow-y-auto max-h-[90vh] rounded-card border border-surface-border bg-surface-card shadow-card">
+                        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-surface-border bg-surface-muted px-6 py-4">
                             <h3 className="text-xl font-bold text-text-primary">Escanear gafete</h3>
                             <button
                                 type="button"
@@ -282,37 +350,8 @@ const openRegistro = () => setActionInUrl('registro');
                                 ✕
                             </button>
                         </div>
-                        <div className="bg-surface-base p-6 space-y-4">
-                            <p className="text-center text-text-body">¿Cómo deseas escanear el gafete?</p>
-                            
-                            <button
-                                onClick={closeScanner}
-                                className="flex w-full items-center gap-4 rounded-module border border-surface-border bg-surface-card p-4 shadow-card hover:border-brand-500 hover:shadow-module"
-                            >
-                                <div className="flex h-12 w-12 items-center justify-center rounded-module bg-brand-100">
-                                    <img src={qrIcon} alt="" className="h-6 w-6" />
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-bold text-text-primary">Escanear código QR</p>
-                                    <p className="text-sm text-text-body">Apunta la cámara al código QR del gafete</p>
-                                </div>
-                            </button>
-                            
-                            <button
-                                onClick={() => {
-                                    clearActionFromUrl();
-                                    navigate({ pathname: '/', search: '?action=reconocimiento', hash: location.hash });
-                                }}
-                                className="flex w-full items-center gap-4 rounded-module border border-surface-border bg-surface-card p-4 shadow-card hover:border-brand-500 hover:shadow-module"
-                            >
-                                <div className="flex h-12 w-12 items-center justify-center rounded-module bg-brand-100">
-                                    <img src={faceArrowIcon} alt="" className="h-6 w-6" />
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-bold text-text-primary">Buscar por reconocimiento facial</p>
-                                    <p className="text-sm text-text-body">Usa la cámara para buscar a la persona</p>
-                                </div>
-                            </button>
+                        <div className="bg-surface-base p-6">
+                            <ScannerQR />
                         </div>
                     </div>
                 </div>

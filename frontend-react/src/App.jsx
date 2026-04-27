@@ -6,7 +6,6 @@ import LoginPage from './pages/LoginPage';
 import RegistroPage from './pages/RegistroPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import RequireAuth from './components/RequireAuth';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './index.css';
 
@@ -28,22 +27,8 @@ function AppShell() {
               <Home />
             }
           />
-          <Route
-            path="/gafete/:id"
-            element={
-              <RequireAuth>
-                <PaginaGafete />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/reconocimiento"
-            element={
-              <RequireAuth>
-                <PaginaReconocimiento />
-              </RequireAuth>
-            }
-          />
+          <Route path="/gafete/:id" element={<PaginaGafete />} />
+          <Route path="/reconocimiento" element={<PaginaReconocimiento />} />
         </Routes>
       </main>
       {shouldShowGlobalFooter ? <Footer /> : null}
