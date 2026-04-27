@@ -41,8 +41,6 @@ const LoginPage = () => {
           <h1 className="mb-2 text-3xl font-extrabold text-text-primary">Acceder</h1>
           <p className="text-text-body">
             Ingresa con tu cuenta para gestionar tus registros.
-            <br />
-            <span className="text-sm text-text-body">Demo DNI: 60751404</span>
           </p>
         </div>
 
