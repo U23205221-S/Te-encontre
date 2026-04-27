@@ -34,3 +34,6 @@ build/
 
 ### Environment variables###
 .env
+
+### MscOS ###
+.DS_Store

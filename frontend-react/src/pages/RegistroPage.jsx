@@ -6,9 +6,31 @@ import { Loader2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
 const passwordRequirements = [
-  { key: 'minLength', label: 'Mínimo 6 caracteres', test: (p) => p.length >= 6 },
-  { key: 'hasLetter', label: 'Al menos una letra', test: (p) => /[a-zA-Z]/.test(p) },
-  { key: 'hasNumber', label: 'Al menos un número', test: (p) => /[0-9]/.test(p) },
+  {
+    key: 'minLength',
+    label: 'Mínimo 8 caracteres',
+    test: (p) => p.length >= 8
+  },
+  {
+    key: 'hasUppercase',
+    label: 'Al menos una letra mayúscula',
+    test: (p) => /[A-Z]/.test(p)
+  },
+  {
+    key: 'hasLowercase',
+    label: 'Al menos una letra minúscula',
+    test: (p) => /[a-z]/.test(p)
+  },
+  {
+    key: 'hasNumber',
+    label: 'Al menos un número',
+    test: (p) => /[0-9]/.test(p)
+  },
+  {
+    key: 'hasSpecialCharacter',
+    label: 'Al menos un carácter especial (@#$%^&+=!.)',
+    test: (p) => /[@#$%^&+=!.]/.test(p)
+  }
 ];
 
 const RegistroPage = () => {
@@ -147,9 +169,9 @@ const RegistroPage = () => {
                     {checkRequirement(req) ? (
                       <CheckCircle size={14} className="text-emerald-400" />
                     ) : (
-                      <XCircle size={14} className="text-slate-500" />
+                      <XCircle size={14} className="text-emergency-dark" />
                     )}
-                    <span className={checkRequirement(req) ? 'text-emerald-400' : 'text-slate-500'}>
+                    <span className={checkRequirement(req) ? 'text-emerald-400' : 'text-emergency-dark'}>
                       {req.label}
                     </span>
                   </div>
