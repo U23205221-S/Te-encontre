@@ -32,6 +32,7 @@ const FormularioGafete = ({ formRef }) => {
     const [cameraOn, setCameraOn] = useState(false);
     const [loading, setLoading] = useState(false);
     const [gafete, setGafete] = useState(null);
+    const [readyToGenerate, setReadyToGenerate] = useState(false);
     const [modelsLoaded, setModelsLoaded] = useState(false);
     const [faceError, setFaceError] = useState('');
     const [faceDescriptor, setFaceDescriptor] = useState(null);
@@ -84,9 +85,11 @@ const FormularioGafete = ({ formRef }) => {
             if (value.length > 9) return;
         }
         setFormData({ ...formData, [name]: value });
+        setReadyToGenerate(false);
     };
 
     const handleFileChange = (e) => {
+        setReadyToGenerate(false);
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
             setFile(selectedFile);
@@ -168,6 +171,7 @@ const FormularioGafete = ({ formRef }) => {
     const startCamera = async () => {
         setCameraError('');
         setFaceDescriptor(null);
+        setReadyToGenerate(false);
         let stream = null;
         try {
             stream = await navigator.mediaDevices.getUserMedia({
@@ -304,6 +308,7 @@ const FormularioGafete = ({ formRef }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!readyToGenerate || loading) return;
         if (!validateForm()) return;
         setLoading(true);
         try {
@@ -500,6 +505,7 @@ const FormularioGafete = ({ formRef }) => {
                         setFile(null);
                         setPreview(null);
                         setFaceDescriptor(null);
+                        setReadyToGenerate(false);
                         window.scrollTo(0, 0);
                     }} className="rounded-module border-2 border-surface-border bg-surface-base px-6 py-3 font-semibold text-text-primary hover:bg-surface-muted transition-colors shadow-sm">
                         Registrar un nuevo familiar
@@ -761,10 +767,20 @@ const FormularioGafete = ({ formRef }) => {
                             )}
                         </div>
                     </div>
-                    <button type="submit" disabled={loading || !faceDescriptor || !file} className="ui-btn-primary mt-6 flex w-full items-center justify-center gap-2 py-4 text-lg">
-                        {loading && <Loader2 className="animate-spin" size={24} />}
-                        {loading ? 'Guardando registro completo...' : 'Finalizar registro y crear gafete'}
+                    <button
+                        type="button"
+                        onClick={() => { if (validateForm()) setReadyToGenerate(true); }}
+                        disabled={loading || !faceDescriptor || !file}
+                        className="ui-btn-primary mt-6 flex w-full items-center justify-center gap-2 py-4 text-lg"
+                    >
+                        Registrar
                     </button>
+                    {readyToGenerate && (
+                        <button type="submit" disabled={loading || !faceDescriptor || !file} className="ui-btn-primary mt-3 flex w-full items-center justify-center gap-2 py-4 text-lg">
+                            {loading && <Loader2 className="animate-spin" size={24} />}
+                            {loading ? 'Guardando registro completo...' : 'Generar QR'}
+                        </button>
+                    )}
                 </form>
             )}
         </div>
