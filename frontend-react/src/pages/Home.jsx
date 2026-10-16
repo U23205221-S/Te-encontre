@@ -354,7 +354,12 @@ const openRegistro = () => setActionInUrl('registro');
                             </button>
                         </div>
                         <div className="bg-surface-base p-6">
-                            <ScannerQR />
+                            <ScannerQR
+                                onScanSuccess={(alertUuid) => {
+                                    setPendingReporterAlert(alertUuid);
+                                    clearActionFromUrl();
+                                }}
+                            />
                         </div>
                     </div>
                 </div>

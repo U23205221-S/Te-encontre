@@ -30,12 +30,24 @@ const FormularioGafete = ({ formRef }) => {
     const [cameraOn, setCameraOn] = useState(false);
     const [loading, setLoading] = useState(false);
     const [gafete, setGafete] = useState(null);
-    const [readyToGenerate, setReadyToGenerate] = useState(false);
+    const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
+    const [showQrModal, setShowQrModal] = useState(false);
     const [modelsLoaded, setModelsLoaded] = useState(false);
     const [faceError, setFaceError] = useState('');
     const [faceDescriptor, setFaceDescriptor] = useState(null);
     const [cameraError, setCameraError] = useState('');
     const [showLightingHint, setShowLightingHint] = useState(false);
+
+    useEffect(() => {
+        if (!showRegisterSuccessModal) return undefined;
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setShowRegisterSuccessModal(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showRegisterSuccessModal]);
 
     const showLightingMessage = () => {
         if (lightingHintTimeoutRef.current) {
@@ -83,11 +95,9 @@ const FormularioGafete = ({ formRef }) => {
             if (value.length > 9) return;
         }
         setFormData({ ...formData, [name]: value });
-        setReadyToGenerate(false);
     };
 
     const handleFileChange = (e) => {
-        setReadyToGenerate(false);
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
             setFile(selectedFile);
@@ -169,7 +179,6 @@ const FormularioGafete = ({ formRef }) => {
     const startCamera = async () => {
         setCameraError('');
         setFaceDescriptor(null);
-        setReadyToGenerate(false);
         let stream = null;
         try {
             stream = await navigator.mediaDevices.getUserMedia({
@@ -306,7 +315,13 @@ const FormularioGafete = ({ formRef }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!readyToGenerate || loading) return;
+        if (loading) return;
+        if (gafete) {
+            setShowQrModal(true);
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.scrollTo(0, 0);
+            return;
+        }
         if (!validateForm()) return;
         setLoading(true);
         try {
@@ -355,7 +370,7 @@ const FormularioGafete = ({ formRef }) => {
             const nuevoGafete = res.data;
 
             setGafete(nuevoGafete);
-            window.scrollTo(0, 0);
+            setShowRegisterSuccessModal(true);
         } catch (err) {
             console.error("Error completo del servidor:", err.response?.data || err);
             let errMsg = "Error al guardar los datos.";
@@ -401,7 +416,7 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
 
-    if (gafete) {
+    if (gafete && showQrModal) {
         const urlGafete = `${window.location.origin}/gafete/${gafete.uuid}`;
         return (
             <div className="mx-auto mb-10 max-w-4xl text-text-body">
@@ -501,7 +516,8 @@ const FormularioGafete = ({ formRef }) => {
                         setFile(null);
                         setPreview(null);
                         setFaceDescriptor(null);
-                        setReadyToGenerate(false);
+                        setShowRegisterSuccessModal(false);
+                        setShowQrModal(false);
                         window.scrollTo(0, 0);
                     }} className="rounded-module border-2 border-surface-border bg-surface-base px-6 py-3 font-semibold text-text-primary hover:bg-surface-muted transition-colors shadow-sm">
                         Registrar un nuevo familiar
@@ -746,20 +762,44 @@ const FormularioGafete = ({ formRef }) => {
                         </div>
                     </div>
                     <button
-                        type="button"
-                        onClick={() => { if (validateForm()) setReadyToGenerate(true); }}
+                        type="submit"
                         disabled={loading || !faceDescriptor || !file}
                         className="ui-btn-primary mt-6 flex w-full items-center justify-center gap-2 py-4 text-lg"
                     >
-                        Registrar
+                        {loading && <Loader2 className="animate-spin" size={24} />}
+                        {loading ? 'Guardando registro completo...' : gafete ? 'Generar QR' : 'Registrar'}
                     </button>
-                    {readyToGenerate && (
-                        <button type="submit" disabled={loading || !faceDescriptor || !file} className="ui-btn-primary mt-3 flex w-full items-center justify-center gap-2 py-4 text-lg">
-                            {loading && <Loader2 className="animate-spin" size={24} />}
-                            {loading ? 'Guardando registro completo...' : 'Generar QR'}
-                        </button>
-                    )}
                 </form>
+            )}
+            {showRegisterSuccessModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
+                    onClick={() => setShowRegisterSuccessModal(false)}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="register-success-title"
+                        className="w-full max-w-md rounded-card border border-surface-border bg-surface-base p-6 text-center shadow-card md:p-8"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+                        <h3 id="register-success-title" className="mb-2 text-xl font-bold text-text-primary">
+                            ¡Se registró correctamente!
+                        </h3>
+                        <p className="mb-6 text-sm text-text-body">
+                            Toda la información del formulario se ha guardado con éxito. Ahora puedes presionar el botón <strong>Generar QR</strong> para visualizar y descargar el gafete.
+                        </p>
+                        <button
+                            type="button"
+                            autoFocus
+                            onClick={() => setShowRegisterSuccessModal(false)}
+                            className="ui-btn-primary flex w-full items-center justify-center py-3 text-base font-semibold"
+                        >
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

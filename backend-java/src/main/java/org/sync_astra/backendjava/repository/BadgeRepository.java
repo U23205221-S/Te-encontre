@@ -29,4 +29,11 @@ public interface BadgeRepository extends JpaRepository<Badge, Long> {
         LIMIT 1
     """, nativeQuery = true)
     Optional<BadgeMatchResult> findBestMatch(@Param("embedding") float[] embedding);
+
+    @Query(value = """
+        SELECT id_badge AS id, (face_vector_badge <-> CAST(:embedding AS vector)) AS distance
+        FROM badge
+        WHERE uuid_badge = :uuid
+    """, nativeQuery = true)
+    Optional<BadgeMatchResult> findMatchByUuid(@Param("uuid") UUID uuid, @Param("embedding") float[] embedding);
 }

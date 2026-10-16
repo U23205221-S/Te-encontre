@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
-import { LinkIcon, ArrowRightIcon, Camera, Loader2, Image as ImageIcon, ScanLine, User, XCircle } from 'lucide-react';
+import * as faceapi from '@vladmandic/face-api';
+import { LinkIcon, ArrowRightIcon, Camera, Loader2, Image as ImageIcon, ScanLine, User, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../lib/api';
 
-const ScannerQR = () => {
+const MODELS_URL = '/models';
+
+const ScannerQR = ({ onScanSuccess }) => {
     const [scanMethod, setScanMethod] = useState('camera');
     const [linkInput, setLinkInput] = useState('');
     const [locationGranted, setLocationGranted] = useState(false);
@@ -19,11 +22,44 @@ const ScannerQR = () => {
     const [capturedPhotoFile, setCapturedPhotoFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Face verification states
+    const [modelsLoaded, setModelsLoaded] = useState(false);
+    const [imgLoaded, setImgLoaded] = useState(false);
+    const [verifyingFace, setVerifyingFace] = useState(false);
+    const [faceVerified, setFaceVerified] = useState(null);
+    const [faceVerificationMessage, setFaceVerificationMessage] = useState('');
+    const [faceVector, setFaceVector] = useState(null);
     
     const scannerRef = useRef(null);
     const fileInputRef = useRef(null);
+    const photoImgRef = useRef(null);
+    const landmarkCanvasRef = useRef(null);
     const readerElementId = 'reader';
     const hiddenReaderId = 'hidden-reader';
+
+    // Load face-api models on mount
+    useEffect(() => {
+        let active = true;
+        const loadModels = async () => {
+            try {
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
+                ]);
+                if (active) {
+                    setModelsLoaded(true);
+                }
+            } catch (err) {
+                console.error('Error loading face-api models:', err);
+            }
+        };
+        loadModels();
+        return () => {
+            active = false;
+        };
+    }, []);
 
     // Request geolocation on mount
     useEffect(() => {
@@ -48,6 +84,150 @@ const ScannerQR = () => {
 
         return () => clearTimeout(timer);
     }, []);
+
+    const drawLandmarks = (ctx, points) => {
+        if (!points || points.length === 0) return;
+        const connections = [
+            [...Array(17).keys()],
+            [17, 18, 19, 20, 21],
+            [22, 23, 24, 25, 26],
+            [27, 28, 29, 30],
+            [31, 32, 33, 34, 35],
+            [36, 37, 38, 39, 40, 41, 36],
+            [42, 43, 44, 45, 46, 47, 42],
+            [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 48],
+            [60, 61, 62, 63, 64, 65, 66, 67, 60],
+        ];
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 230, 255, 0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = 'rgba(0, 200, 255, 0.9)';
+        ctx.shadowBlur = 6;
+        connections.forEach((group) => {
+            ctx.beginPath();
+            const first = points[group[0]];
+            ctx.moveTo(first.x, first.y);
+            for (let i = 1; i < group.length; i++) {
+                const p = points[group[i]];
+                ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+        });
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.shadowColor = 'rgba(0, 200, 255, 1)';
+        ctx.shadowBlur = 10;
+        points.forEach((p) => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.restore();
+    };
+
+    // Detect landmarks on uploaded photo and verify face against QR badge in backend
+    useEffect(() => {
+        if (!photoCaptured || !capturedPhotoUrl || !imgLoaded || !modelsLoaded || !qrCodeUuid) {
+            return undefined;
+        }
+
+        let cancelled = false;
+
+        const verifyPhotoFace = async () => {
+            const imgEl = photoImgRef.current;
+            const canvas = landmarkCanvasRef.current;
+            if (!imgEl || !canvas) return;
+
+            setVerifyingFace(true);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            try {
+                const detection = await faceapi
+                    .detectSingleFace(imgEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (cancelled) return;
+
+                const boxWidth = imgEl.clientWidth || imgEl.naturalWidth;
+                const boxHeight = imgEl.clientHeight || imgEl.naturalHeight;
+                canvas.width = boxWidth;
+                canvas.height = boxHeight;
+                ctx.clearRect(0, 0, boxWidth, boxHeight);
+
+                if (!detection) {
+                    setFaceVector(null);
+                    setFaceVerified(false);
+                    setFaceVerificationMessage(
+                        'No se detectó un rostro claro en la foto. Por favor, sube otra foto donde el rostro se vea de frente.'
+                    );
+                    return;
+                }
+
+                const natW = imgEl.naturalWidth || boxWidth;
+                const natH = imgEl.naturalHeight || boxHeight;
+                const scale = Math.min(boxWidth / natW, boxHeight / natH);
+                const renderW = natW * scale;
+                const renderH = natH * scale;
+                const offsetX = (boxWidth - renderW) / 2;
+                const offsetY = (boxHeight - renderH) / 2;
+
+                const resized = faceapi.resizeResults(detection, { width: renderW, height: renderH });
+                const mappedPoints = resized.landmarks.positions.map((pt) => ({
+                    x: pt.x + offsetX,
+                    y: pt.y + offsetY,
+                }));
+                drawLandmarks(ctx, mappedPoints);
+
+                let descriptorArray = Array.from(detection.descriptor);
+                if (descriptorArray.length > 128) {
+                    descriptorArray = descriptorArray.slice(0, 128);
+                } else {
+                    while (descriptorArray.length < 128) {
+                        descriptorArray.push(0);
+                    }
+                }
+
+                const verifyRes = await api.post('/api/v1/badge/scan/qr/verify-face', {
+                    qrCodeUuid,
+                    faceVector: descriptorArray,
+                });
+
+                if (cancelled) return;
+
+                if (verifyRes.data?.verified) {
+                    setFaceVector(descriptorArray);
+                    setFaceVerified(true);
+                    setFaceVerificationMessage(
+                        verifyRes.data.message || 'Rostro verificado: sí corresponde a la persona registrada en este gafete.'
+                    );
+                } else {
+                    setFaceVector(null);
+                    setFaceVerified(false);
+                    setFaceVerificationMessage(
+                        verifyRes.data?.message || 'El rostro de la foto no coincide con el familiar registrado en este código QR.'
+                    );
+                }
+            } catch (verifyErr) {
+                if (cancelled) return;
+                setFaceVector(null);
+                setFaceVerified(false);
+                setFaceVerificationMessage(
+                    verifyErr.response?.data?.message || 'Error al verificar el rostro con el código QR escaneado.'
+                );
+            } finally {
+                if (!cancelled) {
+                    setVerifyingFace(false);
+                }
+            }
+        };
+
+        verifyPhotoFace();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [photoCaptured, capturedPhotoUrl, imgLoaded, modelsLoaded, qrCodeUuid]);
 
     // Handle QR scan - just extract UUID, don't send to backend yet
     const handleQrScanned = (decodedText) => {
@@ -108,7 +288,7 @@ const ScannerQR = () => {
 
             scanner.render(
                 handleQrScanned,
-                (err) => {
+                () => {
                     // Ignore scan errors
                 }
             );
@@ -143,20 +323,35 @@ const ScannerQR = () => {
         }
     };
 
-    // Capture photo from video element
+    // Capture photo for biometric verification
     const handlePhotoCapture = (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
+        if (capturedPhotoUrl) {
+            URL.revokeObjectURL(capturedPhotoUrl);
+        }
+        if (landmarkCanvasRef.current) {
+            const ctx = landmarkCanvasRef.current.getContext('2d');
+            ctx.clearRect(0, 0, landmarkCanvasRef.current.width, landmarkCanvasRef.current.height);
+        }
+
         const photoUrl = URL.createObjectURL(file);
+        setImgLoaded(false);
+        setFaceVerified(null);
+        setFaceVerificationMessage('');
+        setFaceVector(null);
+        setVerifyingFace(true);
+        setError(null);
         setCapturedPhotoUrl(photoUrl);
         setCapturedPhotoFile(file);
         setPhotoCaptured(true);
+        event.target.value = '';
     };
 
-    // Submit to backend - optional photo
+    // Submit to backend with verified faceVector
     const handleSubmit = async () => {
-        if (!qrCodeUuid || !capturedPhotoFile) return;
+        if (!qrCodeUuid || !capturedPhotoFile || !faceVerified || !faceVector) return;
 
         setLoading(true);
         setError(null);
@@ -181,6 +376,7 @@ const ScannerQR = () => {
 
             const scanData = {
                 qrCodeUuid,
+                faceVector,
                 latitude,
                 longitude,
                 nameDevice,
@@ -199,8 +395,11 @@ const ScannerQR = () => {
             window.sessionStorage.setItem('pendingAlertUuid', alertUuid);
             window.sessionStorage.setItem('showReporterModal', 'true');
             
-            // Navigate to trigger reporter modal
-            navigate('/?action=scanner');
+            if (onScanSuccess) {
+                onScanSuccess(alertUuid);
+            } else {
+                navigate('/?action=scanner');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Error al procesar el escaneo.');
         } finally {
@@ -224,6 +423,15 @@ const ScannerQR = () => {
         if (capturedPhotoUrl) URL.revokeObjectURL(capturedPhotoUrl);
         setCapturedPhotoUrl(null);
         setCapturedPhotoFile(null);
+        setImgLoaded(false);
+        setVerifyingFace(false);
+        setFaceVerified(null);
+        setFaceVerificationMessage('');
+        setFaceVector(null);
+        if (landmarkCanvasRef.current) {
+            const ctx = landmarkCanvasRef.current.getContext('2d');
+            ctx.clearRect(0, 0, landmarkCanvasRef.current.width, landmarkCanvasRef.current.height);
+        }
         setError(null);
     };
 
@@ -346,18 +554,30 @@ const ScannerQR = () => {
                     </div>
                 </div>
             ) : (
-                // Step 2 & 3: Photo (optional) + Submit
+                // Step 2 & 3: Photo + Biometric Verification + Submit
                 <div className="space-y-4">
                     <div className="rounded-card border border-brand-200 bg-brand-50 p-4 text-center">
                         <p className="text-sm font-bold text-brand-800">Código QR detectado</p>
                         <p className="text-xs text-brand-600 mb-2">ID: {qrCodeUuid}</p>
-                        <p className="text-sm text-brand-700 font-medium">Por precaución, es obligatorio tomar una foto de la persona para registrar el reporte.</p>
+                        <p className="text-sm text-brand-700 font-medium">Por precaución, es obligatorio tomar una foto del rostro de la persona para verificar su identidad y registrar el reporte.</p>
                     </div>
 
                     {/* Photo area */}
                     <div className="relative flex items-center justify-center overflow-hidden rounded-card border border-surface-border bg-slate-900 aspect-video">
                         {photoCaptured ? (
-                            <img src={capturedPhotoUrl} alt="Foto capturada" className="w-full h-full object-contain" />
+                            <>
+                                <img
+                                    ref={photoImgRef}
+                                    src={capturedPhotoUrl}
+                                    alt="Foto capturada"
+                                    onLoad={() => setImgLoaded(true)}
+                                    className="w-full h-full object-contain"
+                                />
+                                <canvas
+                                    ref={landmarkCanvasRef}
+                                    className="pointer-events-none absolute inset-0 h-full w-full"
+                                />
+                            </>
                         ) : (
                             <div className="flex flex-col items-center gap-2 text-slate-400">
                                 <Camera size={48} />
@@ -365,6 +585,32 @@ const ScannerQR = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Face verification status */}
+                    {photoCaptured && verifyingFace && (
+                        <div className="flex items-center gap-3 rounded-card border border-brand-200 bg-brand-50 p-3.5 text-brand-800">
+                            <Loader2 className="h-5 w-5 shrink-0 animate-spin text-brand-600" />
+                            <p className="text-sm font-medium">
+                                {modelsLoaded
+                                    ? 'Validando puntos faciales con el registro del familiar...'
+                                    : 'Cargando modelos de IA y validando puntos faciales...'}
+                            </p>
+                        </div>
+                    )}
+
+                    {photoCaptured && !verifyingFace && faceVerified === true && (
+                        <div className="flex items-start gap-2.5 rounded-card border border-green-200 bg-green-50 p-3.5 text-green-800">
+                            <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+                            <p className="text-sm font-semibold">{faceVerificationMessage}</p>
+                        </div>
+                    )}
+
+                    {photoCaptured && !verifyingFace && faceVerified === false && (
+                        <div className="flex items-start gap-2.5 rounded-card border border-red-200 bg-red-50 p-3.5 text-red-700">
+                            <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                            <p className="text-sm font-semibold">{faceVerificationMessage}</p>
+                        </div>
+                    )}
 
                     {/* Error message */}
                     {error && (
@@ -382,11 +628,11 @@ const ScannerQR = () => {
                                 capture="environment"
                                 onChange={handlePhotoCapture}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                disabled={loading}
+                                disabled={loading || verifyingFace}
                             />
                             <button
                                 type="button"
-                                disabled={loading}
+                                disabled={loading || verifyingFace}
                                 className="w-full flex items-center justify-center gap-2 rounded-module bg-accent-500 py-3 font-bold text-accent-800 hover:bg-accent-600 disabled:opacity-50"
                             >
                                 <Camera size={20} />
@@ -397,7 +643,7 @@ const ScannerQR = () => {
                         <button
                             type="button"
                             onClick={handleSubmit}
-                            disabled={loading || !qrCodeUuid || !photoCaptured}
+                            disabled={loading || verifyingFace || !qrCodeUuid || !photoCaptured || !faceVerified || !faceVector}
                             className="flex-1 flex items-center justify-center gap-2 rounded-module bg-brand-500 py-3 font-bold text-white hover:bg-brand-600 disabled:opacity-50"
                         >
                             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}

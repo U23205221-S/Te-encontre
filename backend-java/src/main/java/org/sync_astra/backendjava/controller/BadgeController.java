@@ -1,6 +1,7 @@
 package org.sync_astra.backendjava.controller;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,11 +14,14 @@ import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
 import org.sync_astra.backendjava.dtos.request.ScanAlertPart2RequestDTO;
 import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
+import org.sync_astra.backendjava.dtos.request.VerifyQrFaceRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
+import org.sync_astra.backendjava.dtos.response.VerifyQrFaceResponseDTO;
 import org.sync_astra.backendjava.service.BadgeService;
 import org.sync_astra.backendjava.service.ScanAlertService;
 import org.sync_astra.backendjava.util.ValidateGroup;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -52,8 +56,18 @@ public class BadgeController {
         }
     }
 
+    @PostMapping("/scan/qr/verify-face")
+    public ResponseEntity<?> verifyQrFace(@Valid @RequestBody VerifyQrFaceRequestDTO request) {
+        try {
+            VerifyQrFaceResponseDTO response = badgeService.verifyFaceForQr(request);
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/scan/qr")
-    public ResponseEntity<UUID> scanByQr(
+    public ResponseEntity<?> scanByQr(
             @RequestPart("data") @Validated(ValidateGroup.OnScanQR.class) ScanAlertRequestDTO request,
             @RequestPart("file") @NotNull(message = "El archivo de la foto es obligatorio") MultipartFile file
     ) {
@@ -63,7 +77,9 @@ public class BadgeController {
 
         } catch (EntityNotFoundException e) {
             // Si el QR no existe en la base de datos, devolvemos 404
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
         }
     }
     @PostMapping("/scan/{uuid}")
