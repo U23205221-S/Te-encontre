@@ -36,12 +36,7 @@ public class BadgeRequestDTO {
     @NotNull(message = "El campo gender es obligatorio", groups = {ValidateGroup.OnCreate.class})
     private Gender gender;
 
-    @NotBlank(message = "El campo bloodType es obligatorio", groups = {ValidateGroup.OnCreate.class})
-    private String bloodType;
 
-    @NotBlank(message = "El campo allergies es obligatorio, si no tiene alergias, indique 'Ninguna'",
-            groups = {ValidateGroup.OnCreate.class})
-    private String allergies;
 
     @Null(message = "El campo relationShip no debe ser proporcionado por el cliente, se establecerá automáticamente",
             groups = {ValidateGroup.OnCreate.class})

@@ -12,8 +12,6 @@ const FormularioGafete = ({ formRef }) => {
         dniFamiliar: '',
         fechaNacimiento: '', // YYYY-MM-DD
         genero: 'MASCULINO',
-        tipoSangre: '',
-        alergias: '',
         // Guardianes (2 obligatorios + 1 opcional)
         dniGuardian1: '', nombreGuardian1: '', correoGuardian1: '', telefonoGuardian1: '', parentescoGuardian1: 'PADRE',
         dniGuardian2: '', nombreGuardian2: '', correoGuardian2: '', telefonoGuardian2: '', parentescoGuardian2: 'MADRE',
@@ -231,7 +229,7 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
     const validateForm = () => {
-        if (!formData.nombreFamiliar || !formData.dniFamiliar || !formData.fechaNacimiento || !formData.genero || !formData.tipoSangre) {
+        if (!formData.nombreFamiliar || !formData.dniFamiliar || !formData.fechaNacimiento || !formData.genero) {
             alert("Por favor, completa todos los campos obligatorios del familiar.");
             return false;
         }
@@ -321,8 +319,6 @@ const FormularioGafete = ({ formRef }) => {
                 fullName: formData.nombreFamiliar,
                 dateOfBirth: isoDate,
                 gender: formData.genero,
-                bloodType: formData.tipoSangre,
-                allergies: formData.alergias || 'Ninguna',
                 faceVector: faceDescriptor,
                 guardians: [
                     {
@@ -497,7 +493,7 @@ const FormularioGafete = ({ formRef }) => {
                     <button onClick={() => {
                         setGafete(null);
                         setFormData({
-                            nombreFamiliar: '', dniFamiliar: '', fechaNacimiento: '', genero: 'MASCULINO', tipoSangre: '', alergias: '',
+                            nombreFamiliar: '', dniFamiliar: '', fechaNacimiento: '', genero: 'MASCULINO',
                             dniGuardian1: '', nombreGuardian1: '', correoGuardian1: '', telefonoGuardian1: '', parentescoGuardian1: 'PADRE',
                             dniGuardian2: '', nombreGuardian2: '', correoGuardian2: '', telefonoGuardian2: '', parentescoGuardian2: 'MADRE',
                             dniGuardian3: '', nombreGuardian3: '', correoGuardian3: '', telefonoGuardian3: '', parentescoGuardian3: 'OTRO',
@@ -540,31 +536,13 @@ const FormularioGafete = ({ formRef }) => {
                             <label className="mb-1 block text-sm font-bold text-text-heading">Fecha de Nacimiento *</label>
                             <input required type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} className="ui-input" />
                         </div>
-                        <div className="form-group">
+                        <div className="form-group col-span-1 md:col-span-2">
                             <label className="mb-1 block text-sm font-bold text-text-heading">Género *</label>
                             <select required name="genero" value={formData.genero} onChange={handleChange} className="ui-input">
                                 <option value="MASCULINO">Masculino</option>
                                 <option value="FEMENINO">Femenino</option>
                                 <option value="OTRO">Otro</option>
                             </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-text-heading">Tipo de sangre *</label>
-                            <select required name="tipoSangre" value={formData.tipoSangre} onChange={handleChange} className="ui-input">
-                                <option value="">Seleccione...</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                            </select>
-                        </div>
-                        <div className="form-group col-span-1 md:col-span-2">
-                            <label className="mb-1 block text-sm font-bold text-text-heading">Condiciones médicas / alergias *</label>
-                            <input required type="text" name="alergias" value={formData.alergias} onChange={handleChange} className="ui-input" placeholder="Escriba 'Ninguna' o detalle las alergias" />
                         </div>
 
                         {/* TUTOR 1 */}

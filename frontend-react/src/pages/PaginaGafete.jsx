@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { Phone, User, Activity, AlertCircle, ArrowLeft, ShieldCheck, MapPin, Loader2 } from 'lucide-react';
+import { Phone, User, AlertCircle, ArrowLeft, ShieldCheck, MapPin, Loader2 } from 'lucide-react';
 import { useGeolocationAlert } from '../hooks/useGeolocationAlert';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -118,21 +118,7 @@ const PaginaGafete = () => {
           </div>
         </div>
 
-        {(gafete.bloodType || gafete.allergies) && (
-          <div className="mt-6 rounded-xl border border-accent-500/35 bg-accent-500/10 p-4">
-            <h3 className="mb-3 flex items-center gap-2 font-bold text-accent-200">
-              <Activity size={20} /> Información médica importante
-            </h3>
-            <div className="space-y-2 text-sm text-slate-200">
-              {gafete.bloodType && (
-                <p><span className="font-semibold text-slate-100">Tipo de sangre:</span> {gafete.bloodType}</p>
-              )}
-              {gafete.allergies && (
-                <p><span className="font-semibold text-slate-100">Condiciones/Alergias:</span> {gafete.allergies}</p>
-              )}
-            </div>
-          </div>
-        )}
+
 
         <div className="mt-6">
           <h3 className="text-slate-100 font-bold mb-4 flex items-center gap-2 border-b border-slate-700 pb-2">

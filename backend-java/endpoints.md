@@ -164,8 +164,6 @@ Registra el perfil completo de un Badge, sube la imagen a la nube (Cloudinary) y
   "fullName": "Victor Elias Chung Coelho",
   "dateOfBirth": "2006-03-07T10:00:00Z",
   "gender": "MASCULINO",
-  "bloodType": "O+",
-  "allergies": "Penicilina",
   "faceVector": [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -207,7 +205,6 @@ Registra el perfil completo de un Badge, sube la imagen a la nube (Cloudinary) y
 | `guardians` | Mínimo **2** registros obligatorios, máximo **3** | Posición [0]: Tutor legal principal; [1]: Tutor auxiliar; [2]: Opcional |
 | `dni` | Validado contra registros externos | Debe ser válido y único |
 | `guardians[*].dni` | Todos los DNIs de tutores son validados | Deben ser válidos |
-| `bloodType` | Valores permitidos: `O+`, `O-`, `A+`, `A-`, `B+`, `B-`, `AB+`, `AB-` | |
 | `gender` | Valores permitidos: `MASCULINO`, `FEMENINO`, `OTRO` | |
 
 **Respuesta (200 OK):**
@@ -219,8 +216,6 @@ Registra el perfil completo de un Badge, sube la imagen a la nube (Cloudinary) y
    "fullName": "Victor Elias Chung Coelho",
    "dateOfBirth": "2006-03-07T10:00:00Z",
    "gender": "MASCULINO",
-   "bloodType": "O+",
-   "allergies": "Penicilina",
    "photoUrl": "http://res.cloudinary.com/dhfa49vfa/image/upload/v1777247795/syncastra/badges/caxmf4ejmigg8dxpbukc.png",
    "statusBadge": "NEUTRAL",
    "createdAt": "2026-04-26T23:56:35.324706200Z",
@@ -430,8 +425,6 @@ Actualiza el reporte de escaneo (generado por `/scan/face` o `/scan/qr`) con la 
   "dni": "05371954",
   "fullName": "Victor Elias Chung Coelho",
   "photoUrl": "https://cloudinary.com/...",
-  "bloodType": "O+",
-  "allergies": "Penicilina",
   "gender": "MASCULINO",
   "dateOfBirth": "2006-03-07",
   "guardians": [

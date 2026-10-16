@@ -161,7 +161,6 @@ public class BadgeService {
                                         <img src="{{foto_perfil}}" alt="Foto de {{nombre_persona}}" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px;">
                                         <div style="text-align: left; background-color: #ffffff; padding: 15px; border-radius: 5px;">
                                             <p style="margin: 5px 0; font-size: 15px;"><strong>Nombre completo:</strong> {{nombre_persona}}</p>
-                                            <p style="margin: 5px 0; font-size: 15px;"><strong>Alergias registradas:</strong> {{alergias}}</p>
                                             <p style="margin: 5px 0; font-size: 15px;"><strong>Su vínculo:</strong> {{parentesco}}</p>
                                         </div>
                                     </div>
@@ -193,7 +192,6 @@ public class BadgeService {
         """
                 .replace("{{nombre_apoderado}}", guardian.getName())
                 .replace("{{nombre_persona}}", savedBadge.getFullName())
-                .replace("{{alergias}}", savedBadge.getAllergies() != null ? savedBadge.getAllergies() : "Ninguna") // Pequeña validación de nulos
                 .replace("{{parentesco}}", guardian.getRelationship().toString())
                 .replace("{{url_perfil}}", urlPerfil)
                 .replace("{{foto_perfil}}", savedBadge.getPhotoUrl())
