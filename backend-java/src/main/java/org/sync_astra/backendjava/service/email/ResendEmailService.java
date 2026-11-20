@@ -53,6 +53,7 @@ public class ResendEmailService {
             // Logueamos el error usando SLF4J, pasando la excepción entera al final para ver el StackTrace en consola
             log.error("Fallo de la API de Resend enviando email a {}: {}", to, e.getMessage(), e);
             audit.setStatus(StatusEmail.FALLIDO);
+            audit.setErrorMessage(truncateError(e.getMessage()));
             notificationAuditRepository.save(audit);
             log.info("Auditoría actualizada a FALLIDO para email a: {}", to);
             return CompletableFuture.completedFuture(false);
@@ -61,9 +62,15 @@ public class ResendEmailService {
             // Red de seguridad para cualquier otro error inesperado (red, nulos, etc.)
             log.error("Error inesperado en el hilo asíncrono enviando email a {}: {}", to, e.getMessage(), e);
             audit.setStatus(StatusEmail.FALLIDO);
+            audit.setErrorMessage(truncateError(e.getMessage()));
             notificationAuditRepository.save(audit);
             log.info("Auditoría actualizada a FALLIDO para emails a: {}", to);
             return CompletableFuture.completedFuture(false);
         }
+    }
+
+    private String truncateError(String message) {
+        if (message == null) return null;
+        return message.length() > 950 ? message.substring(0, 950) : message;
     }
 }

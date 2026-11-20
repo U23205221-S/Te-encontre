@@ -61,5 +61,7 @@ public class ScanAlertRequestDTO {
     @NotBlank(message = "El campo ipAddress es obligatorio",
             groups = {ValidateGroup.OnScanQR.class, ValidateGroup.OnScanFace.class})
     private String ipAddress;
+
+    private Double gpsAccuracyMeters;
 }
 

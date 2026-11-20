@@ -50,6 +50,12 @@ public class NotificationAudit {
     @Column(name = "provider_name")
     private String providerName; // ID de la notificación en el proveedor (Resend)
 
+    @Column(name = "recipient_role", length = 40)
+    private String recipientRole;
+
+    @Column(name = "error_message", length = 1000)
+    private String errorMessage;
+
     @LastModifiedDate
     @Column(name = "update_at", nullable = false)
     private Instant updateAt; // Fecha y hora del envío

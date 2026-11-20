@@ -15,10 +15,15 @@ public class EmailOrchestratorService {
     private final NotificationAuditRepository notificationAuditRepository;
 
     public void sendManageEmail(String entity, UUID entityUuid, String to, String subject, String htmlContent) {
+        sendManageEmail(entity, entityUuid, to, subject, htmlContent, null);
+    }
+
+    public void sendManageEmail(String entity, UUID entityUuid, String to, String subject, String htmlContent, String recipientRole) {
         NotificationAudit audit = NotificationAudit.builder()
                 .entity(entity)
                 .entityUuid(entityUuid)
                 .emailSend(to)
+                .recipientRole(recipientRole)
                 .status(StatusEmail.PENDIENTE)
                 .build();
         audit = notificationAuditRepository.save(audit);

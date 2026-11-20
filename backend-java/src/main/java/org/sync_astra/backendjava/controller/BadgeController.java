@@ -18,6 +18,7 @@ import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
 import org.sync_astra.backendjava.dtos.request.VerifyQrFaceRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
 import org.sync_astra.backendjava.dtos.response.FamilyMemberSummaryDTO;
+import org.sync_astra.backendjava.dtos.response.PublicAssistanceDTO;
 import org.sync_astra.backendjava.dtos.response.PublicQrCheckDTO;
 import org.sync_astra.backendjava.dtos.response.VerifyQrFaceResponseDTO;
 import org.sync_astra.backendjava.service.BadgeService;
@@ -87,7 +88,7 @@ public class BadgeController {
         }
     }
     @PostMapping("/scan/{uuid}")
-    public ResponseEntity<BadgeResponseDTO> alertPart2(@PathVariable UUID uuid, @RequestBody ScanAlertPart2RequestDTO request) {
+    public ResponseEntity<PublicAssistanceDTO> alertPart2(@PathVariable UUID uuid, @RequestBody(required = false) ScanAlertPart2RequestDTO request) {
         return ResponseEntity.ok(scanAlertService.processAndSendAlertPart2(uuid, request));
     }
 
