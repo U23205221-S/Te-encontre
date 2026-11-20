@@ -31,7 +31,7 @@ const ReporterStepModal = ({ alertUuid, onClose, onSuccess }) => {
       // Limpiar el alertUuid pendiente
       window.sessionStorage.removeItem('pendingAlertUuid');
 
-      // Pasar la información del gafete (BadgeResponseDTO) para la Fase 5
+      // Pasar la información minimizada (PublicAssistanceDTO) para la Fase 5
       onSuccess(res.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al procesar la solicitud.');

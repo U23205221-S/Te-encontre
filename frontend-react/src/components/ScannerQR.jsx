@@ -3,11 +3,11 @@ import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
 import * as faceapi from '@vladmandic/face-api';
 import { LinkIcon, ArrowRightIcon, Camera, Loader2, Image as ImageIcon, ScanLine, User, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, checkPublicQr } from '../lib/api';
 
 const MODELS_URL = '/models';
 
-const ScannerQR = ({ onScanSuccess }) => {
+const ScannerQR = ({ onScanSuccess, initialQrToken = null }) => {
     const [scanMethod, setScanMethod] = useState('camera');
     const [linkInput, setLinkInput] = useState('');
     const [locationGranted, setLocationGranted] = useState(false);
@@ -15,8 +15,8 @@ const ScannerQR = ({ onScanSuccess }) => {
     const navigate = useNavigate();
     
     // Step management
-    const [qrScanned, setQrScanned] = useState(false);
-    const [qrCodeUuid, setQrCodeUuid] = useState(null);
+    const [qrScanned, setQrScanned] = useState(Boolean(initialQrToken));
+    const [qrCodeUuid, setQrCodeUuid] = useState(initialQrToken);
     const [photoCaptured, setPhotoCaptured] = useState(false);
     const [capturedPhotoUrl, setCapturedPhotoUrl] = useState(null);
     const [capturedPhotoFile, setCapturedPhotoFile] = useState(null);
@@ -229,49 +229,50 @@ const ScannerQR = ({ onScanSuccess }) => {
         };
     }, [photoCaptured, capturedPhotoUrl, imgLoaded, modelsLoaded, qrCodeUuid]);
 
-    // Handle QR scan - just extract UUID, don't send to backend yet
+    const acceptValidQr = async (uuid) => {
+        try {
+            const check = await checkPublicQr(uuid);
+            if (!check?.valid) {
+                setError(check?.message || 'Este código QR fue desactivado o revocado.');
+                return;
+            }
+            if (scannerRef.current) {
+                scannerRef.current.clear();
+            }
+            setQrCodeUuid(uuid);
+            setQrScanned(true);
+            setError(null);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Este código QR es inválido o fue desactivado.');
+        }
+    };
+
+    // Handle QR scan - verify QR is active before requesting face photo
     const handleQrScanned = (decodedText) => {
         try {
             const urlObj = new URL(decodedText);
             if (urlObj.pathname.startsWith('/gafete/')) {
-                const uuid = urlObj.pathname.split('/gafete/')[1];
-                
-                // Stop scanner
-                if (scannerRef.current) {
-                    scannerRef.current.clear();
-                }
-                setQrCodeUuid(uuid);
-                setQrScanned(true);
-                setError(null);
+                const uuid = urlObj.pathname.split('/gafete/')[1].split('?')[0].split('/')[0];
+                acceptValidQr(uuid);
             } else if (urlObj.pathname.includes('/gafete/')) {
-                 const part = urlObj.pathname.split('/gafete/')[1];
-                 const uuid = part.split('?')[0].split('/')[0];
-                 if (scannerRef.current) scannerRef.current.clear();
-                 setQrCodeUuid(uuid);
-                 setQrScanned(true);
-                 setError(null);
+                const part = urlObj.pathname.split('/gafete/')[1];
+                const uuid = part.split('?')[0].split('/')[0];
+                acceptValidQr(uuid);
             } else {
-                 const uuidMatch = decodedText.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
-                 if (uuidMatch) {
-                     if (scannerRef.current) scannerRef.current.clear();
-                     setQrCodeUuid(uuidMatch[0]);
-                     setQrScanned(true);
-                     setError(null);
-                 } else {
-                     setError('Código QR no contiene un identificador válido.');
-                 }
+                const uuidMatch = decodedText.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+                if (uuidMatch) {
+                    acceptValidQr(uuidMatch[0]);
+                } else {
+                    setError('Código QR no contiene un identificador válido.');
+                }
             }
         } catch {
-             // Fallback regex to just extract UUID if it's not a valid URL URL
-             const uuidMatch = decodedText.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
-             if (uuidMatch) {
-                 if (scannerRef.current) scannerRef.current.clear();
-                 setQrCodeUuid(uuidMatch[0]);
-                 setQrScanned(true);
-                 setError(null);
-             } else {
-                 setError('No se reconoció un gafete válido en el QR.');
-             }
+            const uuidMatch = decodedText.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+            if (uuidMatch) {
+                acceptValidQr(uuidMatch[0]);
+            } else {
+                setError('No se reconoció un gafete válido en el QR.');
+            }
         }
     };
 
@@ -359,6 +360,7 @@ const ScannerQR = ({ onScanSuccess }) => {
         try {
             let latitude = null;
             let longitude = null;
+            let gpsAccuracyMeters = null;
             if (navigator.geolocation) {
                 try {
                     const position = await new Promise((resolve, reject) => {
@@ -366,6 +368,7 @@ const ScannerQR = ({ onScanSuccess }) => {
                     });
                     latitude = position.coords.latitude;
                     longitude = position.coords.longitude;
+                    gpsAccuracyMeters = position.coords.accuracy ?? null;
                 } catch (geoErr) {
                     console.warn('Geolocation denied:', geoErr);
                 }
@@ -380,7 +383,8 @@ const ScannerQR = ({ onScanSuccess }) => {
                 latitude,
                 longitude,
                 nameDevice,
-                ipAddress
+                ipAddress,
+                gpsAccuracyMeters
             };
 
             const formData = new FormData();

@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import RegistroPage from './pages/RegistroPage';
 import MisFamiliaresPage from './pages/MisFamiliaresPage';
+import NotificacionesPage from './pages/NotificacionesPage';
 import RequireAuth from './components/RequireAuth';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -39,6 +40,7 @@ function AppShell() {
               </RequireAuth>
             }
           />
+          <Route path="/notificaciones" element={<NotificacionesPage />} />
         </Routes>
       </main>
       {shouldShowGlobalFooter ? <Footer /> : null}
