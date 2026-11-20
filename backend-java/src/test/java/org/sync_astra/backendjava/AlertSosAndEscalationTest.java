@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.access.AccessDeniedException;
 import org.sync_astra.backendjava.dtos.request.ScanAlertPart2RequestDTO;
@@ -26,6 +27,7 @@ import org.sync_astra.backendjava.service.apiCloud.DniService;
 import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
 import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -234,5 +236,26 @@ class AlertSosAndEscalationTest {
         verify(emailOrchestratorService, never()).sendManageEmail(
                 anyString(), any(), eq("ana@example.com"), anyString(), anyString(), eq("AUXILIARY_GUARDIAN")
         );
+    }
+
+    @Test
+    void modifyingQueries_clearAndFlushPersistenceContextAutomatically() throws NoSuchMethodException {
+        Method confirmMethod = ScanAlertRepository.class.getMethod(
+                "markConfirmedIfConfirmable",
+                UUID.class, List.class, AlertStatus.class, Instant.class, String.class
+        );
+        Modifying confirmModifying = confirmMethod.getAnnotation(Modifying.class);
+        assertNotNull(confirmModifying);
+        assertTrue(confirmModifying.clearAutomatically());
+        assertTrue(confirmModifying.flushAutomatically());
+
+        Method escalateMethod = ScanAlertRepository.class.getMethod(
+                "markEscalatedIfActive",
+                Long.class, AlertStatus.class, AlertStatus.class, Instant.class
+        );
+        Modifying escalateModifying = escalateMethod.getAnnotation(Modifying.class);
+        assertNotNull(escalateModifying);
+        assertTrue(escalateModifying.clearAutomatically());
+        assertTrue(escalateModifying.flushAutomatically());
     }
 }

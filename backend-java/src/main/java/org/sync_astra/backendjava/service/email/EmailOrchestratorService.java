@@ -2,6 +2,8 @@ package org.sync_astra.backendjava.service.email;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.sync_astra.backendjava.model.Categories.StatusEmail;
 import org.sync_astra.backendjava.model.NotificationAudit;
 import org.sync_astra.backendjava.repository.NotificationAuditRepository;
@@ -26,8 +28,17 @@ public class EmailOrchestratorService {
                 .recipientRole(recipientRole)
                 .status(StatusEmail.PENDIENTE)
                 .build();
-        audit = notificationAuditRepository.save(audit);
+        NotificationAudit savedAudit = notificationAuditRepository.save(audit);
 
-        resendEmailService.sendEmail(audit, to, subject, htmlContent);
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    resendEmailService.sendEmail(savedAudit, to, subject, htmlContent);
+                }
+            });
+        } else {
+            resendEmailService.sendEmail(savedAudit, to, subject, htmlContent);
+        }
     }
 }

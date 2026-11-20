@@ -27,7 +27,11 @@ public class ResendEmailService {
     public CompletableFuture<Boolean> sendEmail(NotificationAudit audit, String to, String subject, String htmlContent) {
         log.info("Iniciando envío asíncrono de mail a: {}", to);
 
-        audit.setProviderName("Resend");
+        NotificationAudit targetAudit = (audit != null && audit.getId() != null)
+                ? notificationAuditRepository.findById(audit.getId()).orElse(audit)
+                : audit;
+
+        targetAudit.setProviderName("Resend");
 
         try {
             CreateEmailOptions params = CreateEmailOptions.builder()
@@ -42,9 +46,9 @@ public class ResendEmailService {
             // Unificamos el log de éxito con el ID de Resend
             log.info("Email enviado exitosamente a: {}. ID de Resend: {}", to, data.getId());
 
-            audit.setProviderId(data.getId());
-            audit.setStatus(StatusEmail.ENTREGADO);
-            notificationAuditRepository.save(audit);
+            targetAudit.setProviderId(data.getId());
+            targetAudit.setStatus(StatusEmail.ENTREGADO);
+            notificationAuditRepository.save(targetAudit);
 
             log.info("Auditoría actualizada a ENTREGADO para email a: {}", to);
             return CompletableFuture.completedFuture(true);
@@ -52,18 +56,18 @@ public class ResendEmailService {
         } catch (ResendException e) {
             // Logueamos el error usando SLF4J, pasando la excepción entera al final para ver el StackTrace en consola
             log.error("Fallo de la API de Resend enviando email a {}: {}", to, e.getMessage(), e);
-            audit.setStatus(StatusEmail.FALLIDO);
-            audit.setErrorMessage(truncateError(e.getMessage()));
-            notificationAuditRepository.save(audit);
+            targetAudit.setStatus(StatusEmail.FALLIDO);
+            targetAudit.setErrorMessage(truncateError(e.getMessage()));
+            notificationAuditRepository.save(targetAudit);
             log.info("Auditoría actualizada a FALLIDO para email a: {}", to);
             return CompletableFuture.completedFuture(false);
 
         } catch (Exception e) {
             // Red de seguridad para cualquier otro error inesperado (red, nulos, etc.)
             log.error("Error inesperado en el hilo asíncrono enviando email a {}: {}", to, e.getMessage(), e);
-            audit.setStatus(StatusEmail.FALLIDO);
-            audit.setErrorMessage(truncateError(e.getMessage()));
-            notificationAuditRepository.save(audit);
+            targetAudit.setStatus(StatusEmail.FALLIDO);
+            targetAudit.setErrorMessage(truncateError(e.getMessage()));
+            notificationAuditRepository.save(targetAudit);
             log.info("Auditoría actualizada a FALLIDO para emails a: {}", to);
             return CompletableFuture.completedFuture(false);
         }

@@ -28,7 +28,7 @@ public interface ScanAlertRepository extends JpaRepository<ScanAlert, Long> {
             @Param("now") Instant now
     );
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE ScanAlert a
         SET a.status = :confirmedStatus,
@@ -45,7 +45,7 @@ public interface ScanAlertRepository extends JpaRepository<ScanAlert, Long> {
             @Param("actorDni") String actorDni
     );
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE ScanAlert a
         SET a.status = :escalatedStatus,
