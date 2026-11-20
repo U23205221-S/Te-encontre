@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, ShieldAlert, X } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, Menu, ShieldAlert, Users, X } from 'lucide-react';
 
 const navigationItems = [
   {
@@ -31,6 +31,8 @@ const navigationItems = [
 const Header = ({ sessionUser, onLogout }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const isLoggedIn = Boolean(sessionUser);
 
@@ -41,6 +43,17 @@ const Header = ({ sessionUser, onLogout }) => {
       document.body.style.overflow = '';
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!isProfileOpen) return undefined;
+    const handleOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', handleOutside);
+    return () => window.removeEventListener('mousedown', handleOutside);
+  }, [isProfileOpen]);
 
   const toggleMenu = () => {
     setIsMenuOpen((current) => !current);
@@ -87,19 +100,57 @@ const Header = ({ sessionUser, onLogout }) => {
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden items-center gap-3 md:flex">
             {isLoggedIn ? (
-              <>
-                <span className="inline-flex items-center rounded-pill border border-surface-border bg-surface-soft px-3 py-1 text-xs font-semibold text-text-body">
-                  {sessionUser.fullName}
-                </span>
+              <div className="relative" ref={profileMenuRef}>
                 <button
                   type="button"
-                  onClick={onLogout}
-                  className="inline-flex items-center rounded-module border border-surface-border bg-surface-soft px-4 py-2 text-sm font-semibold text-text-body hover:bg-surface-muted"
-                  aria-label="Cerrar sesión"
+                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                  aria-expanded={isProfileOpen}
+                  aria-haspopup="menu"
+                  className="inline-flex items-center gap-2 rounded-pill border border-surface-border bg-surface-soft px-3.5 py-1.5 text-xs font-bold text-text-primary hover:bg-surface-muted"
                 >
-                  Cerrar sesión
+                  <span>{sessionUser.fullName}</span>
+                  <ChevronDown size={14} className={`transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
-              </>
+
+                {isProfileOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-surface-border bg-white py-1.5 shadow-xl"
+                  >
+                    <Link
+                      to="/mis-familiares"
+                      role="menuitem"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-surface-soft"
+                    >
+                      <Users size={16} className="text-brand-600" />
+                      <span>Mis familiares</span>
+                    </Link>
+                    <Link
+                      to="/notificaciones"
+                      role="menuitem"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-surface-soft"
+                    >
+                      <Bell size={16} className="text-brand-600" />
+                      <span>Notificaciones</span>
+                    </Link>
+                    <div className="my-1 border-t border-surface-border" />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        onLogout();
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut size={16} />
+                      <span>Cerrar sesión</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link
@@ -137,7 +188,7 @@ const Header = ({ sessionUser, onLogout }) => {
         id="main-navigation"
         aria-label="Accesos rápidos"
         className={`overflow-hidden border-t border-surface-border bg-white transition-all duration-300 ease-out md:hidden ${
-          isMenuOpen ? 'max-h-96 translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
+          isMenuOpen ? 'max-h-[32rem] translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
         }`}
       >
         <div className="mx-auto w-full max-w-7xl px-6 py-4">
@@ -170,6 +221,20 @@ const Header = ({ sessionUser, onLogout }) => {
                 <p className="rounded-module border border-surface-border bg-surface-soft px-3 py-2 text-sm font-semibold text-text-body">
                   Sesión iniciada: {sessionUser.fullName}
                 </p>
+                <Link
+                  to="/mis-familiares"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="inline-flex w-full items-center gap-2 rounded-module border border-surface-border bg-white px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-surface-muted"
+                >
+                  <Users size={16} className="text-brand-600" /> Mis familiares
+                </Link>
+                <Link
+                  to="/notificaciones"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="inline-flex w-full items-center gap-2 rounded-module border border-surface-border bg-white px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-surface-muted"
+                >
+                  <Bell size={16} className="text-brand-600" /> Notificaciones
+                </Link>
                 <button
                   type="button"
                   onClick={() => {

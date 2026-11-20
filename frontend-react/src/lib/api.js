@@ -86,4 +86,32 @@ api.interceptors.response.use(
   }
 );
 
+export const fetchMyFamilies = () => api.get('/api/v1/badge/my-families').then((r) => r.data);
+
+export const deactivateBadgeQr = (badgeUuid) =>
+  api.post(`/api/v1/badge/${badgeUuid}/qr/deactivate`).then((r) => r.data);
+
+export const regenerateBadgeQr = (badgeUuid) =>
+  api.post(`/api/v1/badge/${badgeUuid}/qr/regenerate`).then((r) => r.data);
+
+export const revokeBadgeConsent = (badgeUuid) =>
+  api.post(`/api/v1/badge/${badgeUuid}/consent/revoke`).then((r) => r.data);
+
+export const grantBadgeConsent = (badgeUuid, consentVersion = '1.0') =>
+  api.post(`/api/v1/badge/${badgeUuid}/consent/grant`, { consentVersion }).then((r) => r.data);
+
+export const checkPublicQr = (qrToken) =>
+  api.get(`/api/v1/badge/public/${qrToken}`).then((r) => r.data);
+
+export const fetchPublicAlertStatus = (alertUuid) =>
+  api.get(`/api/v1/alerts/public/${alertUuid}/status`).then((r) => r.data);
+
+export const confirmPublicAlertByToken = (alertUuid, token) =>
+  api.post(`/api/v1/alerts/public/${alertUuid}/confirm`, null, { params: { token } }).then((r) => r.data);
+
+export const fetchMyAlerts = () => api.get('/api/v1/alerts/my').then((r) => r.data);
+
+export const confirmMyAlert = (alertUuid, token) =>
+  api.post(`/api/v1/alerts/${alertUuid}/confirm`, null, token ? { params: { token } } : undefined).then((r) => r.data);
+
 export default api;

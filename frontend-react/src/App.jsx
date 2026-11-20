@@ -4,6 +4,8 @@ import PaginaReconocimiento from './pages/PaginaReconocimiento';
 import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import RegistroPage from './pages/RegistroPage';
+import MisFamiliaresPage from './pages/MisFamiliaresPage';
+import RequireAuth from './components/RequireAuth';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -29,6 +31,14 @@ function AppShell() {
           />
           <Route path="/gafete/:id" element={<PaginaGafete />} />
           <Route path="/reconocimiento" element={<PaginaReconocimiento />} />
+          <Route
+            path="/mis-familiares"
+            element={
+              <RequireAuth>
+                <MisFamiliaresPage />
+              </RequireAuth>
+            }
+          />
         </Routes>
       </main>
       {shouldShowGlobalFooter ? <Footer /> : null}
