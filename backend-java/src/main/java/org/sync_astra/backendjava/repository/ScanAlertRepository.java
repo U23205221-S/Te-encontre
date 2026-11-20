@@ -18,6 +18,23 @@ import java.util.UUID;
 public interface ScanAlertRepository extends JpaRepository<ScanAlert, Long> {
     Optional<ScanAlert> findByUuid(UUID uuid);
 
+    @Query("""
+        SELECT DISTINCT a FROM ScanAlert a
+        LEFT JOIN FETCH a.badge b
+        LEFT JOIN FETCH b.guardians
+        LEFT JOIN FETCH b.userRegister
+        WHERE a.uuid = :uuid
+    """)
+    Optional<ScanAlert> findWithBadgeByUuid(@Param("uuid") UUID uuid);
+
+    @Query("""
+        SELECT DISTINCT a FROM ScanAlert a
+        LEFT JOIN FETCH a.badge b
+        LEFT JOIN FETCH b.guardians
+        WHERE a.id = :id
+    """)
+    Optional<ScanAlert> findWithBadgeAndGuardiansById(@Param("id") Long id);
+
     Optional<ScanAlert> findByConfirmationToken(UUID confirmationToken);
 
     List<ScanAlert> findByBadge_UserRegisterOrderByScannedAtDesc(Users userRegister);

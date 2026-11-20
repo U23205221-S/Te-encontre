@@ -3,6 +3,7 @@ package org.sync_astra.backendjava;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.repository.Modifying;
@@ -150,8 +151,15 @@ class AlertSosAndEscalationTest {
                 .id(55L).uuid(alertUuid).confirmationToken(token).badge(badge)
                 .status(AlertStatus.ACTIVE).scannedAt(LocalDateTime.now()).expiresAt(Instant.now().plusSeconds(90))
                 .latitude(-12.0).longitude(-77.0).build();
+        ScanAlert confirmedReloaded = ScanAlert.builder()
+                .id(55L).uuid(alertUuid).confirmationToken(token).badge(badge)
+                .status(AlertStatus.CONFIRMED).confirmedAt(Instant.now()).confirmedByDni("12345678")
+                .scannedAt(activeAlert.getScannedAt()).expiresAt(activeAlert.getExpiresAt())
+                .latitude(-12.0).longitude(-77.0).build();
 
-        when(scanAlertRepository.findByUuid(alertUuid)).thenReturn(Optional.of(activeAlert));
+        when(scanAlertRepository.findWithBadgeByUuid(alertUuid))
+                .thenReturn(Optional.of(activeAlert))
+                .thenReturn(Optional.of(confirmedReloaded));
         when(scanAlertRepository.markConfirmedIfConfirmable(
                 eq(alertUuid),
                 eq(List.of(AlertStatus.ACTIVE, AlertStatus.ESCALATED)),
@@ -165,6 +173,51 @@ class AlertSosAndEscalationTest {
         assertEquals(AlertStatus.CONFIRMED, result.getStatus());
         assertNotNull(result.getConfirmedAt());
         assertFalse(result.isAlreadyConfirmed());
+        InOrder inOrder = inOrder(scanAlertRepository);
+        inOrder.verify(scanAlertRepository).findWithBadgeByUuid(alertUuid);
+        inOrder.verify(scanAlertRepository).markConfirmedIfConfirmable(
+                eq(alertUuid), eq(List.of(AlertStatus.ACTIVE, AlertStatus.ESCALATED)),
+                eq(AlertStatus.CONFIRMED), any(), eq("12345678"));
+        inOrder.verify(scanAlertRepository).findWithBadgeByUuid(alertUuid);
+    }
+
+    @Test
+    void confirmAlert_withPublicTokenLinkReloadsAttachedBadgeAfterAtomicConfirm() {
+        UUID alertUuid = UUID.randomUUID();
+        UUID token = UUID.randomUUID();
+        ScanAlert activeAlert = ScanAlert.builder()
+                .id(58L).uuid(alertUuid).confirmationToken(token).badge(badge)
+                .status(AlertStatus.ACTIVE).scannedAt(LocalDateTime.now()).expiresAt(Instant.now().plusSeconds(90))
+                .latitude(-12.0).longitude(-77.0).build();
+        ScanAlert reloadedConfirmed = ScanAlert.builder()
+                .id(58L).uuid(alertUuid).confirmationToken(token).badge(badge)
+                .status(AlertStatus.CONFIRMED).confirmedAt(Instant.now()).confirmedByDni("TOKEN_LINK")
+                .scannedAt(activeAlert.getScannedAt()).expiresAt(activeAlert.getExpiresAt())
+                .latitude(-12.0).longitude(-77.0).build();
+
+        when(scanAlertRepository.findWithBadgeByUuid(alertUuid))
+                .thenReturn(Optional.of(activeAlert))
+                .thenReturn(Optional.of(reloadedConfirmed));
+        when(scanAlertRepository.markConfirmedIfConfirmable(
+                eq(alertUuid),
+                eq(List.of(AlertStatus.ACTIVE, AlertStatus.ESCALATED)),
+                eq(AlertStatus.CONFIRMED),
+                any(),
+                eq("TOKEN_LINK")
+        )).thenReturn(1);
+
+        GuardianAlertDTO result = scanAlertService.confirmAlert(alertUuid, token, null);
+
+        assertEquals(AlertStatus.CONFIRMED, result.getStatus());
+        assertEquals(badge.getUuid(), result.getBadgeUuid());
+        assertEquals("Lucia Torres Mendoza", result.getDependentFullName());
+        assertFalse(result.isAlreadyConfirmed());
+        InOrder inOrder = inOrder(scanAlertRepository);
+        inOrder.verify(scanAlertRepository).findWithBadgeByUuid(alertUuid);
+        inOrder.verify(scanAlertRepository).markConfirmedIfConfirmable(
+                eq(alertUuid), eq(List.of(AlertStatus.ACTIVE, AlertStatus.ESCALATED)),
+                eq(AlertStatus.CONFIRMED), any(), eq("TOKEN_LINK"));
+        inOrder.verify(scanAlertRepository).findWithBadgeByUuid(alertUuid);
     }
 
     @Test
@@ -180,7 +233,7 @@ class AlertSosAndEscalationTest {
                 .id(56L).uuid(alertUuid).confirmationToken(token).badge(badge)
                 .status(AlertStatus.CONFIRMED).confirmedAt(Instant.now()).build();
 
-        when(scanAlertRepository.findByUuid(alertUuid))
+        when(scanAlertRepository.findWithBadgeByUuid(alertUuid))
                 .thenReturn(Optional.of(escalated))
                 .thenReturn(Optional.of(alreadyConfirmedInDb));
         when(scanAlertRepository.markConfirmedIfConfirmable(
@@ -195,6 +248,7 @@ class AlertSosAndEscalationTest {
 
         assertEquals(AlertStatus.CONFIRMED, result.getStatus());
         assertTrue(result.isAlreadyConfirmed());
+        verify(scanAlertRepository, times(2)).findWithBadgeByUuid(alertUuid);
     }
 
     @Test
@@ -203,7 +257,7 @@ class AlertSosAndEscalationTest {
         ScanAlert activeAlert = ScanAlert.builder()
                 .id(55L).uuid(alertUuid).confirmationToken(UUID.randomUUID()).badge(badge)
                 .status(AlertStatus.ACTIVE).build();
-        when(scanAlertRepository.findByUuid(alertUuid)).thenReturn(Optional.of(activeAlert));
+        when(scanAlertRepository.findWithBadgeByUuid(alertUuid)).thenReturn(Optional.of(activeAlert));
 
         assertThrows(AccessDeniedException.class,
                 () -> scanAlertService.confirmAlert(alertUuid, UUID.randomUUID(), "99999999"));
@@ -219,20 +273,33 @@ class AlertSosAndEscalationTest {
                 .latitude(-12.0464).longitude(-77.0428)
                 .photoReport("https://cdn.example.com/rep.jpg")
                 .build();
+        ScanAlert freshEscalated = ScanAlert.builder()
+                .id(77L).uuid(alertUuid).badge(badge).status(AlertStatus.ESCALATED)
+                .scannedAt(expired.getScannedAt())
+                .expiresAt(expired.getExpiresAt())
+                .escalatedAt(Instant.now())
+                .latitude(-12.0464).longitude(-77.0428)
+                .photoReport("https://cdn.example.com/rep.jpg")
+                .build();
 
         when(scanAlertRepository.findExpiredActiveAlerts(eq(AlertStatus.ACTIVE), any())).thenReturn(List.of(expired));
         when(scanAlertRepository.markEscalatedIfActive(eq(77L), eq(AlertStatus.ACTIVE), eq(AlertStatus.ESCALATED), any()))
                 .thenReturn(1)
                 .thenReturn(0);
+        when(scanAlertRepository.findWithBadgeAndGuardiansById(77L)).thenReturn(Optional.of(freshEscalated));
 
         int firstPass = scanAlertService.processExpiredAlerts();
         int secondPass = scanAlertService.processExpiredAlerts();
 
         assertEquals(1, firstPass);
         assertEquals(0, secondPass);
-        verify(emailOrchestratorService, times(1)).sendManageEmail(
+        InOrder inOrder = inOrder(scanAlertRepository, emailOrchestratorService);
+        inOrder.verify(scanAlertRepository).markEscalatedIfActive(eq(77L), eq(AlertStatus.ACTIVE), eq(AlertStatus.ESCALATED), any());
+        inOrder.verify(scanAlertRepository).findWithBadgeAndGuardiansById(77L);
+        inOrder.verify(emailOrchestratorService).sendManageEmail(
                 eq("GUARDIANS"), eq(aux1.getUuid()), eq("carlos@example.com"), anyString(), anyString(), eq("AUXILIARY_GUARDIAN")
         );
+        verify(scanAlertRepository, times(1)).findWithBadgeAndGuardiansById(77L);
         verify(emailOrchestratorService, never()).sendManageEmail(
                 anyString(), any(), eq("ana@example.com"), anyString(), anyString(), eq("AUXILIARY_GUARDIAN")
         );

@@ -161,7 +161,7 @@ public class ScanAlertService {
 
     @Transactional
     public GuardianAlertDTO confirmAlert(UUID alertUuid, UUID confirmationToken, String authenticatedDni) {
-        ScanAlert alert = scanAlertRepository.findByUuid(alertUuid)
+        ScanAlert alert = scanAlertRepository.findWithBadgeByUuid(alertUuid)
                 .orElseThrow(() -> new EntityNotFoundException("Alerta no encontrada con UUID: " + alertUuid));
 
         boolean isOwner = authenticatedDni != null
@@ -189,14 +189,20 @@ public class ScanAlertService {
                 actorDni
         );
 
+        ScanAlert latest = scanAlertRepository.findWithBadgeByUuid(alertUuid).orElse(alert);
         if (updated == 1) {
-            alert.setStatus(AlertStatus.CONFIRMED);
-            alert.setConfirmedAt(now);
-            alert.setConfirmedByDni(actorDni);
-            return toGuardianAlertDTO(alert, false);
+            if (latest.getStatus() != AlertStatus.CONFIRMED) {
+                latest.setStatus(AlertStatus.CONFIRMED);
+            }
+            if (latest.getConfirmedAt() == null) {
+                latest.setConfirmedAt(now);
+            }
+            if (latest.getConfirmedByDni() == null) {
+                latest.setConfirmedByDni(actorDni);
+            }
+            return toGuardianAlertDTO(latest, false);
         }
 
-        ScanAlert latest = scanAlertRepository.findByUuid(alertUuid).orElse(alert);
         return toGuardianAlertDTO(latest, latest.getStatus() == AlertStatus.CONFIRMED);
     }
 
@@ -217,7 +223,8 @@ public class ScanAlertService {
                 continue;
             }
             escalatedCount++;
-            notifyAuxiliaryGuardians(alert);
+            ScanAlert freshAlert = scanAlertRepository.findWithBadgeAndGuardiansById(alert.getId()).orElse(alert);
+            notifyAuxiliaryGuardians(freshAlert);
         }
         return escalatedCount;
     }
