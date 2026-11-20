@@ -126,7 +126,7 @@ const NotificacionesPage = () => {
             </div>
           )}
 
-          {tokenConfirmedAlert ? (
+          {tokenConfirmedAlert?.status === 'CONFIRMED' ? (
             <div className="space-y-4">
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                 <div className="flex items-center gap-2 font-extrabold text-emerald-900">

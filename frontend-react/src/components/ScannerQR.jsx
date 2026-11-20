@@ -538,7 +538,7 @@ const ScannerQR = ({ onScanSuccess, initialQrToken = null }) => {
                         </form>
                     )}
 
-                    {error && scanMethod !== 'camera' && (
+                    {error && (
                         <div className="mt-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
                             <XCircle className="mt-0.5 shrink-0" size={18} />
                             <p className="text-sm font-medium">{error}</p>
