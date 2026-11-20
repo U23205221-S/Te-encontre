@@ -24,12 +24,10 @@ public class ScanAlertRequestDTO {
             groups = ValidateGroup.OnScanFace.class)
     private UUID qrCodeUuid;
 
-    @NotNull(message = "El campo faceVector es obligatorio para el escaneo facial",
-            groups = ValidateGroup.OnScanFace.class)
-    @Null(message = "El campo faceVector no debe ser proporcionado para el escaneo por QR",
-            groups = ValidateGroup.OnScanQR.class)
+    @NotNull(message = "El campo faceVector es obligatorio",
+            groups = {ValidateGroup.OnScanQR.class, ValidateGroup.OnScanFace.class})
     @Size(min = 128, max = 128, message = "El vector facial debe contener exactamente 128 puntos",
-            groups = {ValidateGroup.OnScanFace.class})
+            groups = {ValidateGroup.OnScanQR.class, ValidateGroup.OnScanFace.class})
     private float[] faceVector;
 
     @NotNull(message = "El campo latitude es obligatorio",

@@ -12,8 +12,6 @@ const FormularioGafete = ({ formRef }) => {
         dniFamiliar: '',
         fechaNacimiento: '', // YYYY-MM-DD
         genero: 'MASCULINO',
-        tipoSangre: '',
-        alergias: '',
         // Guardianes (2 obligatorios + 1 opcional)
         dniGuardian1: '', nombreGuardian1: '', correoGuardian1: '', telefonoGuardian1: '', parentescoGuardian1: 'PADRE',
         dniGuardian2: '', nombreGuardian2: '', correoGuardian2: '', telefonoGuardian2: '', parentescoGuardian2: 'MADRE',
@@ -32,11 +30,24 @@ const FormularioGafete = ({ formRef }) => {
     const [cameraOn, setCameraOn] = useState(false);
     const [loading, setLoading] = useState(false);
     const [gafete, setGafete] = useState(null);
+    const [showRegisterSuccessModal, setShowRegisterSuccessModal] = useState(false);
+    const [showQrModal, setShowQrModal] = useState(false);
     const [modelsLoaded, setModelsLoaded] = useState(false);
     const [faceError, setFaceError] = useState('');
     const [faceDescriptor, setFaceDescriptor] = useState(null);
     const [cameraError, setCameraError] = useState('');
     const [showLightingHint, setShowLightingHint] = useState(false);
+
+    useEffect(() => {
+        if (!showRegisterSuccessModal) return undefined;
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setShowRegisterSuccessModal(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showRegisterSuccessModal]);
 
     const showLightingMessage = () => {
         if (lightingHintTimeoutRef.current) {
@@ -227,7 +238,7 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
     const validateForm = () => {
-        if (!formData.nombreFamiliar || !formData.dniFamiliar || !formData.fechaNacimiento || !formData.genero || !formData.tipoSangre) {
+        if (!formData.nombreFamiliar || !formData.dniFamiliar || !formData.fechaNacimiento || !formData.genero) {
             alert("Por favor, completa todos los campos obligatorios del familiar.");
             return false;
         }
@@ -304,6 +315,13 @@ const FormularioGafete = ({ formRef }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (loading) return;
+        if (gafete) {
+            setShowQrModal(true);
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.scrollTo(0, 0);
+            return;
+        }
         if (!validateForm()) return;
         setLoading(true);
         try {
@@ -316,8 +334,6 @@ const FormularioGafete = ({ formRef }) => {
                 fullName: formData.nombreFamiliar,
                 dateOfBirth: isoDate,
                 gender: formData.genero,
-                bloodType: formData.tipoSangre,
-                allergies: formData.alergias || 'Ninguna',
                 faceVector: faceDescriptor,
                 guardians: [
                     {
@@ -354,7 +370,7 @@ const FormularioGafete = ({ formRef }) => {
             const nuevoGafete = res.data;
 
             setGafete(nuevoGafete);
-            window.scrollTo(0, 0);
+            setShowRegisterSuccessModal(true);
         } catch (err) {
             console.error("Error completo del servidor:", err.response?.data || err);
             let errMsg = "Error al guardar los datos.";
@@ -400,7 +416,7 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
 
-    if (gafete) {
+    if (gafete && showQrModal) {
         const urlGafete = `${window.location.origin}/gafete/${gafete.uuid}`;
         return (
             <div className="mx-auto mb-10 max-w-4xl text-text-body">
@@ -492,7 +508,7 @@ const FormularioGafete = ({ formRef }) => {
                     <button onClick={() => {
                         setGafete(null);
                         setFormData({
-                            nombreFamiliar: '', dniFamiliar: '', fechaNacimiento: '', genero: 'MASCULINO', tipoSangre: '', alergias: '',
+                            nombreFamiliar: '', dniFamiliar: '', fechaNacimiento: '', genero: 'MASCULINO',
                             dniGuardian1: '', nombreGuardian1: '', correoGuardian1: '', telefonoGuardian1: '', parentescoGuardian1: 'PADRE',
                             dniGuardian2: '', nombreGuardian2: '', correoGuardian2: '', telefonoGuardian2: '', parentescoGuardian2: 'MADRE',
                             dniGuardian3: '', nombreGuardian3: '', correoGuardian3: '', telefonoGuardian3: '', parentescoGuardian3: 'OTRO',
@@ -500,6 +516,8 @@ const FormularioGafete = ({ formRef }) => {
                         setFile(null);
                         setPreview(null);
                         setFaceDescriptor(null);
+                        setShowRegisterSuccessModal(false);
+                        setShowQrModal(false);
                         window.scrollTo(0, 0);
                     }} className="rounded-module border-2 border-surface-border bg-surface-base px-6 py-3 font-semibold text-text-primary hover:bg-surface-muted transition-colors shadow-sm">
                         Registrar un nuevo familiar
@@ -534,31 +552,13 @@ const FormularioGafete = ({ formRef }) => {
                             <label className="mb-1 block text-sm font-bold text-text-heading">Fecha de Nacimiento *</label>
                             <input required type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} className="ui-input" />
                         </div>
-                        <div className="form-group">
+                        <div className="form-group col-span-1 md:col-span-2">
                             <label className="mb-1 block text-sm font-bold text-text-heading">Género *</label>
                             <select required name="genero" value={formData.genero} onChange={handleChange} className="ui-input">
                                 <option value="MASCULINO">Masculino</option>
                                 <option value="FEMENINO">Femenino</option>
                                 <option value="OTRO">Otro</option>
                             </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="mb-1 block text-sm font-bold text-text-heading">Tipo de sangre *</label>
-                            <select required name="tipoSangre" value={formData.tipoSangre} onChange={handleChange} className="ui-input">
-                                <option value="">Seleccione...</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                            </select>
-                        </div>
-                        <div className="form-group col-span-1 md:col-span-2">
-                            <label className="mb-1 block text-sm font-bold text-text-heading">Condiciones médicas / alergias *</label>
-                            <input required type="text" name="alergias" value={formData.alergias} onChange={handleChange} className="ui-input" placeholder="Escriba 'Ninguna' o detalle las alergias" />
                         </div>
 
                         {/* TUTOR 1 */}
@@ -761,11 +761,45 @@ const FormularioGafete = ({ formRef }) => {
                             )}
                         </div>
                     </div>
-                    <button type="submit" disabled={loading || !faceDescriptor || !file} className="ui-btn-primary mt-6 flex w-full items-center justify-center gap-2 py-4 text-lg">
+                    <button
+                        type="submit"
+                        disabled={loading || !faceDescriptor || !file}
+                        className="ui-btn-primary mt-6 flex w-full items-center justify-center gap-2 py-4 text-lg"
+                    >
                         {loading && <Loader2 className="animate-spin" size={24} />}
-                        {loading ? 'Guardando registro completo...' : 'Finalizar registro y crear gafete'}
+                        {loading ? 'Guardando registro completo...' : gafete ? 'Generar QR' : 'Registrar'}
                     </button>
                 </form>
+            )}
+            {showRegisterSuccessModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
+                    onClick={() => setShowRegisterSuccessModal(false)}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="register-success-title"
+                        className="w-full max-w-md rounded-card border border-surface-border bg-surface-base p-6 text-center shadow-card md:p-8"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+                        <h3 id="register-success-title" className="mb-2 text-xl font-bold text-text-primary">
+                            ¡Se registró correctamente!
+                        </h3>
+                        <p className="mb-6 text-sm text-text-body">
+                            Toda la información del formulario se ha guardado con éxito. Ahora puedes presionar el botón <strong>Generar QR</strong> para visualizar y descargar el gafete.
+                        </p>
+                        <button
+                            type="button"
+                            autoFocus
+                            onClick={() => setShowRegisterSuccessModal(false)}
+                            className="ui-btn-primary flex w-full items-center justify-center py-3 text-base font-semibold"
+                        >
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

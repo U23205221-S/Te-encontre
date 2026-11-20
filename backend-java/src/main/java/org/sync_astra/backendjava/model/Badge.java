@@ -50,15 +50,7 @@ public class Badge {
     @Column(name = "gender_badge", nullable = false)
     private Gender gender;
 
-    @Convert(converter = DataEncrypt.class)
-    @Column(name = "blood_type_badge", nullable = false)
-    private String bloodType;
-
-    @Convert(converter = DataEncrypt.class)
-    @Column(name = "allergies_badge", nullable = false)
-    private String allergies;
-
-    @Column(name = "medical_conditions_badge", nullable = false)
+    @Column(name = "photo_url_badge", nullable = false)
     private String photoUrl;
 
     @Column(name = "face_vector_badge", nullable = false, columnDefinition = "vector(128)")

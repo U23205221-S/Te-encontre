@@ -9,7 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
 import org.sync_astra.backendjava.dtos.request.GuardiansRequestDTO;
 import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
+import org.sync_astra.backendjava.dtos.request.VerifyQrFaceRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
+import org.sync_astra.backendjava.dtos.response.VerifyQrFaceResponseDTO;
 import org.sync_astra.backendjava.mapper.mapperImpl.BadgeMapper;
 import org.sync_astra.backendjava.mapper.mapperImpl.GuardiansMapper;
 import org.sync_astra.backendjava.model.Badge;
@@ -28,6 +30,7 @@ import org.sync_astra.backendjava.service.email.ResendEmailService;
 import java.io.IOException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -54,6 +57,33 @@ public class BadgeService {
                 .orElseThrow(() -> new EntityNotFoundException("No se encontró ninguna coincidencia biométrica que supere el umbral mínimo."));
     }
 
+    @Transactional(readOnly = true)
+    public VerifyQrFaceResponseDTO verifyFaceForQr(VerifyQrFaceRequestDTO requestDTO) {
+        Badge badge = badgeRepository.findByUuid(requestDTO.getQrCodeUuid())
+                .orElseThrow(() -> new EntityNotFoundException("Credencial no encontrada para el QR escaneado."));
+
+        Optional<BadgeRepository.BadgeMatchResult> match = badgeRepository.findMatchByUuid(
+                requestDTO.getQrCodeUuid(),
+                requestDTO.getFaceVector()
+        );
+
+        boolean isMatch = match.map(r -> r.getDistance() < MATCH_THRESHOLD).orElse(false);
+
+        if (isMatch) {
+            return VerifyQrFaceResponseDTO.builder()
+                    .verified(true)
+                    .fullName(badge.getFullName())
+                    .message("Rostro verificado: corresponde a " + badge.getFullName() + ".")
+                    .build();
+        }
+
+        return VerifyQrFaceResponseDTO.builder()
+                .verified(false)
+                .fullName(null)
+                .message("El rostro de la foto no coincide con el familiar registrado en este código QR.")
+                .build();
+    }
+
     // BÚSQUEDA POR QR (UUID)
     @Transactional
     public UUID getByUuid(ScanAlertRequestDTO requestDTO, MultipartFile file) {
@@ -62,7 +92,12 @@ public class BadgeService {
         Badge badge = badgeRepository.findByUuid(requestDTO.getQrCodeUuid())
                 .orElseThrow(() -> new EntityNotFoundException("Credencial no encontrada para el QR escaneado."));
 
-        // 2. Disparamos la alerta y retornamos directamente el UUID de esa alerta generada
+        // 2. Verificamos que el rostro de la foto coincida biométricamente con el Badge del QR
+        badgeRepository.findMatchByUuid(requestDTO.getQrCodeUuid(), requestDTO.getFaceVector())
+                .filter(r -> r.getDistance() < MATCH_THRESHOLD)
+                .orElseThrow(() -> new IllegalArgumentException("El rostro de la foto no coincide con el familiar registrado en este código QR."));
+
+        // 3. Disparamos la alerta y retornamos directamente el UUID de esa alerta generada
         return scanAlertService.processAndSendAlert(badge, file, requestDTO);
     }
 
@@ -161,7 +196,6 @@ public class BadgeService {
                                         <img src="{{foto_perfil}}" alt="Foto de {{nombre_persona}}" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px;">
                                         <div style="text-align: left; background-color: #ffffff; padding: 15px; border-radius: 5px;">
                                             <p style="margin: 5px 0; font-size: 15px;"><strong>Nombre completo:</strong> {{nombre_persona}}</p>
-                                            <p style="margin: 5px 0; font-size: 15px;"><strong>Alergias registradas:</strong> {{alergias}}</p>
                                             <p style="margin: 5px 0; font-size: 15px;"><strong>Su vínculo:</strong> {{parentesco}}</p>
                                         </div>
                                     </div>
@@ -193,7 +227,6 @@ public class BadgeService {
         """
                 .replace("{{nombre_apoderado}}", guardian.getName())
                 .replace("{{nombre_persona}}", savedBadge.getFullName())
-                .replace("{{alergias}}", savedBadge.getAllergies() != null ? savedBadge.getAllergies() : "Ninguna") // Pequeña validación de nulos
                 .replace("{{parentesco}}", guardian.getRelationship().toString())
                 .replace("{{url_perfil}}", urlPerfil)
                 .replace("{{foto_perfil}}", savedBadge.getPhotoUrl())

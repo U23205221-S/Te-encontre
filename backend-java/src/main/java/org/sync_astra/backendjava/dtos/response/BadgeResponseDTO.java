@@ -24,8 +24,7 @@ public class BadgeResponseDTO {
     private String fullName;
     private Instant dateOfBirth;
     private Gender gender;
-    private String bloodType;
-    private String allergies;
+
     private String photoUrl;
     private StatusBadge statusBadge;
 
