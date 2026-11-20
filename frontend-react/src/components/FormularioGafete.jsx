@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { api } from '../lib/api';
+import { api, regenerateBadgeQr } from '../lib/api';
 import * as faceapi from '@vladmandic/face-api';
 import html2canvas from 'html2canvas';
 import { Camera, Send, Loader2, Link as LinkIcon, Download, CheckCircle, XCircle, Printer } from 'lucide-react';
 import QRGenerado from './QRGenerado';
+import PrivacyConsentModal from './PrivacyConsentModal';
 const MODELS_URL = '/models';
 const FormularioGafete = ({ formRef }) => {
     const [formData, setFormData] = useState({
@@ -37,6 +38,9 @@ const FormularioGafete = ({ formRef }) => {
     const [faceDescriptor, setFaceDescriptor] = useState(null);
     const [cameraError, setCameraError] = useState('');
     const [showLightingHint, setShowLightingHint] = useState(false);
+    const [consentAccepted, setConsentAccepted] = useState(false);
+    const [showConsentModal, setShowConsentModal] = useState(false);
+    const [regeneratingQr, setRegeneratingQr] = useState(false);
 
     useEffect(() => {
         if (!showRegisterSuccessModal) return undefined;
@@ -310,6 +314,10 @@ const FormularioGafete = ({ formRef }) => {
             alert("Por favor, enciende la cámara y captura el rostro del familiar para el reconocimiento facial.");
             return false;
         }
+        if (!consentAccepted) {
+            alert("Debes revisar y aceptar el consentimiento informado de privacidad antes de completar el registro.");
+            return false;
+        }
         return true;
     };
 
@@ -335,6 +343,8 @@ const FormularioGafete = ({ formRef }) => {
                 dateOfBirth: isoDate,
                 gender: formData.genero,
                 faceVector: faceDescriptor,
+                consentAccepted: true,
+                consentVersion: '1.0',
                 guardians: [
                     {
                         dni: formData.dniGuardian1,
@@ -416,8 +426,29 @@ const FormularioGafete = ({ formRef }) => {
         }
     };
 
+    const handleRegenerateFromSuccess = async () => {
+        if (!gafete?.uuid || regeneratingQr) return;
+        const confirmed = window.confirm(
+            '¿Regenerar este código QR? Se creará un QR nuevo y el código anterior quedará invalidado.'
+        );
+        if (!confirmed) return;
+        try {
+            setRegeneratingQr(true);
+            const updated = await regenerateBadgeQr(gafete.uuid);
+            setGafete((prev) => ({
+                ...prev,
+                activeQrToken: updated.activeQrToken,
+            }));
+        } catch (err) {
+            alert(err.response?.data?.message || 'No se pudo regenerar el código QR.');
+        } finally {
+            setRegeneratingQr(false);
+        }
+    };
+
     if (gafete && showQrModal) {
-        const urlGafete = `${window.location.origin}/gafete/${gafete.uuid}`;
+        const qrToken = gafete.activeQrToken || gafete.uuid;
+        const urlGafete = `${window.location.origin}/gafete/${qrToken}`;
         return (
             <div className="mx-auto mb-10 max-w-4xl text-text-body">
                 {/* Contenedor visible solo en pantalla (No en impresión) */}
@@ -464,7 +495,12 @@ const FormularioGafete = ({ formRef }) => {
 
                                 <div className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl p-6 border-2 border-dashed border-gray-300 w-full max-w-sm mx-auto md:mx-0 print:border-black print:bg-transparent">
                                     <div className="bg-white p-3 rounded-xl shadow-sm print:shadow-none print:border print:border-gray-200">
-                                        <QRGenerado url={urlGafete} id={`qr-gafete-${gafete.uuid}`} />
+                                        <QRGenerado
+                                            url={urlGafete}
+                                            id={`qr-gafete-${qrToken}`}
+                                            onRegenerate={handleRegenerateFromSuccess}
+                                            regenerating={regeneratingQr}
+                                        />
                                     </div>
                                     <div className="mt-5 w-full rounded-lg bg-gray-200 px-4 py-3 text-center text-sm font-mono font-bold text-gray-800 break-all print:border print:border-black print:bg-white">
                                         <span className="hover:text-brand-600 text-gray-800">{urlGafete}</span>
@@ -487,7 +523,7 @@ const FormularioGafete = ({ formRef }) => {
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white font-bold text-2xl print:border-2 print:border-black print:bg-white print:text-black">4</div>
                             <div className="pt-1">
                                 <h3 className="text-xl font-bold text-gray-800">Ayúdame a comunicarnos</h3>
-                                <p className="text-base text-gray-600 mt-1">Al ubicar el perfil, la plataforma mostrará de inmediato los datos y teléfonos de contacto de mis responsables.</p>
+                                <p className="text-base text-gray-600 mt-1">Al ubicar el perfil, la plataforma enviará una alerta SOS y permitirá contactar de forma segura a mis responsables.</p>
                                 <div className="mt-4 p-4 bg-brand-50 border-l-4 border-brand-500 rounded-r-lg print:border-black print:bg-gray-100">
                                     <p className="text-lg italic font-medium text-brand-900 print:text-black">"¡Muchas gracias por tu solidaridad, empatía y el tiempo brindado para ayudarme a regresar a salvo!"</p>
                                 </div>
@@ -516,6 +552,7 @@ const FormularioGafete = ({ formRef }) => {
                         setFile(null);
                         setPreview(null);
                         setFaceDescriptor(null);
+                        setConsentAccepted(false);
                         setShowRegisterSuccessModal(false);
                         setShowQrModal(false);
                         window.scrollTo(0, 0);
@@ -761,16 +798,47 @@ const FormularioGafete = ({ formRef }) => {
                             )}
                         </div>
                     </div>
+                    <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-4 space-y-2">
+                        <label className="flex items-start gap-3 cursor-pointer text-sm text-text-primary">
+                            <input
+                                type="checkbox"
+                                checked={consentAccepted}
+                                onChange={(e) => setConsentAccepted(e.target.checked)}
+                                className="mt-1 h-4 w-4 rounded border-surface-border text-brand-600 focus:ring-brand-500"
+                            />
+                            <span>
+                                He leído y autorizo el tratamiento de los datos personales, fotografía y patrón biométrico de mi familiar conforme al consentimiento informado de privacidad.{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConsentModal(true)}
+                                    className="font-bold text-brand-700 underline hover:text-brand-800"
+                                >
+                                    Leer el documento completo
+                                </button>
+                            </span>
+                        </label>
+                        <p className="pl-7 text-xs text-text-muted">
+                            El ciudadano solo verá el primer nombre y las acciones mínimas necesarias para contactar a los apoderados en una emergencia.
+                        </p>
+                    </div>
                     <button
                         type="submit"
-                        disabled={loading || !faceDescriptor || !file}
-                        className="ui-btn-primary mt-6 flex w-full items-center justify-center gap-2 py-4 text-lg"
+                        disabled={loading || !faceDescriptor || !file || !consentAccepted}
+                        className="ui-btn-primary mt-6 flex w-full items-center justify-center gap-2 py-4 text-lg disabled:opacity-50"
                     >
                         {loading && <Loader2 className="animate-spin" size={24} />}
                         {loading ? 'Guardando registro completo...' : gafete ? 'Generar QR' : 'Registrar'}
                     </button>
                 </form>
             )}
+            <PrivacyConsentModal
+                isOpen={showConsentModal}
+                onClose={() => setShowConsentModal(false)}
+                onAccept={() => {
+                    setConsentAccepted(true);
+                    setShowConsentModal(false);
+                }}
+            />
             {showRegisterSuccessModal && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"

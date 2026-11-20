@@ -14,7 +14,7 @@ const RequireAuth = ({ children }) => {
       const stored = window.localStorage.getItem(AUTH_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed && parsed.fullName && parsed.email) {
+        if (parsed && (parsed.accessToken || (parsed.fullName && parsed.email))) {
           user = parsed;
         }
       }

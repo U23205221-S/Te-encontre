@@ -257,6 +257,7 @@ const BuscarRostro = () => {
       // Get geolocation
       let latitude = -6.77137;
       let longitude = -79.84088;
+      let gpsAccuracyMeters = null;
       if (navigator.geolocation) {
         try {
           const position = await new Promise((resolve, reject) => {
@@ -264,6 +265,7 @@ const BuscarRostro = () => {
           });
           latitude = position.coords.latitude;
           longitude = position.coords.longitude;
+          gpsAccuracyMeters = position.coords.accuracy ?? null;
         } catch (geoErr) {
           console.warn('Geolocation denied:', geoErr);
         }
@@ -285,7 +287,8 @@ const BuscarRostro = () => {
         latitude,
         longitude,
         nameDevice,
-        ipAddress
+        ipAddress,
+        gpsAccuracyMeters
       };
 
       // Photo is optional - only add if captured
