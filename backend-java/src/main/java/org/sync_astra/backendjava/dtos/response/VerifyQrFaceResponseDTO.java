@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class VerifyQrFaceResponseDTO {
 
     private boolean verified;
-    private String fullName;
+    private String firstName;
     private String message;
 }

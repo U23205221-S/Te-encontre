@@ -57,4 +57,8 @@ public class BadgeRequestDTO {
     @Size(min = 2, message = "Debe proporcionar al menos un tutor legal y un auxiliar (mínimo 2 registros)",
             groups = {ValidateGroup.OnCreate.class})
     private List<GuardiansRequestDTO> guardians;
+
+    private Boolean consentAccepted;
+
+    private String consentVersion;
 }

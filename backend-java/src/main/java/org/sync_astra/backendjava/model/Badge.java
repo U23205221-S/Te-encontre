@@ -61,6 +61,18 @@ public class Badge {
     @Enumerated(EnumType.STRING)
     private StatusBadge statusBadge;
 
+    @Column(name = "consent_active")
+    private Boolean consentActive;
+
+    @Column(name = "consent_version", length = 20)
+    private String consentVersion;
+
+    @Column(name = "consent_accepted_at")
+    private Instant consentAcceptedAt;
+
+    @Column(name = "consent_revoked_at")
+    private Instant consentRevokedAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -78,4 +90,10 @@ public class Badge {
 
     @OneToMany(mappedBy = "badge", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScanAlert> scanAlerts;
+
+    @OneToMany(mappedBy = "badge", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BadgeQrCode> qrCodes;
+
+    @OneToMany(mappedBy = "badge", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ConsentAudit> consentAudits;
 }

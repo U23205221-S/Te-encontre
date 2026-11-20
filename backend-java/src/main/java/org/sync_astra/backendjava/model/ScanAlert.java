@@ -5,8 +5,10 @@ import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.sync_astra.backendjava.model.Categories.AlertStatus;
 import org.sync_astra.backendjava.util.DataEncrypt;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -61,6 +63,29 @@ public class ScanAlert {
     @CreatedDate
     @Column(name = "scanned_at", nullable = false, updatable = false)
     private LocalDateTime scannedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    private AlertStatus status;
+
+    @Column(name = "expires_at")
+    private Instant expiresAt;
+
+    @Column(name = "confirmed_at")
+    private Instant confirmedAt;
+
+    @Convert(converter = DataEncrypt.class)
+    @Column(name = "confirmed_by_dni")
+    private String confirmedByDni;
+
+    @Column(name = "escalated_at")
+    private Instant escalatedAt;
+
+    @Column(name = "confirmation_token", unique = true)
+    private UUID confirmationToken;
+
+    @Column(name = "gps_accuracy_meters")
+    private Double gpsAccuracyMeters;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_badge", nullable = false)
