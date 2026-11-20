@@ -63,6 +63,7 @@ cloudinary:
   api-secret: ${CLOUDINARY_API_SECRET:tu-api-secret}
 
 app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
   encryption:
     secret-key: ${ENCRYPTION_SECRET:tu-encryption-secret}
     algorithm: ${ENCRYPTION_ALGORITHM:AES}

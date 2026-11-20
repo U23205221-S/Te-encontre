@@ -1,10 +1,11 @@
 package org.sync_astra.backendjava.exceptions;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-//import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.AccessDeniedException;
 //import org.springframework.security.authentication.BadCredentialsException;
 //import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -30,6 +31,28 @@ public class GlobalExceptionHandler {
 
         body.put("errors", fieldErrors);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(QrRevokedException.class)
+    public ResponseEntity<Map<String, Object>> handleQrRevoked(QrRevokedException ex, HttpServletRequest request) {
+        Map<String, Object> body = createBaseBody(HttpStatus.GONE, ex.getMessage());
+        body.put("path", request.getRequestURI());
+        body.put("code", "QR_REVOKED");
+        return new ResponseEntity<>(body, HttpStatus.GONE);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleEntityNotFound(EntityNotFoundException ex, HttpServletRequest request) {
+        Map<String, Object> body = createBaseBody(HttpStatus.NOT_FOUND, ex.getMessage());
+        body.put("path", request.getRequestURI());
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        Map<String, Object> body = createBaseBody(HttpStatus.FORBIDDEN, ex.getMessage());
+        body.put("path", request.getRequestURI());
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
     // 2. Captura errores de negocio (Como el de las contraseñas que no coinciden)

@@ -12,15 +12,19 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
+import org.sync_astra.backendjava.dtos.request.ConsentRequestDTO;
 import org.sync_astra.backendjava.dtos.request.ScanAlertPart2RequestDTO;
 import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
 import org.sync_astra.backendjava.dtos.request.VerifyQrFaceRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
+import org.sync_astra.backendjava.dtos.response.FamilyMemberSummaryDTO;
+import org.sync_astra.backendjava.dtos.response.PublicQrCheckDTO;
 import org.sync_astra.backendjava.dtos.response.VerifyQrFaceResponseDTO;
 import org.sync_astra.backendjava.service.BadgeService;
 import org.sync_astra.backendjava.service.ScanAlertService;
 import org.sync_astra.backendjava.util.ValidateGroup;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -91,6 +95,47 @@ public class BadgeController {
     @GetMapping("/uuid/{uuid}")
     public ResponseEntity<BadgeResponseDTO> getBadgeByUuid(@PathVariable String uuid) {
         return ResponseEntity.ok(badgeService.getBadgeByUuid(uuid));
+    }
+
+    @GetMapping("/public/{qrToken}")
+    public ResponseEntity<PublicQrCheckDTO> checkPublicQr(@PathVariable UUID qrToken) {
+        PublicQrCheckDTO check = badgeService.checkPublicQr(qrToken);
+        return ResponseEntity.status(check.isValid() ? HttpStatus.OK : HttpStatus.GONE).body(check);
+    }
+
+    @GetMapping("/my-families")
+    public ResponseEntity<List<FamilyMemberSummaryDTO>> getMyFamilies(Authentication authentication) {
+        return ResponseEntity.ok(badgeService.getMyFamilies(authentication.getName()));
+    }
+
+    @PostMapping("/{badgeUuid}/qr/deactivate")
+    public ResponseEntity<FamilyMemberSummaryDTO> deactivateQr(
+            @PathVariable UUID badgeUuid,
+            Authentication authentication) {
+        return ResponseEntity.ok(badgeService.deactivateQr(badgeUuid, authentication.getName()));
+    }
+
+    @PostMapping("/{badgeUuid}/qr/regenerate")
+    public ResponseEntity<FamilyMemberSummaryDTO> regenerateQr(
+            @PathVariable UUID badgeUuid,
+            Authentication authentication) {
+        return ResponseEntity.ok(badgeService.regenerateQr(badgeUuid, authentication.getName()));
+    }
+
+    @PostMapping("/{badgeUuid}/consent/revoke")
+    public ResponseEntity<FamilyMemberSummaryDTO> revokeConsent(
+            @PathVariable UUID badgeUuid,
+            Authentication authentication) {
+        return ResponseEntity.ok(badgeService.revokeConsent(badgeUuid, authentication.getName()));
+    }
+
+    @PostMapping("/{badgeUuid}/consent/grant")
+    public ResponseEntity<FamilyMemberSummaryDTO> grantConsent(
+            @PathVariable UUID badgeUuid,
+            @RequestBody(required = false) ConsentRequestDTO request,
+            Authentication authentication) {
+        String version = request != null ? request.getConsentVersion() : null;
+        return ResponseEntity.ok(badgeService.grantConsent(badgeUuid, version, authentication.getName()));
     }
 
 }

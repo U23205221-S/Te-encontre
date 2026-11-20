@@ -3,32 +3,41 @@ package org.sync_astra.backendjava.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.sync_astra.backendjava.dtos.request.BadgeRequestDTO;
 import org.sync_astra.backendjava.dtos.request.GuardiansRequestDTO;
 import org.sync_astra.backendjava.dtos.request.ScanAlertRequestDTO;
 import org.sync_astra.backendjava.dtos.request.VerifyQrFaceRequestDTO;
 import org.sync_astra.backendjava.dtos.response.BadgeResponseDTO;
+import org.sync_astra.backendjava.dtos.response.FamilyMemberSummaryDTO;
+import org.sync_astra.backendjava.dtos.response.PublicQrCheckDTO;
 import org.sync_astra.backendjava.dtos.response.VerifyQrFaceResponseDTO;
+import org.sync_astra.backendjava.exceptions.QrRevokedException;
 import org.sync_astra.backendjava.mapper.mapperImpl.BadgeMapper;
-import org.sync_astra.backendjava.mapper.mapperImpl.GuardiansMapper;
 import org.sync_astra.backendjava.model.Badge;
+import org.sync_astra.backendjava.model.BadgeQrCode;
+import org.sync_astra.backendjava.model.Categories.ConsentAction;
+import org.sync_astra.backendjava.model.Categories.QrCodeStatus;
 import org.sync_astra.backendjava.model.Categories.StatusBadge;
+import org.sync_astra.backendjava.model.ConsentAudit;
 import org.sync_astra.backendjava.model.Guardians;
 import org.sync_astra.backendjava.model.Users;
+import org.sync_astra.backendjava.repository.BadgeQrCodeRepository;
 import org.sync_astra.backendjava.repository.BadgeRepository;
-import org.sync_astra.backendjava.repository.GuardiansRepository;
+import org.sync_astra.backendjava.repository.ConsentAuditRepository;
 import org.sync_astra.backendjava.repository.UserRepository;
 import org.sync_astra.backendjava.service.apiCloud.DniService;
 import org.sync_astra.backendjava.service.cloudinary.ImageStorageService;
 import org.sync_astra.backendjava.service.email.EmailOrchestratorService;
-import org.sync_astra.backendjava.service.email.ResendEmailService;
-
+import org.sync_astra.backendjava.util.NameUtils;
 
 import java.io.IOException;
-
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,94 +47,107 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BadgeService {
     private final BadgeRepository badgeRepository;
+    private final BadgeQrCodeRepository badgeQrCodeRepository;
+    private final ConsentAuditRepository consentAuditRepository;
     private final BadgeMapper badgeMapper;
-    private final UserRepository userRepository; // <-- Inyectamos para buscar al escaneador
-    private final ScanAlertService scanAlertService; // <-- Inyectamos el servicio de alertas
-    private static final double MATCH_THRESHOLD = 0.6; // Ajustar según precisión del modelo
-    // Ruta donde se guardarán las fotos (puedes ajustarla a tu monorepo)
+    private final UserRepository userRepository;
+    private final ScanAlertService scanAlertService;
+    private static final double MATCH_THRESHOLD = 0.6;
+    private static final String DEFAULT_CONSENT_VERSION = "1.0";
     private final ImageStorageService imageStorageService;
     private final EmailOrchestratorService emailOrchestratorService;
     private final DniService dniService;
 
-    // IDENTIFICACIÓN POR ROSTRO: Devuelve el DTO completo si hay match
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl = "http://localhost:5173";
+
     @Transactional
     public UUID identifyByFace(ScanAlertRequestDTO requestDTO, MultipartFile file) {
         return badgeRepository.findBestMatch(requestDTO.getFaceVector())
                 .filter(result -> result.getDistance() < MATCH_THRESHOLD)
                 .flatMap(result -> badgeRepository.findById(result.getId()))
+                .filter(badge -> !Boolean.FALSE.equals(badge.getConsentActive()))
                 .map(badge -> scanAlertService.processAndSendAlert(badge, file, requestDTO))
                 .orElseThrow(() -> new EntityNotFoundException("No se encontró ninguna coincidencia biométrica que supere el umbral mínimo."));
     }
 
     @Transactional(readOnly = true)
     public VerifyQrFaceResponseDTO verifyFaceForQr(VerifyQrFaceRequestDTO requestDTO) {
-        Badge badge = badgeRepository.findByUuid(requestDTO.getQrCodeUuid())
-                .orElseThrow(() -> new EntityNotFoundException("Credencial no encontrada para el QR escaneado."));
+        Badge badge = resolveBadgeByQrToken(requestDTO.getQrCodeUuid());
 
         Optional<BadgeRepository.BadgeMatchResult> match = badgeRepository.findMatchByUuid(
-                requestDTO.getQrCodeUuid(),
+                badge.getUuid(),
                 requestDTO.getFaceVector()
         );
 
         boolean isMatch = match.map(r -> r.getDistance() < MATCH_THRESHOLD).orElse(false);
 
         if (isMatch) {
+            String firstName = NameUtils.extractFirstName(badge.getFullName());
             return VerifyQrFaceResponseDTO.builder()
                     .verified(true)
-                    .fullName(badge.getFullName())
-                    .message("Rostro verificado: corresponde a " + badge.getFullName() + ".")
+                    .firstName(firstName)
+                    .message("Rostro verificado: corresponde a " + firstName + ".")
                     .build();
         }
 
         return VerifyQrFaceResponseDTO.builder()
                 .verified(false)
-                .fullName(null)
+                .firstName(null)
                 .message("El rostro de la foto no coincide con el familiar registrado en este código QR.")
                 .build();
     }
 
-    // BÚSQUEDA POR QR (UUID)
     @Transactional
     public UUID getByUuid(ScanAlertRequestDTO requestDTO, MultipartFile file) {
+        Badge badge = resolveBadgeByQrToken(requestDTO.getQrCodeUuid());
 
-        // 1. Buscamos el Badge por el UUID del QR
-        Badge badge = badgeRepository.findByUuid(requestDTO.getQrCodeUuid())
-                .orElseThrow(() -> new EntityNotFoundException("Credencial no encontrada para el QR escaneado."));
-
-        // 2. Verificamos que el rostro de la foto coincida biométricamente con el Badge del QR
-        badgeRepository.findMatchByUuid(requestDTO.getQrCodeUuid(), requestDTO.getFaceVector())
+        badgeRepository.findMatchByUuid(badge.getUuid(), requestDTO.getFaceVector())
                 .filter(r -> r.getDistance() < MATCH_THRESHOLD)
                 .orElseThrow(() -> new IllegalArgumentException("El rostro de la foto no coincide con el familiar registrado en este código QR."));
 
-        // 3. Disparamos la alerta y retornamos directamente el UUID de esa alerta generada
         return scanAlertService.processAndSendAlert(badge, file, requestDTO);
     }
 
-    // Consulta simple de badge por UUID (sin alerta, requiere auth)
+    @Transactional(readOnly = true)
+    public PublicQrCheckDTO checkPublicQr(UUID qrToken) {
+        try {
+            Badge badge = resolveBadgeByQrToken(qrToken);
+            return PublicQrCheckDTO.builder()
+                    .valid(true)
+                    .firstName(NameUtils.extractFirstName(badge.getFullName()))
+                    .message("Código QR válido.")
+                    .build();
+        } catch (QrRevokedException | EntityNotFoundException ex) {
+            return PublicQrCheckDTO.builder()
+                    .valid(false)
+                    .firstName(null)
+                    .message(ex.getMessage())
+                    .build();
+        }
+    }
+
     public BadgeResponseDTO getBadgeByUuid(String uuid) {
         Badge badge = badgeRepository.findByUuid(UUID.fromString(uuid))
                 .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + uuid));
-        return badgeMapper.toDTO(badge);
+        BadgeResponseDTO dto = badgeMapper.toDTO(badge);
+        enrichBadgeResponse(dto, badge, resolveActiveQrToken(badge));
+        return dto;
     }
 
-
-    /**
-     * REGISTRO MODIFICADO: Crea un nuevo badge subiendo la foto a Cloudinary.
-     */
     @Transactional
     public BadgeResponseDTO createWithPhoto(BadgeRequestDTO requestDTO, MultipartFile file, String registerUserName) {
-
-        // 1. Validaciones rápidas (Fail-Fast)
+        if (!Boolean.TRUE.equals(requestDTO.getConsentAccepted())) {
+            throw new IllegalArgumentException("Debe aceptar el consentimiento informado de privacidad antes de completar el registro.");
+        }
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("La imagen no puede estar vacía.");
         }
         validarDnis(requestDTO);
 
-        // 2. Consultas a BD previas a operaciones costosas (Cloudinary)
         Users userRegister = userRepository.findByDni(registerUserName)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
 
-        // 3. Operación externa costosa: Subida a Cloudinary
         String photoUrl;
         try {
             photoUrl = imageStorageService.uploadImage(file, "badges");
@@ -134,42 +156,236 @@ public class BadgeService {
             throw new RuntimeException("Error en el sistema de almacenamiento en la nube.");
         }
 
-        // 4. Preparación y Mapeo de la Entidad
+        String consentVersion = StringUtils.hasText(requestDTO.getConsentVersion())
+                ? requestDTO.getConsentVersion().trim()
+                : DEFAULT_CONSENT_VERSION;
+        Instant now = Instant.now();
+
         requestDTO.setPhotoUrl(photoUrl);
         requestDTO.setStatusBadge(StatusBadge.NEUTRAL);
 
         Badge badge = new Badge();
         badgeMapper.updateFromDto(requestDTO, badge);
         badge.setUserRegister(userRegister);
+        badge.setConsentActive(true);
+        badge.setConsentVersion(consentVersion);
+        badge.setConsentAcceptedAt(now);
+        badge.setConsentRevokedAt(null);
 
-        // 5. Configurar relación bidireccional
         if (badge.getGuardians() != null) {
             for (int i = 0; i < badge.getGuardians().size(); i++) {
                 Guardians guardian = badge.getGuardians().get(i);
                 guardian.setBadge(badge);
-                guardian.setLegalRepresentative(i == 0); // El índice 0 siempre será true, el resto false
+                guardian.setLegalRepresentative(i == 0);
             }
         }
 
-        // 6. Guardado en Base de Datos
         Badge savedBadge = badgeRepository.save(badge);
-        log.info("Nuevo Badge registrado con éxito. UUID: {}", savedBadge.getUuid());
+        BadgeQrCode initialQr = badgeQrCodeRepository.save(BadgeQrCode.builder()
+                .qrToken(UUID.randomUUID())
+                .status(QrCodeStatus.ACTIVE)
+                .createdAt(now)
+                .badge(savedBadge)
+                .build());
+        recordConsentAudit(savedBadge, ConsentAction.GRANTED, consentVersion, registerUserName, now);
 
-        // 7. Notificaciones
-        enviarCorreosNotificacion(savedBadge);
+        log.info("Nuevo Badge registrado con éxito. UUID: {}, QR Token: {}", savedBadge.getUuid(), initialQr.getQrToken());
 
-        return badgeMapper.toDTO(savedBadge);
+        enviarCorreosNotificacion(savedBadge, initialQr.getQrToken());
+
+        BadgeResponseDTO dto = badgeMapper.toDTO(savedBadge);
+        enrichBadgeResponse(dto, savedBadge, initialQr.getQrToken());
+        return dto;
     }
 
-    // Método privado para generar el HTML
-    private String buildEmailTemplate(Guardians guardian, Badge savedBadge, String urlPerfil) {
+    @Transactional(readOnly = true)
+    public List<FamilyMemberSummaryDTO> getMyFamilies(String ownerDni) {
+        Users owner = userRepository.findByDni(ownerDni)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario en sesión no encontrado en la BD"));
 
-        // 1. Definimos el mensaje dinámico según el rol del guardián
+        return badgeRepository.findByUserRegisterOrderByCreatedAtDesc(owner)
+                .stream()
+                .map(this::toFamilySummary)
+                .toList();
+    }
+
+    @Transactional
+    public FamilyMemberSummaryDTO deactivateQr(UUID badgeUuid, String ownerDni) {
+        Badge badge = loadOwnedBadge(badgeUuid, ownerDni);
+        deactivateActiveQrTokens(badge.getId(), QrCodeStatus.DEACTIVATED);
+        return toFamilySummary(badge);
+    }
+
+    @Transactional
+    public FamilyMemberSummaryDTO regenerateQr(UUID badgeUuid, String ownerDni) {
+        Badge badge = loadOwnedBadge(badgeUuid, ownerDni);
+        if (Boolean.FALSE.equals(badge.getConsentActive())) {
+            throw new IllegalStateException("Debes otorgar un nuevo consentimiento informado antes de regenerar el código QR.");
+        }
+
+        deactivateActiveQrTokens(badge.getId(), QrCodeStatus.REVOKED);
+        badgeQrCodeRepository.save(BadgeQrCode.builder()
+                .qrToken(UUID.randomUUID())
+                .status(QrCodeStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .badge(badge)
+                .build());
+
+        return toFamilySummary(badge);
+    }
+
+    @Transactional
+    public FamilyMemberSummaryDTO revokeConsent(UUID badgeUuid, String ownerDni) {
+        Badge badge = loadOwnedBadge(badgeUuid, ownerDni);
+        Instant now = Instant.now();
+
+        badge.setConsentActive(false);
+        badge.setConsentRevokedAt(now);
+        badgeRepository.save(badge);
+
+        deactivateActiveQrTokens(badge.getId(), QrCodeStatus.DEACTIVATED);
+        String version = StringUtils.hasText(badge.getConsentVersion()) ? badge.getConsentVersion() : DEFAULT_CONSENT_VERSION;
+        recordConsentAudit(badge, ConsentAction.REVOKED, version, ownerDni, now);
+
+        return toFamilySummary(badge);
+    }
+
+    @Transactional
+    public FamilyMemberSummaryDTO grantConsent(UUID badgeUuid, String requestedVersion, String ownerDni) {
+        Badge badge = loadOwnedBadge(badgeUuid, ownerDni);
+        Instant now = Instant.now();
+        String version = StringUtils.hasText(requestedVersion) ? requestedVersion.trim() : DEFAULT_CONSENT_VERSION;
+
+        badge.setConsentActive(true);
+        badge.setConsentVersion(version);
+        badge.setConsentAcceptedAt(now);
+        badge.setConsentRevokedAt(null);
+        badgeRepository.save(badge);
+
+        recordConsentAudit(badge, ConsentAction.GRANTED, version, ownerDni, now);
+        return toFamilySummary(badge);
+    }
+
+    public Badge resolveBadgeByQrToken(UUID qrToken) {
+        Optional<BadgeQrCode> qrCodeOpt = badgeQrCodeRepository.findByQrToken(qrToken);
+        if (qrCodeOpt.isPresent()) {
+            BadgeQrCode qrCode = qrCodeOpt.get();
+            if (qrCode.getStatus() != QrCodeStatus.ACTIVE) {
+                throw new QrRevokedException("Este código QR fue desactivado o revocado y ya no es válido.");
+            }
+            Badge badge = qrCode.getBadge();
+            if (Boolean.FALSE.equals(badge.getConsentActive())) {
+                throw new QrRevokedException("El consentimiento informado de este perfil fue revocado.");
+            }
+            return badge;
+        }
+
+        // Legacy compatibility for pre-Sprint 2 badges without badge_qr_codes rows
+        Badge legacyBadge = badgeRepository.findByUuid(qrToken)
+                .orElseThrow(() -> new EntityNotFoundException("Credencial no encontrada para el QR escaneado."));
+        List<BadgeQrCode> history = badgeQrCodeRepository.findByBadgeIdOrderByCreatedAtDesc(legacyBadge.getId());
+        if (!history.isEmpty()) {
+            throw new QrRevokedException("Este código QR fue reemplazado o revocado.");
+        }
+        if (Boolean.FALSE.equals(legacyBadge.getConsentActive())) {
+            throw new QrRevokedException("El consentimiento informado de este perfil fue revocado.");
+        }
+        return legacyBadge;
+    }
+
+    private Badge loadOwnedBadge(UUID badgeUuid, String ownerDni) {
+        Badge badge = badgeRepository.findByUuid(badgeUuid)
+                .orElseThrow(() -> new EntityNotFoundException("Familiar no encontrado para el UUID: " + badgeUuid));
+        if (badge.getUserRegister() == null || !badge.getUserRegister().getDni().equals(ownerDni)) {
+            throw new AccessDeniedException("No tienes permiso para administrar este perfil.");
+        }
+        return badge;
+    }
+
+    private void deactivateActiveQrTokens(Long badgeId, QrCodeStatus targetStatus) {
+        Instant now = Instant.now();
+        List<BadgeQrCode> codes = badgeQrCodeRepository.findByBadgeIdOrderByCreatedAtDesc(badgeId);
+        for (BadgeQrCode code : codes) {
+            if (code.getStatus() == QrCodeStatus.ACTIVE) {
+                code.setStatus(targetStatus);
+                code.setDeactivatedAt(now);
+                badgeQrCodeRepository.save(code);
+            }
+        }
+    }
+
+    private void recordConsentAudit(Badge badge, ConsentAction action, String version, String actorDni, Instant actedAt) {
+        consentAuditRepository.save(ConsentAudit.builder()
+                .action(action)
+                .consentVersion(version)
+                .actorDni(actorDni)
+                .actedAt(actedAt)
+                .badge(badge)
+                .build());
+    }
+
+    private UUID resolveActiveQrToken(Badge badge) {
+        if (badge.getId() == null) {
+            return badge.getUuid();
+        }
+        List<BadgeQrCode> codes = badgeQrCodeRepository.findByBadgeIdOrderByCreatedAtDesc(badge.getId());
+        return codes.stream()
+                .filter(code -> code.getStatus() == QrCodeStatus.ACTIVE)
+                .map(BadgeQrCode::getQrToken)
+                .findFirst()
+                .orElse(codes.isEmpty() ? badge.getUuid() : null);
+    }
+
+    private FamilyMemberSummaryDTO toFamilySummary(Badge badge) {
+        List<BadgeQrCode> codes = badge.getId() != null
+                ? badgeQrCodeRepository.findByBadgeIdOrderByCreatedAtDesc(badge.getId())
+                : List.of();
+        BadgeQrCode latest = codes.isEmpty() ? null : codes.get(0);
+        UUID activeToken = codes.stream()
+                .filter(c -> c.getStatus() == QrCodeStatus.ACTIVE)
+                .map(BadgeQrCode::getQrToken)
+                .findFirst()
+                .orElse(null);
+
+        QrCodeStatus status = latest != null
+                ? latest.getStatus()
+                : (Boolean.FALSE.equals(badge.getConsentActive()) ? QrCodeStatus.DEACTIVATED : QrCodeStatus.ACTIVE);
+        UUID latestToken = latest != null ? latest.getQrToken() : badge.getUuid();
+
+        return FamilyMemberSummaryDTO.builder()
+                .badgeUuid(badge.getUuid())
+                .fullName(badge.getFullName())
+                .firstName(NameUtils.extractFirstName(badge.getFullName()))
+                .maskedDni(NameUtils.maskDni(badge.getDni()))
+                .dateOfBirth(badge.getDateOfBirth())
+                .gender(badge.getGender())
+                .photoUrl(badge.getPhotoUrl())
+                .guardiansCount(badge.getGuardians() != null ? badge.getGuardians().size() : 0)
+                .activeQrToken(activeToken != null ? activeToken : (codes.isEmpty() && !Boolean.FALSE.equals(badge.getConsentActive()) ? badge.getUuid() : null))
+                .latestQrToken(latestToken)
+                .qrStatus(status)
+                .consentActive(!Boolean.FALSE.equals(badge.getConsentActive()))
+                .consentVersion(StringUtils.hasText(badge.getConsentVersion()) ? badge.getConsentVersion() : DEFAULT_CONSENT_VERSION)
+                .consentAcceptedAt(badge.getConsentAcceptedAt())
+                .consentRevokedAt(badge.getConsentRevokedAt())
+                .build();
+    }
+
+    private void enrichBadgeResponse(BadgeResponseDTO dto, Badge badge, UUID activeQrToken) {
+        if (dto == null) {
+            return;
+        }
+        dto.setActiveQrToken(activeQrToken);
+        dto.setConsentActive(!Boolean.FALSE.equals(badge.getConsentActive()));
+        dto.setConsentVersion(StringUtils.hasText(badge.getConsentVersion()) ? badge.getConsentVersion() : DEFAULT_CONSENT_VERSION);
+        dto.setConsentAcceptedAt(badge.getConsentAcceptedAt());
+    }
+
+    private String buildEmailTemplate(Guardians guardian, Badge savedBadge, String urlPerfil) {
         String mensajeRol = guardian.isLegalRepresentative()
                 ? "Como <strong>Representante Legal</strong>, has sido asignado para recibir las notificaciones principales en caso de que este código sea escaneado por personal de asistencia o autoridades."
                 : "Como <strong>Contacto de Emergencia</strong>, has sido registrado en nuestro sistema para brindar apoyo y ser notificado en caso de requerir asistencia adicional.";
 
-        // 2. Retornamos el Text Block con los reemplazos
         return """
         <!DOCTYPE html>
         <html lang="es">
@@ -202,8 +418,8 @@ public class BadgeService {
 
                                     <p style="font-size: 16px; color: #333; text-align: center;"><strong>Código QR de Emergencia:</strong></p>
                                     <div align="center" style="margin-bottom: 20px;">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{url_perfil}}" 
-                                             alt="QR de Emergencia" 
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{url_perfil}}"
+                                             alt="QR de Emergencia"
                                              style="border: 5px solid #eee; padding: 10px; border-radius: 10px; width: 180px; height: 180px;">
                                         <p style="font-size: 12px; color: #777; margin-top: 5px;">Este QR dirige a la información vital en caso de extravío.</p>
                                     </div>
@@ -233,18 +449,17 @@ public class BadgeService {
                 .replace("{{mensaje_rol}}", mensajeRol);
     }
 
-
-    private void enviarCorreosNotificacion(Badge savedBadge) {
+    private void enviarCorreosNotificacion(Badge savedBadge, UUID qrToken) {
         if (savedBadge.getGuardians() == null) return;
 
-        String urlPerfil = "https://qr-utp-rs.pages.dev/gafete/" + savedBadge.getUuid();
+        String base = frontendUrl != null ? frontendUrl.replaceAll("/+$", "") : "http://localhost:5173";
+        String urlPerfil = base + "/gafete/" + qrToken;
 
         for (Guardians guardian : savedBadge.getGuardians()) {
             try {
                 String htmlContent = buildEmailTemplate(guardian, savedBadge, urlPerfil);
                 emailOrchestratorService.sendManageEmail("GUARDIANS", guardian.getUuid(), guardian.getEmail(), "Nuevo Registro... TE ENCONTRÉ", htmlContent);
             } catch (Exception e) {
-                // CRÍTICO: Un error enviando el correo NO debe cancelar (rollback) la creación del Badge en la BD.
                 log.error("Error enviando correo de confirmación al guardián {}: {}", guardian.getEmail(), e.getMessage());
             }
         }

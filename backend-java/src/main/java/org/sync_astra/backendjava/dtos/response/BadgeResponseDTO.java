@@ -28,6 +28,11 @@ public class BadgeResponseDTO {
     private String photoUrl;
     private StatusBadge statusBadge;
 
+    private UUID activeQrToken;
+    private boolean consentActive;
+    private String consentVersion;
+    private Instant consentAcceptedAt;
+
     // Fechas de auditoría útiles para mostrar en el Frontend (Ej: "Registrado el...")
     private Instant createdAt;
     private Instant updatedAt;
