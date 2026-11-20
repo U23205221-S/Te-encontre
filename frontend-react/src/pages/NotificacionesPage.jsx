@@ -14,6 +14,7 @@ import {
   confirmMyAlert,
   confirmPublicAlertByToken,
   fetchMyAlerts,
+  fetchPublicAlertStatus,
 } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -45,11 +46,19 @@ const NotificacionesPage = () => {
   const [alerts, setAlerts] = useState([]);
   const [selectedUuid, setSelectedUuid] = useState(queryAlertUuid || null);
   const [tokenConfirmedAlert, setTokenConfirmedAlert] = useState(null);
+  const [publicAlertStatus, setPublicAlertStatus] = useState(null);
   const [loading, setLoading] = useState(Boolean(sessionUser));
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
   const [nowSeconds, setNowSeconds] = useState(() => Date.now());
   const isLoading = Boolean(sessionUser) && loading;
+
+  const hasTokenParams = Boolean(queryAlertUuid && queryToken);
+  const requestedAlertInInbox = queryAlertUuid
+    ? alerts.some((a) => a.alertUuid === queryAlertUuid)
+    : false;
+  const shouldShowTokenCard =
+    hasTokenParams && (!sessionUser || (!isLoading && !requestedAlertInInbox));
 
   useEffect(() => {
     const timer = setInterval(() => setNowSeconds(Date.now()), 1000);
@@ -67,8 +76,10 @@ const NotificacionesPage = () => {
         if (!active) return;
         const list = Array.isArray(data) ? data : [];
         setAlerts(list);
-        if (queryAlertUuid && list.some((a) => a.alertUuid === queryAlertUuid)) {
-          setSelectedUuid(queryAlertUuid);
+        if (queryAlertUuid) {
+          setSelectedUuid(
+            list.some((a) => a.alertUuid === queryAlertUuid) ? queryAlertUuid : null
+          );
         } else if (list.length > 0) {
           setSelectedUuid((prev) => prev || list[0].alertUuid);
         }
@@ -87,10 +98,35 @@ const NotificacionesPage = () => {
     };
   }, [sessionUser, queryAlertUuid]);
 
+  useEffect(() => {
+    if (!shouldShowTokenCard || !queryAlertUuid) {
+      return undefined;
+    }
+
+    let active = true;
+    fetchPublicAlertStatus(queryAlertUuid)
+      .then((data) => {
+        if (active && data) {
+          setPublicAlertStatus(data);
+        }
+      })
+      .catch(() => {
+        // Direct token confirmation remains available even if status preview fails
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [shouldShowTokenCard, queryAlertUuid]);
+
+  const activeTokenConfirmed =
+    tokenConfirmedAlert?.alertUuid === queryAlertUuid ? tokenConfirmedAlert : null;
+  const activePublicStatus =
+    publicAlertStatus?.alertUuid === queryAlertUuid ? publicAlertStatus : null;
+
   const selectedAlert =
     alerts.find((a) => a.alertUuid === selectedUuid) ||
-    alerts[0] ||
-    tokenConfirmedAlert ||
+    (!queryAlertUuid ? alerts[0] : null) ||
     null;
 
   const handleConfirm = async (alertUuid) => {
@@ -111,45 +147,77 @@ const NotificacionesPage = () => {
     }
   };
 
-  if (!sessionUser) {
+  if (shouldShowTokenCard || !sessionUser) {
+    const isTokenConfirmed =
+      activeTokenConfirmed?.status === 'CONFIRMED' ||
+      activePublicStatus?.alertStatus === 'CONFIRMED';
+    const confirmedAtValue =
+      activeTokenConfirmed?.confirmedAt || activePublicStatus?.confirmedAt;
+    const isTokenEscalated = activePublicStatus?.alertStatus === 'ESCALATED';
+
     return (
       <div className="mx-auto max-w-xl px-4 py-12 text-text-body">
         <div className="rounded-card border border-surface-border bg-white p-6 shadow-card md:p-8">
           <div className="mb-4 flex items-center gap-3">
-            <Bell className="text-brand-600" size={28} />
-            <h1 className="text-xl font-extrabold text-text-primary">Confirmación de Alerta SOS</h1>
+            <Bell className="text-brand-600" size={28} aria-hidden="true" />
+            <div>
+              <h1 className="text-xl font-extrabold text-text-primary">Confirmación de Alerta SOS</h1>
+              {activePublicStatus?.firstName && (
+                <p className="text-xs font-semibold text-text-muted">
+                  Familiar identificado: {activePublicStatus.firstName}
+                </p>
+              )}
+            </div>
           </div>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+            >
               {error}
             </div>
           )}
 
-          {tokenConfirmedAlert?.status === 'CONFIRMED' ? (
+          {isTokenConfirmed ? (
             <div className="space-y-4">
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <div
+                role="status"
+                aria-live="polite"
+                className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+              >
                 <div className="flex items-center gap-2 font-extrabold text-emerald-900">
-                  <CheckCircle2 size={20} className="text-emerald-600" />
+                  <CheckCircle2 size={20} className="text-emerald-600" aria-hidden="true" />
                   <span>La familia ya está en camino</span>
                 </div>
                 <p className="mt-1 text-sm text-emerald-800">
-                  Confirmaste la recepción a las {formatTime(tokenConfirmedAlert.confirmedAt)}. El temporizador se detuvo y el ciudadano fue informado.
+                  Confirmaste la recepción a las {formatTime(confirmedAtValue)}. El temporizador se detuvo y el ciudadano fue informado.
                 </p>
               </div>
-              {tokenConfirmedAlert.googleMapsLink && (
+              {activeTokenConfirmed?.googleMapsLink && (
                 <a
-                  href={tokenConfirmedAlert.googleMapsLink}
+                  href={activeTokenConfirmed.googleMapsLink}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 rounded-module border border-surface-border bg-surface-soft px-4 py-2.5 text-sm font-bold text-brand-700 hover:bg-surface-muted"
                 >
-                  <MapPin size={16} /> Ver ubicación en Google Maps <ExternalLink size={14} />
+                  <MapPin size={16} aria-hidden="true" /> Ver ubicación en Google Maps <ExternalLink size={14} aria-hidden="true" />
                 </a>
               )}
             </div>
-          ) : queryAlertUuid && queryToken ? (
+          ) : hasTokenParams ? (
             <div className="space-y-4">
+              {isTokenEscalated && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <div className="flex items-center gap-2 font-extrabold text-amber-900">
+                    <ShieldAlert size={20} className="text-amber-700" aria-hidden="true" />
+                    <span>Escalamiento automático ejecutado</span>
+                  </div>
+                  <p className="mt-1 text-xs text-amber-800">
+                    Esta alerta ya escaló a los contactos auxiliares. Puedes confirmar la recepción para avisar al ciudadano que vas en camino.
+                  </p>
+                </div>
+              )}
               <p className="text-sm text-text-body">
                 Pulsa el botón para confirmar la recepción de la alerta SOS, detener el escalamiento automático y avisar al ciudadano que estás en camino.
               </p>
@@ -169,6 +237,17 @@ const NotificacionesPage = () => {
               </p>
               <Link to="/login" className="ui-btn-primary inline-flex px-6 py-2.5 text-sm font-bold">
                 Iniciar sesión
+              </Link>
+            </div>
+          )}
+
+          {sessionUser && hasTokenParams && (
+            <div className="mt-6 border-t border-surface-border pt-4 text-center">
+              <Link
+                to="/notificaciones"
+                className="text-xs font-bold text-brand-700 hover:underline"
+              >
+                Ver mi bandeja de notificaciones
               </Link>
             </div>
           )}
@@ -257,7 +336,7 @@ const NotificacionesPage = () => {
             })}
           </aside>
 
-          {selectedAlert && (
+          {selectedAlert ? (
             <section className="rounded-card border border-surface-border bg-white p-6 shadow-card lg:col-span-8">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-surface-border pb-4">
                 <div>
@@ -385,17 +464,40 @@ const NotificacionesPage = () => {
                 )}
 
                 {selectedAlert.status === 'ESCALATED' && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                    <div className="flex items-center gap-2 font-extrabold text-amber-900">
-                      <ShieldAlert size={20} className="text-amber-700" />
-                      <span>Escalamiento automático ejecutado</span>
+                  <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-5">
+                    <div>
+                      <div className="flex items-center gap-2 font-extrabold text-amber-900">
+                        <ShieldAlert size={20} className="text-amber-700" aria-hidden="true" />
+                        <span>Escalamiento automático ejecutado</span>
+                      </div>
+                      <p className="mt-1 text-xs text-amber-800">
+                        Transcurrieron 120 segundos sin confirmación del titular ({formatTime(selectedAlert.escalatedAt)}). Se notificó a los contactos auxiliares registrados.
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs text-amber-800">
-                      Transcurrieron 120 segundos sin confirmación del titular ({formatTime(selectedAlert.escalatedAt)}). Se notificó a los contactos auxiliares registrados.
+
+                    <button
+                      type="button"
+                      disabled={confirming}
+                      onClick={() => handleConfirm(selectedAlert.alertUuid)}
+                      className="w-full rounded-xl bg-red-600 px-6 py-3.5 text-base font-extrabold text-white shadow-md transition-colors hover:bg-red-700 disabled:opacity-60"
+                    >
+                      {confirming ? 'Confirmando...' : 'Confirmar recepción'}
+                    </button>
+                    <p className="text-center text-xs font-medium text-amber-900">
+                      Al confirmar, avisaremos a la persona que reportó que ya vas en camino.
                     </p>
                   </div>
                 )}
               </div>
+            </section>
+          ) : (
+            <section className="rounded-card border border-surface-border bg-white p-8 text-center shadow-card lg:col-span-8">
+              <p className="text-sm font-semibold text-text-primary">
+                La alerta solicitada no se encuentra en tu bandeja.
+              </p>
+              <p className="mt-1 text-xs text-text-muted">
+                Selecciona una alerta de la lista para ver sus detalles.
+              </p>
             </section>
           )}
         </div>

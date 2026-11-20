@@ -36,7 +36,7 @@ const Phase5EmergencyContact = ({ badgeData, onClose }) => {
   }, [assistance?.expiresAt, isConfirmed, isEscalated]);
 
   useEffect(() => {
-    if (!alertUuid || isConfirmed || isEscalated) return undefined;
+    if (!alertUuid || isConfirmed) return undefined;
     let active = true;
 
     const pollStatus = async () => {
@@ -58,7 +58,7 @@ const Phase5EmergencyContact = ({ badgeData, onClose }) => {
       active = false;
       clearInterval(pollInterval);
     };
-  }, [alertUuid, isConfirmed, isEscalated]);
+  }, [alertUuid, isConfirmed]);
 
   const formatTime = (seconds) => {
     const safe = Math.max(0, Number(seconds) || 0);
