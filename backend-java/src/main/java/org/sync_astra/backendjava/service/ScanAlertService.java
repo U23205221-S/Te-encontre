@@ -181,9 +181,9 @@ public class ScanAlertService {
 
         Instant now = Instant.now();
         String actorDni = authenticatedDni != null ? authenticatedDni : "TOKEN_LINK";
-        int updated = scanAlertRepository.markConfirmedIfActive(
+        int updated = scanAlertRepository.markConfirmedIfConfirmable(
                 alertUuid,
-                AlertStatus.ACTIVE,
+                List.of(AlertStatus.ACTIVE, AlertStatus.ESCALATED),
                 AlertStatus.CONFIRMED,
                 now,
                 actorDni
@@ -196,7 +196,8 @@ public class ScanAlertService {
             return toGuardianAlertDTO(alert, false);
         }
 
-        return toGuardianAlertDTO(alert, alert.getStatus() == AlertStatus.CONFIRMED);
+        ScanAlert latest = scanAlertRepository.findByUuid(alertUuid).orElse(alert);
+        return toGuardianAlertDTO(latest, latest.getStatus() == AlertStatus.CONFIRMED);
     }
 
     @Transactional

@@ -35,11 +35,11 @@ public interface ScanAlertRepository extends JpaRepository<ScanAlert, Long> {
             a.confirmedAt = :now,
             a.confirmedByDni = :actorDni
         WHERE a.uuid = :alertUuid
-          AND a.status = :activeStatus
+          AND a.status IN :confirmableStatuses
     """)
-    int markConfirmedIfActive(
+    int markConfirmedIfConfirmable(
             @Param("alertUuid") UUID alertUuid,
-            @Param("activeStatus") AlertStatus activeStatus,
+            @Param("confirmableStatuses") List<AlertStatus> confirmableStatuses,
             @Param("confirmedStatus") AlertStatus confirmedStatus,
             @Param("now") Instant now,
             @Param("actorDni") String actorDni

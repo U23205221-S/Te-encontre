@@ -296,4 +296,18 @@ class BadgeLifecycleAndPrivacyTest {
         assertThrows(AccessDeniedException.class,
                 () -> badgeService.deactivateQr(dependentBadge.getUuid(), "99999999"));
     }
+
+    @Test
+    void deactivateQr_recordsDeactivatedTokenEvenForLegacyBadgesWithoutHistory() {
+        when(badgeRepository.findByUuid(dependentBadge.getUuid())).thenReturn(Optional.of(dependentBadge));
+        when(badgeQrCodeRepository.findByBadgeIdOrderByCreatedAtDesc(dependentBadge.getId())).thenReturn(List.of());
+        when(badgeQrCodeRepository.save(any(BadgeQrCode.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        FamilyMemberSummaryDTO result = badgeService.deactivateQr(dependentBadge.getUuid(), "12345678");
+
+        verify(badgeQrCodeRepository, times(1)).save(argThat(qr ->
+                qr.getQrToken().equals(dependentBadge.getUuid()) && qr.getStatus() == QrCodeStatus.DEACTIVATED
+        ));
+        assertNotNull(result);
+    }
 }

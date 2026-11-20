@@ -150,14 +150,49 @@ class AlertSosAndEscalationTest {
                 .latitude(-12.0).longitude(-77.0).build();
 
         when(scanAlertRepository.findByUuid(alertUuid)).thenReturn(Optional.of(activeAlert));
-        when(scanAlertRepository.markConfirmedIfActive(eq(alertUuid), eq(AlertStatus.ACTIVE), eq(AlertStatus.CONFIRMED), any(), eq("12345678")))
-                .thenReturn(1);
+        when(scanAlertRepository.markConfirmedIfConfirmable(
+                eq(alertUuid),
+                eq(List.of(AlertStatus.ACTIVE, AlertStatus.ESCALATED)),
+                eq(AlertStatus.CONFIRMED),
+                any(),
+                eq("12345678")
+        )).thenReturn(1);
 
         GuardianAlertDTO result = scanAlertService.confirmAlert(alertUuid, null, "12345678");
 
         assertEquals(AlertStatus.CONFIRMED, result.getStatus());
         assertNotNull(result.getConfirmedAt());
         assertFalse(result.isAlreadyConfirmed());
+    }
+
+    @Test
+    void confirmAlert_allowsConfirmingAfterEscalationAndRefreshesStaleStateOnRace() {
+        UUID alertUuid = UUID.randomUUID();
+        UUID token = UUID.randomUUID();
+        ScanAlert escalated = ScanAlert.builder()
+                .id(56L).uuid(alertUuid).confirmationToken(token).badge(badge)
+                .status(AlertStatus.ESCALATED).scannedAt(LocalDateTime.now()).expiresAt(Instant.now().minusSeconds(5))
+                .latitude(-12.0).longitude(-77.0).build();
+
+        ScanAlert alreadyConfirmedInDb = ScanAlert.builder()
+                .id(56L).uuid(alertUuid).confirmationToken(token).badge(badge)
+                .status(AlertStatus.CONFIRMED).confirmedAt(Instant.now()).build();
+
+        when(scanAlertRepository.findByUuid(alertUuid))
+                .thenReturn(Optional.of(escalated))
+                .thenReturn(Optional.of(alreadyConfirmedInDb));
+        when(scanAlertRepository.markConfirmedIfConfirmable(
+                eq(alertUuid),
+                eq(List.of(AlertStatus.ACTIVE, AlertStatus.ESCALATED)),
+                eq(AlertStatus.CONFIRMED),
+                any(),
+                eq("TOKEN_LINK")
+        )).thenReturn(0);
+
+        GuardianAlertDTO result = scanAlertService.confirmAlert(alertUuid, token, null);
+
+        assertEquals(AlertStatus.CONFIRMED, result.getStatus());
+        assertTrue(result.isAlreadyConfirmed());
     }
 
     @Test

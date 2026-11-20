@@ -127,9 +127,8 @@ public class BadgeService {
         }
     }
 
-    public BadgeResponseDTO getBadgeByUuid(String uuid) {
-        Badge badge = badgeRepository.findByUuid(UUID.fromString(uuid))
-                .orElseThrow(() -> new EntityNotFoundException("Badge no encontrado para el UUID: " + uuid));
+    public BadgeResponseDTO getBadgeByUuid(String uuid, String ownerDni) {
+        Badge badge = loadOwnedBadge(UUID.fromString(uuid), ownerDni);
         BadgeResponseDTO dto = badgeMapper.toDTO(badge);
         enrichBadgeResponse(dto, badge, resolveActiveQrToken(badge));
         return dto;
@@ -212,7 +211,18 @@ public class BadgeService {
     @Transactional
     public FamilyMemberSummaryDTO deactivateQr(UUID badgeUuid, String ownerDni) {
         Badge badge = loadOwnedBadge(badgeUuid, ownerDni);
-        deactivateActiveQrTokens(badge.getId(), QrCodeStatus.DEACTIVATED);
+        List<BadgeQrCode> existing = badgeQrCodeRepository.findByBadgeIdOrderByCreatedAtDesc(badge.getId());
+        if (existing.isEmpty()) {
+            badgeQrCodeRepository.save(BadgeQrCode.builder()
+                    .qrToken(badge.getUuid())
+                    .status(QrCodeStatus.DEACTIVATED)
+                    .createdAt(Instant.now())
+                    .deactivatedAt(Instant.now())
+                    .badge(badge)
+                    .build());
+        } else {
+            deactivateActiveQrTokens(badge.getId(), QrCodeStatus.DEACTIVATED);
+        }
         return toFamilySummary(badge);
     }
 

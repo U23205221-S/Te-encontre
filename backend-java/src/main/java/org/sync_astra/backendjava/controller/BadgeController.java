@@ -94,8 +94,8 @@ public class BadgeController {
 
     // Endpoint para Consultar Badge por UUID (sin alerta)
     @GetMapping("/uuid/{uuid}")
-    public ResponseEntity<BadgeResponseDTO> getBadgeByUuid(@PathVariable String uuid) {
-        return ResponseEntity.ok(badgeService.getBadgeByUuid(uuid));
+    public ResponseEntity<BadgeResponseDTO> getBadgeByUuid(@PathVariable String uuid, Authentication authentication) {
+        return ResponseEntity.ok(badgeService.getBadgeByUuid(uuid, authentication.getName()));
     }
 
     @GetMapping("/public/{qrToken}")
